@@ -321,3 +321,303 @@
                     select.appendChild(opt);
                 });
                 selectProject();
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Не удалось загрузить список проектов: ' + err.message);
+            });
+    }
+    loadProjects();
+
+    function selectProject() {
+        let idx = document.getElementById('projectSelect').value;
+        let imgPreview = document.getElementById('projImgPreview');
+        let deleteBtn = document.getElementById('deleteBtn');
+        if (idx === "") {
+            document.getElementById('projTitle').value = '';
+            document.getElementById('projPath').value = '';
+            document.getElementById('projShortDesc').value = '';
+            document.getElementById('projFullDesc').value = '';
+            currentProjImageUrl = '';
+            imgPreview.src = '';
+            imgPreview.style.display = 'none';
+            deleteBtn.style.display = 'none';
+        } else {
+            let p = allProjects[idx];
+            document.getElementById('projTitle').value = p.title || '';
+            document.getElementById('projPath').value = p.path || '';
+            document.getElementById('projShortDesc').value = p.shortDesc || p.desc || '';
+            document.getElementById('projFullDesc').value = p.fullDesc || p.desc || '';
+            currentProjImageUrl = p.imageUrl || p.image || '';
+            if (currentProjImageUrl) {
+                imgPreview.src = currentProjImageUrl;
+                imgPreview.style.display = 'block';
+            } else {
+                imgPreview.src = '';
+                imgPreview.style.display = 'none';
+            }
+            deleteBtn.style.display = 'inline-block';
+        }
+    }
+
+    function saveProjectWithImage() {
+        let fileInput = document.getElementById('projImageFile');
+        if (fileInput.files.length > 0) {
+            let file = fileInput.files[0];
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: e.target.result, filename: file.name })
+                })
+                .then(checkResponse)
+                .then(data => {
+                    if (data.success) {
+                        currentProjImageUrl = data.url;
+                        saveProjectData();
+                    } else {
+                        alert('Ошибка загрузки фото: ' + (data.error || 'Неизвестная ошибка'));
+                    }
+                })
+                .catch(err => {
+                    alert('Сбой при загрузке изображения: ' + err.message);
+                });
+            };
+            reader.readAsDataURL(file);
+        } else {
+            saveProjectData();
+        }
+    }
+
+    function saveProjectData() {
+        let idx = document.getElementById('projectSelect').value;
+        let projData = {
+            title: document.getElementById('projTitle').value,
+            path: document.getElementById('projPath').value,
+            shortDesc: document.getElementById('projShortDesc').value,
+            fullDesc: document.getElementById('projFullDesc').value,
+            imageUrl: currentProjImageUrl
+        };
+        if (idx === "") {
+            allProjects.push(projData);
+        } else {
+            allProjects[idx] = projData;
+        }
+        fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(allProjects)
+        })
+        .then(checkResponse)
+        .then(data => {
+            if(data.success) {
+                alert('Проект успешно сохранен!');
+                loadProjects();
+            } else {
+                alert('Ошибка сохранения: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        })
+        .catch(err => {
+            alert('Сбой при сохранении проекта: ' + err.message);
+        });
+    }
+
+    function deleteProject() {
+        let idx = document.getElementById('projectSelect').value;
+        if (idx === "") return;
+        if (!confirm('Вы уверены, что хотите удалить этот проект?')) return;
+
+        allProjects.splice(idx, 1);
+        fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(allProjects)
+        })
+        .then(checkResponse)
+        .then(data => {
+            if(data.success) {
+                alert('Проект успешно удален!');
+                document.getElementById('projectSelect').value = "";
+                loadProjects();
+            } else {
+                alert('Ошибка при удалении: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        })
+        .catch(err => {
+            alert('Сбой при удалении проекта: ' + err.message);
+        });
+    }
+
+    function loadSettings() {
+        fetch('/api/settings')
+            .then(checkResponse)
+            .then(data => {
+                document.getElementById('webhook_lssd').value = data.webhook_lssd || '';
+                document.getElementById('webhook_lspd').value = data.webhook_lspd || '';
+                document.getElementById('webhook_gov').value = data.webhook_gov || '';
+                document.getElementById('webhook_cid').value = data.webhook_cid || '';
+                document.getElementById('webhook_fib').value = data.webhook_fib || '';
+                document.getElementById('role_ids').value = data.role_ids || '';
+                if(data.illustrationUrl) {
+                    let img = document.getElementById('currentIllustration');
+                    img.src = data.illustrationUrl;
+                    img.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                console.error('Ошибка загрузки настроек:', err.message);
+            });
+    }
+    loadSettings();
+
+    function saveSettings() {
+        fetch('/api/settings')
+            .then(checkResponse)
+            .then(currentData => {
+                currentData.webhook_lssd = document.getElementById('webhook_lssd').value;
+                currentData.webhook_lspd = document.getElementById('webhook_lspd').value;
+                currentData.webhook_gov = document.getElementById('webhook_gov').value;
+                currentData.webhook_cid = document.getElementById('webhook_cid').value;
+                currentData.webhook_fib = document.getElementById('webhook_fib').value;
+                currentData.role_ids = document.getElementById('role_ids').value;
+
+                return fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentData)
+                });
+            })
+            .then(checkResponse)
+            .then(data => {
+                if(data.success) {
+                    alert('Контакты успешно сохранены!');
+                } else {
+                    alert('Ошибка сохранения');
+                }
+            })
+            .catch(err => {
+                alert('Сбой при сохранении контактов: ' + err.message);
+            });
+    }
+
+    function uploadIllustration() {
+        let fileInput = document.getElementById('illustrationFile');
+        if(fileInput.files.length === 0) {
+            alert('Выберите файл иллюстрации!');
+            return;
+        }
+        let file = fileInput.files[0];
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: e.target.result, filename: file.name })
+            })
+            .then(checkResponse)
+            .then(data => {
+                if(data.success) {
+                    let newUrl = data.url;
+                    fetch('/api/settings')
+                        .then(checkResponse)
+                        .then(settings => {
+                            settings.illustrationUrl = newUrl;
+                            return fetch('/api/settings', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(settings)
+                            });
+                        })
+                        .then(checkResponse)
+                        .then(stData => {
+                            if (stData.success) {
+                                alert('Иллюстрация успешно сохранена!');
+                                let img = document.getElementById('currentIllustration');
+                                img.src = newUrl;
+                                img.style.display = 'block';
+                            } else {
+                                alert('Ошибка сохранения параметров иллюстрации');
+                            }
+                        });
+                } else {
+                    alert('Ошибка загрузки файла на сервер: ' + (data.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(err => {
+                alert('Сбой при загрузке иллюстрации: ' + err.message);
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function fetchLogs() {
+        fetch('/api/logs')
+            .then(checkResponse)
+            .then(data => {
+                document.getElementById('serverLogs').innerText = data.logs || 'Логов пока нет';
+            })
+            .catch(err => {
+                document.getElementById('serverLogs').innerText = 'Ошибка получения логов: ' + err.message;
+            });
+    }
+    fetchLogs();
+
+    function loadFileList() {
+        fetch('/api/list-files')
+            .then(checkResponse)
+            .then(files => {
+                let select = document.getElementById('fileSelect');
+                select.innerHTML = '';
+                if (files && files.length > 0) {
+                    files.forEach(f => {
+                        let opt = document.createElement('option');
+                        opt.value = f;
+                        opt.textContent = f;
+                        select.appendChild(opt);
+                    });
+                    loadFileCode();
+                }
+            })
+            .catch(err => {
+                console.error('Ошибка загрузки списка файлов:', err.message);
+            });
+    }
+    loadFileList();
+
+    function loadFileCode() {
+        let file = document.getElementById('fileSelect').value;
+        if (!file) return;
+        fetch('/api/file?path=' + encodeURIComponent(file))
+            .then(checkResponse)
+            .then(data => {
+                document.getElementById('codeEditor').value = data.content || '';
+            })
+            .catch(err => {
+                alert('Ошибка загрузки файла: ' + err.message);
+            });
+    }
+
+    function saveFileCode() {
+        let file = document.getElementById('fileSelect').value;
+        let content = document.getElementById('codeEditor').value;
+        fetch('/api/file', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filePath: file, content: content })
+        })
+        .then(checkResponse)
+        .then(data => {
+            if(data.success) {
+                alert('Код успешно сохранен и применен!');
+            } else {
+                alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        })
+        .catch(err => {
+            alert('Сбой при сохранении кода: ' + err.message);
+        });
+    }
+    </script>
+</body>
+</html>
