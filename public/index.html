@@ -76,12 +76,13 @@
 
         /* МОДАЛЬНОЕ ОКНО */
         #detailsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
-        .modal-box { background: #121214; border: 1px solid var(--primary); border-radius: 20px; padding: 35px; width: 100%; max-width: 550px; position: relative; box-shadow: 0 20px 40px rgba(138, 43, 226, 0.4); text-align: center; }
+        .modal-box { background: #121214; border: 1px solid var(--primary); border-radius: 20px; padding: 35px; width: 100%; max-width: 600px; position: relative; box-shadow: 0 20px 40px rgba(138, 43, 226, 0.4); text-align: center; }
         .modal-close { position: absolute; top: 15px; right: 20px; font-size: 28px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
         .modal-close:hover { color: #fff; }
         .modal-img { width: 100%; max-height: 240px; object-fit: cover; border-radius: 12px; margin-bottom: 20px; display: none; border: 1px solid var(--border); }
         .modal-title { color: var(--primary-light); font-size: 24px; font-weight: 700; margin-bottom: 15px; }
-        .modal-desc { color: var(--text-muted); font-size: 15px; line-height: 1.6; text-align: left; }
+        .modal-desc { color: var(--text-muted); font-size: 15px; line-height: 1.6; text-align: left; margin-bottom: 25px; white-space: pre-wrap; }
+        .modal-actions { display: flex; justify-content: center; gap: 15px; }
 
         /* КОНТАКТЫ */
         .contact-grid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 20px; padding-bottom: 60px; }
@@ -121,7 +122,7 @@
                 <div class="skill-card">
                     <i class="fab fa-python skill-icon"></i>
                     <h3>Python & Discord.py</h3>
-                    <p>Разработка и развертывание сложных Discord-ботов , работа с массивами данных и API, хостинг.</p>
+                    <p>Разработка и развертывание сложных Discord-ботов, работа с массивами данных и API, хостинг.</p>
                 </div>
                 <div class="skill-card">
                     <i class="fas fa-server skill-icon"></i>
@@ -164,9 +165,7 @@
     <!-- ПРОЕКТЫ -->
     <div class="section" id="projects">
         <h2 class="section-title">Мои Проекты</h2>
-        <div class="projects-grid" id="projectsGrid">
-            <!-- Динамическая загрузка -->
-        </div>
+        <div class="projects-grid" id="projectsGrid"></div>
     </div>
 
     <!-- МОДАЛЬНОЕ ОКНО -->
@@ -176,6 +175,7 @@
             <img id="modalImg" class="modal-img" src="" alt="Фото проекта">
             <h3 id="modalTitle" class="modal-title"></h3>
             <p id="modalDesc" class="modal-desc"></p>
+            <div class="modal-actions" id="modalActions"></div>
         </div>
     </div>
 
@@ -221,28 +221,31 @@
                 grid.innerHTML = '';
                 if (projects && projects.length > 0) {
                     projects.forEach((p, index) => {
-                        const mediaContent = (p.image || p.imageUrl)
-                            ? `<img src="${p.image || p.imageUrl}" alt="${p.title}">` 
+                        const mediaContent = (p.imageUrl || p.image)
+                            ? `<img src="${p.imageUrl || p.image}" alt="${p.title}">` 
                             : `<i class="fas fa-folder-open"></i>`;
                         
                         const tagsHtml = (p.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+                        const delay = (index % 3) * -2; 
                         
                         const title = (p.title || 'Проект').replace(/'/g, "\\'");
-                        const desc = (p.desc || 'Описание отсутствует.').replace(/'/g, "\\'").replace(/\n/g, ' ');
-                        const imgUrl = (p.image || p.imageUrl || '');
+                        const shortDesc = (p.shortDesc || p.desc || 'Краткое описание отсутствует.').replace(/'/g, "\\'").replace(/\n/g, ' ');
+                        const fullDesc = (p.fullDesc || p.desc || 'Полное описание отсутствует.').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+                        const imgUrl = (p.imageUrl || p.image || '');
+                        const pathUrl = (p.path || '');
 
                         grid.innerHTML += `
-                            <div class="project-card" onclick="openModal('${title}', '${desc}', '${imgUrl}')">
+                            <div class="project-card" style="animation-delay: ${delay}s" onclick="openModal('${title}', '${fullDesc}', '${imgUrl}', '${pathUrl}')">
                                 <div class="card-image">
                                     <div class="card-image-placeholder">${mediaContent}</div>
                                     <div class="card-overlay">
-                                        ${p.link ? `<a href="${p.link}" target="_blank" class="card-btn" onclick="event.stopPropagation()">Открыть</a>` : ''}
-                                        <button class="card-btn card-btn-details" onclick="event.stopPropagation(); openModal('${title}', '${desc}', '${imgUrl}')">Подробнее</button>
+                                        ${pathUrl ? `<a href="${pathUrl}" target="_blank" class="card-btn" onclick="event.stopPropagation()">Тестировать</a>` : ''}
+                                        <button class="card-btn card-btn-details" onclick="event.stopPropagation(); openModal('${title}', '${fullDesc.replace(/\\n/g, '\\n')}', '${imgUrl}', '${pathUrl}')">Подробнее</button>
                                     </div>
                                 </div>
                                 <div class="card-info">
                                     <h3>${p.title}</h3>
-                                    <p class="card-description">${p.desc}</p>
+                                    <p class="card-description">${p.shortDesc || p.desc || ''}</p>
                                     <div class="card-tags">${tagsHtml}</div>
                                 </div>
                             </div>
@@ -254,9 +257,9 @@
             })
             .catch(err => console.error(err));
 
-        function openModal(title, desc, imageUrl) {
+        function openModal(title, desc, imageUrl, pathUrl) {
             document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalDesc').textContent = desc;
+            document.getElementById('modalDesc').innerText = desc.replace(/\\n/g, '\n');
             let img = document.getElementById('modalImg');
             if (imageUrl) {
                 img.src = imageUrl;
@@ -264,6 +267,18 @@
             } else {
                 img.style.display = 'none';
             }
+
+            let actions = document.getElementById('modalActions');
+            actions.innerHTML = '';
+            if (pathUrl) {
+                let testBtn = document.createElement('a');
+                testBtn.className = 'card-btn';
+                testBtn.href = pathUrl;
+                testBtn.target = '_blank';
+                testBtn.textContent = 'Открыть и протестировать';
+                actions.appendChild(testBtn);
+            }
+
             document.getElementById('detailsModal').style.display = 'flex';
         }
 
