@@ -33,8 +33,8 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 125vw;
+            height: 125vh;
             z-index: -1;
             overflow: hidden;
             pointer-events: none;
@@ -64,6 +64,48 @@
         @keyframes floatOrb {
             0% { transform: translate(0, 0) scale(1); }
             100% { transform: translate(150px, 100px) scale(1.2); }
+        }
+
+        .holiday-widget {
+            position: fixed;
+            top: 100px;
+            left: 30px;
+            z-index: 90;
+            background: rgba(15, 15, 40, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            max-width: 260px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .holiday-widget:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .holiday-widget-icon {
+            font-size: 26px;
+            color: var(--primary-light);
+            flex-shrink: 0;
+        }
+
+        .holiday-widget-title {
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 2px;
+            font-size: 13px;
+        }
+
+        .holiday-widget-desc {
+            color: var(--text-muted);
+            font-size: 11px;
+            line-height: 1.3;
         }
         
         header { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(10px); padding: 20px 50px; border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
@@ -139,29 +181,6 @@
         .card-tags { display: flex; gap: 8px; flex-wrap: wrap; }
         .tag { padding: 4px 12px; background: rgba(138, 43, 226, 0.1); border-radius: 50px; font-size: 12px; color: var(--primary-light); border: 1px solid rgba(138, 43, 226, 0.3); font-weight: 600; }
 
-        .holiday-interactive {
-            background: linear-gradient(135deg, rgba(138,43,226,0.1), rgba(15,15,40,0.6));
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            max-width: 800px;
-            margin: 40px auto 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-            transition: transform 0.3s;
-        }
-        .holiday-interactive:hover { transform: scale(1.02); border-color: var(--primary); }
-        .holiday-icon { font-size: 40px; color: var(--primary-light); margin-bottom: 15px; animation: bounce 2s infinite; }
-        .holiday-title { font-size: 24px; font-weight: 700; margin-bottom: 10px; color: #fff; }
-        .holiday-desc { color: var(--text-muted); font-size: 16px; }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-15px); }
-            60% { transform: translateY(-7px); }
-        }
-
         #detailsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
         .modal-box { background: #121214; border: 1px solid var(--primary); border-radius: 20px; padding: 35px; width: 100%; max-width: 600px; position: relative; box-shadow: 0 20px 40px rgba(138, 43, 226, 0.4); text-align: center; }
         .modal-close { position: absolute; top: 15px; right: 20px; font-size: 28px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
@@ -182,6 +201,7 @@
         @media (max-width: 900px) {
             .skills-layout { flex-direction: column; }
             .skills-illustration { min-height: 300px; width: 100%; }
+            .holiday-widget { display: none; }
         }
     </style>
 </head>
@@ -190,6 +210,14 @@
         <div class="orb"></div>
         <div class="orb"></div>
         <div class="orb"></div>
+    </div>
+
+    <div class="holiday-widget" id="holidayWidget">
+        <div class="holiday-widget-icon" id="widgetIcon"><i class="fas fa-calendar-alt"></i></div>
+        <div>
+            <div class="holiday-widget-title" id="widgetTitle">Загрузка...</div>
+            <div class="holiday-widget-desc" id="widgetDesc">Синхронизация</div>
+        </div>
     </div>
 
     <header>
@@ -252,12 +280,6 @@
     <div class="section" id="projects">
         <h2 class="section-title">Мои Проекты</h2>
         <div class="projects-grid" id="projectsGrid"></div>
-        
-        <div class="holiday-interactive" id="holidayBox">
-            <div class="holiday-icon"><i class="fas fa-calendar-alt"></i></div>
-            <div class="holiday-title" id="holidayTitle">Проверка системного календаря...</div>
-            <div class="holiday-desc" id="holidayDesc">Синхронизация данных</div>
-        </div>
     </div>
 
     <div id="detailsModal">
@@ -293,40 +315,42 @@
     <script>
         let globalProjects = [];
 
-        function loadHoliday() {
+        function loadHolidayWidget() {
             const date = new Date();
             const day = date.getDate();
             const month = date.getMonth() + 1; 
             
-            let hTitle = "Отличный день для кодинга!";
-            let hDesc = "Никаких багов, только чистый код и успешные деплои.";
+            let hTitle = "День для кодинга";
+            let hDesc = "Чистый код и деплои.";
+            let iconClass = "fas fa-laptop-code";
 
             if (month === 8 && day === 2) {
-                hTitle = "🎉 С ЮБИЛЕЕМ! ТВОЙ 20-Й ДЕНЬ РОЖДЕНИЯ! 🎂";
-                hDesc = "Желаю бесконечного онлайна, идеальной компиляции с первого раза и мощнейших серверов! Пусть все проекты взлетают до небес!";
-                document.querySelector('.holiday-icon').innerHTML = '<i class="fas fa-birthday-cake"></i>';
+                hTitle = "С Днем Рождения! (20 лет)";
+                hDesc = "Бесконечный онлайн и мощный сервер!";
+                iconClass = "fas fa-birthday-cake";
             } else if (day === 256) { 
-                hTitle = "С Днем Программиста! (День 256)";
-                hDesc = "Пусть код пишется сам, а серверы никогда не падают.";
-                document.querySelector('.holiday-icon').innerHTML = '<i class="fas fa-laptop-code"></i>';
+                hTitle = "День Программиста";
+                hDesc = "Код пишется сам, серверы стабильны.";
+                iconClass = "fas fa-code";
             } else {
                 const funHolidays = [
-                    { t: "День системного администратора (в душе)", d: "Самое время проверить, не забился ли диск на 100%!" },
-                    { t: "Международный день без багов", d: "Легенда гласит, что такой день существует, но его никто не видел." },
-                    { t: "День деплоя в пятницу вечером", d: "Самый экстремальный праздник для любого программиста." },
-                    { t: "День чистого кода", d: "Когда всё красиво, понятно и даже есть комментарии." },
-                    { t: "Праздник святого Кофеина", d: "Главный спонсор всех ночных разработок и ботов для Discord." },
-                    { t: "День «Оно работает на моем компе!»", d: "Официальный праздник всех разработчиков." }
+                    { t: "День сисадмина", d: "Проверь свободное место на диске!" },
+                    { t: "День без багов", d: "Легендарный мифический праздник." },
+                    { t: "Пятничный деплой", d: "Самый экстремальный кипиш." },
+                    { t: "День чистого кода", d: "Идеальная архитектура и логи." },
+                    { t: "День Кофеина", d: "Главный спонсор ночных фич." },
+                    { t: "День «У меня всё ок»", d: "Оно работает на нашем сервере!" }
                 ];
                 const selected = funHolidays[day % funHolidays.length];
                 hTitle = selected.t;
                 hDesc = selected.d;
             }
 
-            document.getElementById('holidayTitle').textContent = hTitle;
-            document.getElementById('holidayDesc').textContent = hDesc;
+            document.getElementById('widgetTitle').textContent = hTitle;
+            document.getElementById('widgetDesc').textContent = hDesc;
+            document.getElementById('widgetIcon').innerHTML = `<i class="${iconClass}"></i>`;
         }
-        loadHoliday();
+        loadHolidayWidget();
 
         fetch('/api/settings')
             .then(res => res.json())
