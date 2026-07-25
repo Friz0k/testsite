@@ -105,7 +105,7 @@
         .card-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(5,5,5,0.95)); padding: 1.5rem 1rem 1rem; opacity: 0; transition: opacity 0.3s ease; display: flex; justify-content: center; gap: 10px; }
         .project-card:hover .card-overlay { opacity: 1; }
 
-        .card-btn { background: var(--primary); color: white; padding: 6px 14px; border-radius: 6px; font-size: 13px; text-decoration: none; font-weight: 600; transition: background 0.2s; }
+        .card-btn { background: var(--primary); color: white; padding: 6px 14px; border-radius: 6px; font-size: 13px; text-decoration: none; font-weight: 600; transition: background 0.2s; border: none; cursor: pointer; }
         .card-btn:hover { background: var(--primary-light); }
         .card-btn-details { background: rgba(255, 255, 255, 0.15); }
         .card-btn-details:hover { background: rgba(255, 255, 255, 0.3); }
@@ -244,6 +244,8 @@
     </div>
 
     <script>
+        let globalProjects = [];
+
         fetch('/api/settings')
             .then(res => res.json())
             .then(data => {
@@ -260,35 +262,33 @@
         fetch('/api/projects')
             .then(res => res.json())
             .then(projects => {
+                globalProjects = projects || [];
                 const grid = document.getElementById('projectsGrid');
                 grid.innerHTML = '';
-                if (projects && projects.length > 0) {
-                    projects.forEach((p, index) => {
+                
+                if (globalProjects.length > 0) {
+                    globalProjects.forEach((p, index) => {
                         const mediaContent = (p.imageUrl || p.image)
                             ? `<img src="${p.imageUrl || p.image}" alt="${p.title}">` 
                             : `<i class="fas fa-folder-open"></i>`;
                         
                         const tagsHtml = (p.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
                         const delay = (index % 3) * -2; 
-                        
-                        const title = (p.title || 'Проект').replace(/'/g, "\\'");
-                        const shortDesc = (p.shortDesc || p.desc || 'Краткое описание отсутствует.').replace(/'/g, "\\'").replace(/\n/g, ' ');
-                        const fullDesc = (p.fullDesc || p.desc || 'Полное описание отсутствует.').replace(/'/g, "\\'").replace(/\n/g, '\\n');
-                        const imgUrl = (p.imageUrl || p.image || '');
-                        const pathUrl = (p.path || '');
+                        const pathUrl = p.path || '';
+                        const shortDesc = p.shortDesc || p.desc || '';
 
                         grid.innerHTML += `
-                            <div class="project-card" style="animation-delay: ${delay}s" onclick="openModal('${title}', '${fullDesc}', '${imgUrl}', '${pathUrl}')">
+                            <div class="project-card" style="animation-delay: ${delay}s" onclick="openModal(${index})">
                                 <div class="card-image">
                                     <div class="card-image-placeholder">${mediaContent}</div>
                                     <div class="card-overlay">
                                         ${pathUrl ? `<a href="${pathUrl}" target="_blank" class="card-btn" onclick="event.stopPropagation()">Тестировать</a>` : ''}
-                                        <button class="card-btn card-btn-details" onclick="event.stopPropagation(); openModal('${title}', '${fullDesc.replace(/\\n/g, '\\n')}', '${imgUrl}', '${pathUrl}')">Подробнее</button>
+                                        <button class="card-btn card-btn-details" onclick="event.stopPropagation(); openModal(${index})">Подробнее</button>
                                     </div>
                                 </div>
                                 <div class="card-info">
-                                    <h3>${p.title}</h3>
-                                    <p class="card-description">${p.shortDesc || p.desc || ''}</p>
+                                    <h3>${p.title || 'Проект'}</h3>
+                                    <p class="card-description">${shortDesc}</p>
                                     <div class="card-tags">${tagsHtml}</div>
                                 </div>
                             </div>
@@ -300,12 +300,17 @@
             })
             .catch(err => console.error(err));
 
-        function openModal(title, desc, imageUrl, pathUrl) {
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalDesc').innerText = desc.replace(/\\n/g, '\n');
+        function openModal(index) {
+            const p = globalProjects[index];
+            if (!p) return;
+
+            document.getElementById('modalTitle').textContent = p.title || 'Проект';
+            document.getElementById('modalDesc').innerText = p.fullDesc || p.desc || 'Полное описание отсутствует.';
+            
             let img = document.getElementById('modalImg');
-            if (imageUrl) {
-                img.src = imageUrl;
+            const imgUrl = p.imageUrl || p.image;
+            if (imgUrl) {
+                img.src = imgUrl;
                 img.style.display = 'block';
             } else {
                 img.style.display = 'none';
@@ -313,10 +318,10 @@
 
             let actions = document.getElementById('modalActions');
             actions.innerHTML = '';
-            if (pathUrl) {
+            if (p.path) {
                 let testBtn = document.createElement('a');
                 testBtn.className = 'card-btn';
-                testBtn.href = pathUrl;
+                testBtn.href = p.path;
                 testBtn.target = '_blank';
                 testBtn.textContent = 'Открыть и протестировать';
                 actions.appendChild(testBtn);
