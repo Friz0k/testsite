@@ -81,7 +81,7 @@ app.post('/api/settings', authMiddleware, (req, res) => {
     });
 });
 
-app.post('/api/upload-illustration', authMiddleware, (req, res) => {
+app.post('/api/upload', authMiddleware, (req, res) => {
     const { image, filename } = req.body;
     if (!image) return res.status(400).json({ error: 'No image' });
     
@@ -92,23 +92,12 @@ app.post('/api/upload-illustration', authMiddleware, (req, res) => {
 
     const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
     const ext = filename ? path.extname(filename) : '.png';
-    const uniqueName = 'illustration_' + Date.now() + ext;
+    const uniqueName = 'media_' + Date.now() + ext;
     const filePath = path.join(uploadsDir, uniqueName);
 
     fs.writeFile(filePath, base64Data, 'base64', (err) => {
         if (err) return res.status(500).json({ error: 'Save error' });
-        
-        const fileUrl = '/uploads/' + uniqueName;
-        ensureDataFiles();
-        let settings = {};
-        try {
-            settings = JSON.parse(fs.readFileSync(settingsFilePath, 'utf8'));
-        } catch (e) {}
-        
-        settings.illustrationUrl = fileUrl;
-        fs.writeFileSync(settingsFilePath, JSON.stringify(settings, null, 2));
-        
-        res.json({ success: true, url: fileUrl });
+        res.json({ success: true, url: '/uploads/' + uniqueName });
     });
 });
 
