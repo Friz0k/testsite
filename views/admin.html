@@ -6,7 +6,8 @@
     <style>
         :root {
             --bg-color: #09090b;
-            --panel-bg: #121214;
+            --sidebar-bg: #121214;
+            --panel-bg: #18181b;
             --border-color: #27272a;
             --accent-color: #7c3aed;
             --accent-hover: #6d28d9;
@@ -24,41 +25,89 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            padding: 30px 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .admin-container {
-            max-width: 1100px;
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+
+        .sidebar h2 {
+            color: var(--accent-color);
+            font-size: 18px;
+            padding: 0 20px 20px 20px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 15px 10px;
+            flex-grow: 1;
+        }
+
+        .nav-links li {
+            padding: 12px 15px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-links li:hover {
+            background-color: rgba(124, 58, 237, 0.1);
+            color: var(--text-main);
+        }
+
+        .nav-links li.active {
+            background-color: var(--accent-color);
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .content-area {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .tab-content {
+            display: none;
+            max-width: 900px;
             margin: 0 auto;
         }
 
-        h1 {
-            color: var(--accent-color);
-            text-align: center;
-            margin-bottom: 35px;
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
+        .tab-content.active {
+            display: block;
         }
 
         .admin-section {
             background-color: var(--panel-bg);
             padding: 30px;
-            border-radius: 14px;
-            margin-bottom: 25px;
+            border-radius: 12px;
             border: 1px solid var(--border-color);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            margin-bottom: 20px;
         }
 
-        h2 {
-            color: var(--text-main);
+        h3 {
             margin-top: 0;
             margin-bottom: 20px;
             font-size: 20px;
+            color: var(--text-main);
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 12px;
-            font-weight: 600;
         }
 
         label {
@@ -68,19 +117,17 @@
             font-size: 13px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         input[type="text"], select, textarea {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             margin-bottom: 20px;
             background-color: var(--bg-color);
             color: var(--text-main);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 14px;
-            transition: border-color 0.2s;
         }
 
         input[type="text"]:focus, select:focus, textarea:focus {
@@ -94,11 +141,10 @@
 
         textarea#codeEditor {
             height: 450px;
-            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            font-family: monospace;
             color: #c084fc;
             background-color: #050507;
             font-size: 13px;
-            line-height: 1.5;
         }
 
         button {
@@ -110,15 +156,11 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: background 0.2s;
         }
 
         button:hover {
             background-color: var(--accent-hover);
-        }
-
-        button:active {
-            transform: scale(0.98);
         }
 
         .btn-success {
@@ -132,92 +174,190 @@
         pre {
             background-color: #050507;
             color: var(--success-color);
-            padding: 18px;
+            padding: 15px;
             border-radius: 8px;
             height: 350px;
             overflow-y: auto;
-            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            font-family: monospace;
             font-size: 13px;
             border: 1px solid var(--border-color);
             margin-bottom: 15px;
-            line-height: 1.4;
         }
 
-        .form-group {
-            margin-bottom: 5px;
+        .preview-img {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div class="admin-container">
-        <h1>Панель управления Frizworld</h1>
-        
-        <div class="admin-section">
-            <h2>Глобальные переменные</h2>
-            <form id="settingsForm">
-                <div class="form-group">
-                    <label>ВЕБХУК LSSD</label>
-                    <input type="text" id="webhook_lssd" name="webhook_lssd">
-                </div>
-                <div class="form-group">
-                    <label>ВЕБХУК LSPD</label>
-                    <input type="text" id="webhook_lspd" name="webhook_lspd">
-                </div>
-                <div class="form-group">
-                    <label>ВЕБХУК GOV</label>
-                    <input type="text" id="webhook_gov" name="webhook_gov">
-                </div>
-                <div class="form-group">
-                    <label>ВЕБХУК CID</label>
-                    <input type="text" id="webhook_cid" name="webhook_cid">
-                </div>
-                <div class="form-group">
-                    <label>ВЕБХУК FIB</label>
-                    <input type="text" id="webhook_fib" name="webhook_fib">
-                </div>
-                <div class="form-group">
-                    <label>ID РОЛЕЙ ДЛЯ УПОМИНАНИЯ (ЧЕРЕЗ ЗАПЯТУЮ)</label>
-                    <input type="text" id="role_ids" name="role_ids">
-                </div>
-                <div class="form-group">
-                    <label>БАЛЛОВАЯ СИСТЕМА (НАСТРОЙКИ ТЕКСТОМ / JSON)</label>
-                    <textarea id="points_system" name="points_system" rows="6"></textarea>
-                </div>
-                <button type="button" onclick="saveSettings()">СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
-            </form>
-        </div>
+    <div class="sidebar">
+        <h2>Frizworld Admin</h2>
+        <ul class="nav-links">
+            <li class="active" onclick="switchTab('projects', this)">1. Добавление проектов</li>
+            <li onclick="switchTab('illustration', this)">2. Управление иллюстрацией</li>
+            <li onclick="switchTab('logs', this)">3. Логи сервера</li>
+            <li onclick="switchTab('code', this)">4. Редактор кода проекта</li>
+            <li onclick="switchTab('contacts', this)">5. Изменение контактов</li>
+        </ul>
+    </div>
 
-        <div class="admin-section">
-            <h2>Управление иллюстрацией</h2>
-            <div class="form-group">
-                <label>ССЫЛКА НА ИЛЛЮСТРАЦИЮ</label>
-                <input type="text" id="illustrationUrl" placeholder="Вставьте прямую ссылку на фото">
+    <div class="content-area">
+        <div id="projects" class="tab-content active">
+            <div class="admin-section">
+                <h3>Управление проектами</h3>
+                <label>Выберите проект для редактирования</label>
+                <select id="projectSelect" onchange="selectProject()">
+                    <option value="">-- Создать новый проект --</option>
+                </select>
+                
+                <label>Название проекта</label>
+                <input type="text" id="projTitle" placeholder="Например: SA LSSD">
+                
+                <label>Путь/Ссылка</label>
+                <input type="text" id="projPath" placeholder="Например: /systems/sa_lssd/">
+                
+                <label>Описание</label>
+                <textarea id="projDesc" rows="4" placeholder="Описание проекта..."></textarea>
+                
+                <button type="button" onclick="saveProject()">Сохранить проект</button>
             </div>
-            <button type="button" onclick="saveIllustration()">СОХРАНИТЬ ИЛЛЮСТРАЦИЮ</button>
         </div>
 
-        <div class="admin-section">
-            <h2>Логи сервера в реальном времени</h2>
-            <button type="button" onclick="fetchLogs()" style="margin-bottom: 15px;">ОБНОВИТЬ ЛОГИ</button>
-            <pre id="serverLogs">Загрузка логов...</pre>
+        <div id="illustration" class="tab-content">
+            <div class="admin-section">
+                <h3>Управление иллюстрацией</h3>
+                <label>Текущая иллюстрация</label>
+                <img id="currentIllustration" class="preview-img" src="" alt="Нет иллюстрации" onerror="this.style.display='none'">
+                
+                <label>Загрузить новое фото с компьютера</label>
+                <input type="file" id="imageFile" accept="image/*" style="margin-bottom: 20px; color: #fff;">
+                
+                <button type="button" onclick="uploadIllustration()">Загрузить и сохранить</button>
+            </div>
         </div>
 
-        <div class="admin-section">
-            <h2>Редактор кода проекта</h2>
-            <div class="form-group">
-                <label>ВЫБЕРИТЕ ФАЙЛ ДЛЯ РЕДАКТИРОВАНИЯ</label>
+        <div id="logs" class="tab-content">
+            <div class="admin-section">
+                <h3>Логи сервера в реальном времени</h3>
+                <button type="button" onclick="fetchLogs()" style="margin-bottom: 15px;">Обновить логи</button>
+                <pre id="serverLogs">Загрузка логов...</pre>
+            </div>
+        </div>
+
+        <div id="code" class="tab-content">
+            <div class="admin-section">
+                <h3>Редактор кода проекта</h3>
+                <label>Выберите файл</label>
                 <select id="fileSelect" onchange="loadFileCode()">
                     <option value="server.js">server.js</option>
                     <option value="public/index.html">Главная страница (public/index.html)</option>
-                    <option value="public/admin.html">Админ-панель (public/admin.html)</option>
+                    <option value="views/admin.html">Админ-панель (views/admin.html)</option>
                 </select>
+                <textarea id="codeEditor"></textarea>
+                <button type="button" class="btn-success" onclick="saveFileCode()">Сохранить изменения в коде</button>
             </div>
-            <textarea id="codeEditor"></textarea>
-            <button type="button" class="btn-success" onclick="saveFileCode()">СОХРАНИТЬ И ПРИМЕНИТЬ КОД</button>
+        </div>
+
+        <div id="contacts" class="tab-content">
+            <div class="admin-section">
+                <h3>Изменение контактов и вебхуков</h3>
+                <label>Вебхук LSSD</label>
+                <input type="text" id="webhook_lssd">
+                
+                <label>Вебхук LSPD</label>
+                <input type="text" id="webhook_lspd">
+                
+                <label>Вебхук GOV</label>
+                <input type="text" id="webhook_gov">
+                
+                <label>Вебхук CID</label>
+                <input type="text" id="webhook_cid">
+                
+                <label>Вебхук FIB</label>
+                <input type="text" id="webhook_fib">
+                
+                <label>ID ролей для упоминания (через запятую)</label>
+                <input type="text" id="role_ids">
+                
+                <button type="button" onclick="saveSettings()">Сохранить контакты</button>
+            </div>
         </div>
     </div>
 
     <script>
+    function switchTab(tabId, element) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        element.classList.add('active');
+    }
+
+    let allProjects = [];
+
+    function loadProjects() {
+        fetch('/api/projects')
+            .then(res => res.json())
+            .then(data => {
+                allProjects = data || [];
+                let select = document.getElementById('projectSelect');
+                select.innerHTML = '<option value="">-- Создать новый проект --</option>';
+                allProjects.forEach((p, index) => {
+                    let opt = document.createElement('option');
+                    opt.value = index;
+                    opt.textContent = p.title || ('Проект ' + (index + 1));
+                    select.appendChild(opt);
+                });
+            });
+    }
+    loadProjects();
+
+    function selectProject() {
+        let idx = document.getElementById('projectSelect').value;
+        if (idx === "") {
+            document.getElementById('projTitle').value = '';
+            document.getElementById('projPath').value = '';
+            document.getElementById('projDesc').value = '';
+        } else {
+            let p = allProjects[idx];
+            document.getElementById('projTitle').value = p.title || '';
+            document.getElementById('projPath').value = p.path || '';
+            document.getElementById('projDesc').value = p.desc || '';
+        }
+    }
+
+    function saveProject() {
+        let idx = document.getElementById('projectSelect').value;
+        let projData = {
+            title: document.getElementById('projTitle').value,
+            path: document.getElementById('projPath').value,
+            desc: document.getElementById('projDesc').value
+        };
+        if (idx === "") {
+            allProjects.push(projData);
+        } else {
+            allProjects[idx] = projData;
+        }
+        fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(allProjects)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                alert('Проекты успешно сохранены!');
+                loadProjects();
+            } else {
+                alert('Ошибка сохранения');
+            }
+        });
+    }
+
     function loadSettings() {
         fetch('/api/settings')
             .then(res => res.json())
@@ -228,46 +368,69 @@
                 document.getElementById('webhook_cid').value = data.webhook_cid || '';
                 document.getElementById('webhook_fib').value = data.webhook_fib || '';
                 document.getElementById('role_ids').value = data.role_ids || '';
-                document.getElementById('points_system').value = data.points_system || '';
                 if(data.illustrationUrl) {
-                    document.getElementById('illustrationUrl').value = data.illustrationUrl;
+                    let img = document.getElementById('currentIllustration');
+                    img.src = data.illustrationUrl;
+                    img.style.display = 'block';
                 }
-            })
-            .catch(err => console.error(err));
+            });
     }
     loadSettings();
 
     function saveSettings() {
-        let body = {
-            webhook_lssd: document.getElementById('webhook_lssd').value,
-            webhook_lspd: document.getElementById('webhook_lspd').value,
-            webhook_gov: document.getElementById('webhook_gov').value,
-            webhook_cid: document.getElementById('webhook_cid').value,
-            webhook_fib: document.getElementById('webhook_fib').value,
-            role_ids: document.getElementById('role_ids').value,
-            points_system: document.getElementById('points_system').value,
-            illustrationUrl: document.getElementById('illustrationUrl').value
-        };
-        fetch('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success) {
-                alert('Настройки успешно сохранены!');
-            } else {
-                alert('Ошибка при сохранении настроек');
-            }
-        })
-        .catch(err => alert('Ошибка соединения'));
+        fetch('/api/settings')
+            .then(res => res.json())
+            .then(currentData => {
+                currentData.webhook_lssd = document.getElementById('webhook_lssd').value;
+                currentData.webhook_lspd = document.getElementById('webhook_lspd').value;
+                currentData.webhook_gov = document.getElementById('webhook_gov').value;
+                currentData.webhook_cid = document.getElementById('webhook_cid').value;
+                currentData.webhook_fib = document.getElementById('webhook_fib').value;
+                currentData.role_ids = document.getElementById('role_ids').value;
+
+                return fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentData)
+                });
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert('Контакты успешно сохранены!');
+                } else {
+                    alert('Ошибка сохранения');
+                }
+            });
     }
 
-    function saveIllustration() {
-        let url = document.getElementById('illustrationUrl').value;
-        localStorage.setItem('site_illustration', url);
-        saveSettings();
+    function uploadIllustration() {
+        let fileInput = document.getElementById('imageFile');
+        if(fileInput.files.length === 0) {
+            alert('Выберите файл изображения!');
+            return;
+        }
+        let file = fileInput.files[0];
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            fetch('/api/upload-illustration', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: e.target.result, filename: file.name })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert('Иллюстрация успешно загружена!');
+                    let img = document.getElementById('currentIllustration');
+                    img.src = data.url;
+                    img.style.display = 'block';
+                } else {
+                    alert('Ошибка загрузки');
+                }
+            });
+        };
+        reader.readAsDataURL(file);
     }
 
     function fetchLogs() {
@@ -275,13 +438,9 @@
             .then(res => res.json())
             .then(data => {
                 document.getElementById('serverLogs').innerText = data.logs || 'Логов пока нет';
-            })
-            .catch(err => {
-                document.getElementById('serverLogs').innerText = 'Ошибка загрузки логов';
             });
     }
     fetchLogs();
-    setInterval(fetchLogs, 10000);
 
     function loadFileCode() {
         let file = document.getElementById('fileSelect').value;
@@ -289,8 +448,7 @@
             .then(res => res.json())
             .then(data => {
                 document.getElementById('codeEditor').value = data.content || '';
-            })
-            .catch(err => alert('Ошибка загрузки файла'));
+            });
     }
     loadFileCode();
 
@@ -305,12 +463,11 @@
         .then(res => res.json())
         .then(data => {
             if(data.success) {
-                alert('Код успешно сохранен и применен на сервере!');
+                alert('Код успешно сохранен и применен!');
             } else {
-                alert('Ошибка при сохранении: ' + (data.error || 'Неизвестная ошибка'));
+                alert('Ошибка: ' + data.error);
             }
-        })
-        .catch(err => alert('Ошибка соединения с сервером'));
+        });
     }
     </script>
 </body>
