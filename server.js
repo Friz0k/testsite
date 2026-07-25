@@ -8,6 +8,18 @@ const { exec } = require('child_process');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Мидлвар для логирования всех зашедших пользователей
+app.use((req, res, next) => {
+    // Игнорируем запросы к статичным файлам (картинки, css), чтобы не спамить в логи
+    if (!req.url.match(/\.(css|png|jpg|jpeg|gif|ico|js)$/)) {
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const time = new Date().toLocaleString('ru-RU');
+        const userAgent = req.headers['user-agent'] || 'Unknown';
+        console.log(`[ВИЗИТ] ${time} | IP: ${ip} | URL: ${req.url} | Агент: ${userAgent.split(' ')[0]}`);
+    }
+    next();
+});
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
