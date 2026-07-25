@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background-color: black; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; position: relative; overflow-x: hidden;
+    }
+    .form-container {
+      background-color: rgba(45, 45, 45, 0.85); padding: 32px; border-radius: 12px; width: 100%; max-width: 500px;
+      box-shadow: 0 4px 20px rgba(255,255,255,0.1), 0 0 30px rgba(255,255,255,0.2); position: relative; z-index: 10;
+    }
+    h1 { text-align: center; margin-bottom: 24px; font-size: 28px; border-bottom: 1px solid #555; padding-bottom: 12px; }
+    label { display: block; margin-bottom: 8px; font-weight: bold; color: #f0f0f0; }
+    input, select {
+      width: 100%; padding: 12px; margin-bottom: 20px; background-color: #3a3a3a;
+      border: 1px solid #555; border-radius: 6px; color: white; font-size: 16px;
+    }
+    input:focus, select:focus { outline: none; border-color: #aaa; }
+    button {
+      width: 100%; background-color: #555; color: white; border: none; padding: 14px;
+      font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background-color 0.3s;
+    }
+    button:hover { background-color: #777; }
+    #message { margin-top: 16px; text-align: center; font-weight: bold; min-height: 24px; }
+    .success { color: #a3d8a3; } .error { color: #ff8a8a; }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h1>Заявка в семью Deadly</h1>
+    <div class="field"><label>Ник-нейм *</label><input type="text" id="nick" required></div>
+    <div class="field"><label>Настоящее имя *</label><input type="text" id="realName" required></div>
+    <div class="field"><label>Сколько лет *</label><input type="number" id="age" min="1" max="100" required></div>
+    <div class="field"><label>Уровень *</label><input type="number" id="level" min="0" required></div>
+    <div class="field"><label>Сколько в день играете (часы) *</label><input type="number" id="hoursPerDay" step="0.5" required></div>
+    <div class="field"><label>Был ли опыт в других семьях? *</label><input type="text" id="pastFamilies"></div>
+    <div class="field"><label>Готовы ли сменить фамилию? *</label>
+      <select id="changeSurname" required><option value="">—</option><option value="Да">Да</option><option value="Нет">Нет</option></select>
+    </div>
+    <div class="field"><label>Готовы ли к еженедельному взносу? *</label>
+      <select id="weeklyFee" required><option value="">—</option><option value="Да">Да</option><option value="Нет">Нет</option></select>
+    </div>
+    <div class="field"><label>Discord (тег) *</label><input type="text" id="discord" required></div>
+    <button type="button" onclick="sendForm();">Отправить заявку</button>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    function sendForm() {
+      const data = {
+        nick: document.getElementById('nick').value.trim(),
+        realName: document.getElementById('realName').value.trim(),
+        age: document.getElementById('age').value.trim(),
+        level: document.getElementById('level').value.trim(),
+        hoursPerDay: document.getElementById('hoursPerDay').value.trim(),
+        pastFamilies: document.getElementById('pastFamilies').value.trim() || 'Нет',
+        changeSurname: document.getElementById('changeSurname').value,
+        weeklyFee: document.getElementById('weeklyFee').value,
+        discord: document.getElementById('discord').value.trim()
+      };
+
+      for (let key in data) {
+        if (!data[key]) {
+          document.getElementById('message').innerHTML = '❌ Заполните все поля!';
+          document.getElementById('message').className = 'error';
+          return;
+        }
+      }
+
+      const msgDiv = document.getElementById('message');
+      msgDiv.innerHTML = 'Отправка...'; msgDiv.className = '';
+
+      fetch('/api/deadly/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(response => {
+        msgDiv.innerHTML = response.message;
+        msgDiv.className = response.success ? 'success' : 'error';
+        if (response.success) document.querySelectorAll('input, select').forEach(el => el.value = '');
+      })
+      .catch(error => {
+        msgDiv.innerHTML = 'Ошибка: ' + error.message;
+        msgDiv.className = 'error';
+      });
+    }
+  </script>
+</body>
+</html>
