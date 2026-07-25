@@ -2,7 +2,6 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const authMiddleware = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -51,23 +50,41 @@ app.use((req, res, next) => {
     next();
 });
 
+const checkAuth = (req, res, next) => {
+    const cookies = req.headers.cookie || '';
+    if (cookies.includes('admin_auth=true')) {
+        return next();
+    }
+    if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+        return res.status(401).json({ success: false, error: 'Доступ запрещен' });
+    }
+    return res.redirect('/login');
+};
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 const projectsFilePath = path.join(__dirname, 'data', 'projects.json');
 const configFilePath = path.join(__dirname, 'data', 'config.json');
 const systemsDirPath = path.join(__dirname, 'public', 'systems');
 
+const getHtmlFile = (fileName) => {
+    const viewsPath = path.join(__dirname, 'views', fileName);
+    const publicPath = path.join(__dirname, 'public', fileName);
+    if (fs.existsSync(viewsPath)) return viewsPath;
+    if (fs.existsSync(publicPath)) return publicPath;
+    return null;
+};
+
 app.get('/login', (req, res) => {
-    const viewsLogin = path.join(__dirname, 'views', 'login.html');
-    const publicLogin = path.join(__dirname, 'public', 'login.html');
-    if (fs.existsSync(viewsLogin)) {
-        res.sendFile(viewsLogin);
+    const filePath = getHtmlFile('login.html');
+    if (filePath) {
+        res.sendFile(filePath);
     } else {
-        res.sendFile(publicLogin);
+        res.status(404).send('Файл login.html не найден');
     }
 });
 
-app.post('/login', (req, res) => {
+const handleLogin = (req, res) => {
     const username = req.body.username || req.body.user || req.body.login || req.body.email;
     const password = req.body.password || req.body.pass || req.body.pwd;
     
@@ -86,15 +103,17 @@ app.post('/login', (req, res) => {
         }
         return res.redirect('/login?error=1');
     }
-});
+};
 
-app.get(['/admin', '/admin.html'], authMiddleware, (req, res) => {
-    const viewsAdmin = path.join(__dirname, 'views', 'admin.html');
-    const publicAdmin = path.join(__dirname, 'public', 'admin.html');
-    if (fs.existsSync(viewsAdmin)) {
-        res.sendFile(viewsAdmin);
+app.post('/login', handleLogin);
+app.post('/api/auth', handleLogin);
+
+app.get(['/admin', '/admin.html'], checkAuth, (req, res) => {
+    const filePath = getHtmlFile('admin.html');
+    if (filePath) {
+        res.sendFile(filePath);
     } else {
-        res.sendFile(publicAdmin);
+        res.status(404).send('Файл admin.html не найден');
     }
 });
 
@@ -110,7 +129,7 @@ app.get('/api/projects', (req, res) => {
     }
 });
 
-app.post('/api/projects', authMiddleware, (req, res) => {
+app.post('/api/projects', checkAuth, (req, res) => {
     try {
         const dataDir = path.dirname(projectsFilePath);
         if (!fs.existsSync(dataDir)) {
@@ -135,7 +154,7 @@ app.get('/api/settings', (req, res) => {
     }
 });
 
-app.post('/api/settings', authMiddleware, (req, res) => {
+app.post('/api/settings', checkAuth, (req, res) => {
     try {
         const dataDir = path.dirname(configFilePath);
         if (!fs.existsSync(dataDir)) {
@@ -148,14 +167,14 @@ app.post('/api/settings', authMiddleware, (req, res) => {
     }
 });
 
-app.post('/api/upload', authMiddleware, upload.single('image'), (req, res) => {
+app.post('/api/upload', checkAuth, upload.single('image'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'Файл не загружен' });
     }
     res.json({ success: true, url: `/uploads/${req.file.filename}` });
 });
 
-app.get('/api/logs', authMiddleware, (req, res) => {
+app.get('/api/logs', checkAuth, (req, res) => {
     const logPath = path.join(__dirname, 'logs', 'visits.log');
     if (!fs.existsSync(logPath)) {
         return res.json({ logs: 'Логов пока нет' });
@@ -168,13 +187,21 @@ app.get('/api/logs', authMiddleware, (req, res) => {
     }
 });
 
-app.get('/api/list-files', authMiddleware, (req, res) => {
-    const targetFiles = ['server.js', 'package.json', 'data/projects.json', 'data/config.json', 'views/admin.html', 'views/login.html', 'public/index.html'];
+app.get('/api/list-files', checkAuth, (req, res) => {
+    const targetFiles = [
+        'server.js',
+        'package.json',
+        'data/projects.json',
+        'data/config.json',
+        'views/admin.html',
+        'views/login.html',
+        'public/index.html'
+    ];
     const existingFiles = targetFiles.filter(f => fs.existsSync(path.join(__dirname, f)));
     res.json(existingFiles);
 });
 
-app.get('/api/file', authMiddleware, (req, res) => {
+app.get('/api/file', checkAuth, (req, res) => {
     const filePath = req.query.path;
     if (!filePath) return res.status(400).json({ error: 'Путь не указан' });
     const fullPath = path.join(__dirname, filePath);
@@ -187,7 +214,7 @@ app.get('/api/file', authMiddleware, (req, res) => {
     }
 });
 
-app.post('/api/file', authMiddleware, (req, res) => {
+app.post('/api/file', checkAuth, (req, res) => {
     const { filePath, content } = req.body;
     if (!filePath) return res.status(400).json({ error: 'Путь не указан' });
     const fullPath = path.join(__dirname, filePath);
