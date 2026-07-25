@@ -52,9 +52,14 @@ app.use((req, res, next) => {
 
 const checkAuth = (req, res, next) => {
     const cookies = req.headers.cookie || '';
+    console.log(`[DEBUG AUTH] Проверка URL: ${req.originalUrl} | Полученные куки: "${cookies}"`);
+    
     if (cookies.includes('admin_auth=true')) {
+        console.log(`[DEBUG AUTH] Успешно: куки админа найдены для ${req.originalUrl}`);
         return next();
     }
+    
+    console.warn(`[DEBUG AUTH] Отказ в доступе: куки не найдены. Перенаправление на /login`);
     if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
         return res.status(401).json({ success: false, error: 'Доступ запрещен' });
     }
@@ -70,34 +75,50 @@ const systemsDirPath = path.join(__dirname, 'public', 'systems');
 const getHtmlFile = (fileName) => {
     const viewsPath = path.join(__dirname, 'views', fileName);
     const publicPath = path.join(__dirname, 'public', fileName);
+    console.log(`[DEBUG FILE] Поиск файла ${fileName}...`);
+    console.log(` -> Проверка в views: ${viewsPath} (Существует: ${fs.existsSync(viewsPath)})`);
+    console.log(` -> Проверка в public: ${publicPath} (Существует: ${fs.existsSync(publicPath)})`);
+    
     if (fs.existsSync(viewsPath)) return viewsPath;
     if (fs.existsSync(publicPath)) return publicPath;
     return null;
 };
 
 app.get('/login', (req, res) => {
+    console.log('[DEBUG ROUTE] Запрошена страница /login');
     const filePath = getHtmlFile('login.html');
     if (filePath) {
         res.sendFile(filePath);
     } else {
+        console.error('[DEBUG ERROR] Файл login.html не найден ни в /views, ни в /public!');
         res.status(404).send('Файл login.html не найден');
     }
 });
 
 const handleLogin = (req, res) => {
+    console.log('[DEBUG LOGIN] Получен POST запрос на авторизацию.');
+    console.log('[DEBUG LOGIN] Тело запроса (req.body):', req.body);
+    
     const username = req.body.username || req.body.user || req.body.login || req.body.email;
     const password = req.body.password || req.body.pass || req.body.pwd;
     
     const adminUser = process.env.ADMIN_USER || 'admin';
     const adminPass = process.env.ADMIN_PASS || 'admin';
 
+    console.log(`[DEBUG LOGIN] Сравнение: введено [${username} / ${password}], ожидается [${adminUser} / ${adminPass}]`);
+
     if (username === adminUser && password === adminPass) {
+        console.log('[DEBUG LOGIN] Пароль верный! Установка куки admin_auth=true...');
         res.setHeader('Set-Cookie', 'admin_auth=true; Path=/; HttpOnly');
+        
         if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+            console.log('[DEBUG LOGIN] Отправка JSON ответа об успешном входе.');
             return res.json({ success: true, redirect: '/admin.html' });
         }
+        console.log('[DEBUG LOGIN] Выполнение редиректа на /admin.html');
         return res.redirect('/admin.html');
     } else {
+        console.warn('[DEBUG LOGIN] Ошибка входа: неверный логин или пароль!');
         if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
             return res.status(401).json({ success: false, error: 'Неверные данные' });
         }
@@ -109,10 +130,13 @@ app.post('/login', handleLogin);
 app.post('/api/auth', handleLogin);
 
 app.get(['/admin', '/admin.html'], checkAuth, (req, res) => {
+    console.log('[DEBUG ROUTE] Доступ к админке разрешен, поиск файла admin.html...');
     const filePath = getHtmlFile('admin.html');
     if (filePath) {
+        console.log(`[DEBUG ROUTE] Отправка файла админки: ${filePath}`);
         res.sendFile(filePath);
     } else {
+        console.error('[DEBUG ERROR] Файл admin.html не найден ни в /views, ни в /public!');
         res.status(404).send('Файл admin.html не найден');
     }
 });
@@ -191,70 +215,3 @@ app.get('/api/list-files', checkAuth, (req, res) => {
     const targetFiles = [
         'server.js',
         'package.json',
-        'data/projects.json',
-        'data/config.json',
-        'views/admin.html',
-        'views/login.html',
-        'public/index.html'
-    ];
-    const existingFiles = targetFiles.filter(f => fs.existsSync(path.join(__dirname, f)));
-    res.json(existingFiles);
-});
-
-app.get('/api/file', checkAuth, (req, res) => {
-    const filePath = req.query.path;
-    if (!filePath) return res.status(400).json({ error: 'Путь не указан' });
-    const fullPath = path.join(__dirname, filePath);
-    if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'Файл не найден' });
-    try {
-        const content = fs.readFileSync(fullPath, 'utf8');
-        res.json({ content });
-    } catch (err) {
-        res.status(500).json({ error: 'Ошибка чтения файла' });
-    }
-});
-
-app.post('/api/file', checkAuth, (req, res) => {
-    const { filePath, content } = req.body;
-    if (!filePath) return res.status(400).json({ error: 'Путь не указан' });
-    const fullPath = path.join(__dirname, filePath);
-    try {
-        fs.writeFileSync(fullPath, content, 'utf8');
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Ошибка записи файла' });
-    }
-});
-
-app.get('/api/systems', (req, res) => {
-    if (!fs.existsSync(systemsDirPath)) {
-        return res.json([]);
-    }
-    try {
-        const items = fs.readdirSync(systemsDirPath, { withFileTypes: true });
-        const systemsList = items.map(item => ({
-            name: item.name,
-            isDirectory: item.isDirectory()
-        }));
-        res.json(systemsList);
-    } catch (err) {
-        res.status(500).json({ error: 'Ошибка чтения системной директории' });
-    }
-});
-
-app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
-        if (err) {
-            res.status(404).send('Страница не найдена');
-        }
-    });
-});
-
-app.use((err, req, res, next) => {
-    console.error('Ошибка сервера:', err.stack);
-    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-});
-
-app.listen(PORT, () => {
-    console.log(`Сервер запущен на порту ${PORT}`);
-});
