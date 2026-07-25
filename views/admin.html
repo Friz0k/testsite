@@ -503,7 +503,7 @@
 
     function uploadIllustration() {
         let fileInput = document.getElementById('illustrationFile');
-        if(fileInput.files.length === 0) {
+        if (fileInput.files.length === 0) {
             alert('Выберите файл иллюстрации!');
             return;
         }
@@ -517,35 +517,34 @@
             })
             .then(checkResponse)
             .then(data => {
-                if(data.success) {
-                    let newUrl = data.url;
-                    fetch('/api/settings')
-                        .then(checkResponse)
-                        .then(settings => {
-                            settings.illustrationUrl = newUrl;
-                            return fetch('/api/settings', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(settings)
-                            });
-                        })
-                        .then(checkResponse)
-                        .then(stData => {
-                            if (stData.success) {
-                                alert('Иллюстрация успешно сохранена!');
-                                let img = document.getElementById('currentIllustration');
-                                img.src = newUrl;
-                                img.style.display = 'block';
-                            } else {
-                                alert('Ошибка сохранения параметров иллюстрации');
-                            }
-                        });
-                } else {
-                    alert('Ошибка загрузки файла на сервер: ' + (data.error || 'Неизвестная ошибка'));
+                if (!data.success) {
+                    throw new Error(data.error || 'Ошибка загрузки изображения');
                 }
+                let newUrl = data.url;
+                return fetch('/api/settings')
+                    .then(checkResponse)
+                    .then(settings => {
+                        settings.illustrationUrl = newUrl;
+                        return fetch('/api/settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(settings)
+                        });
+                    })
+                    .then(checkResponse)
+                    .then(stData => {
+                        if (stData.success) {
+                            alert('Иллюстрация успешно сохранена!');
+                            let img = document.getElementById('currentIllustration');
+                            img.src = newUrl;
+                            img.style.display = 'block';
+                        } else {
+                            throw new Error('Не удалось сохранить настройки иллюстрации');
+                        }
+                    });
             })
             .catch(err => {
-                alert('Сбой при загрузке иллюстрации: ' + err.message);
+                alert('Сбой при сохранении иллюстрации: ' + err.message);
             });
         };
         reader.readAsDataURL(file);
