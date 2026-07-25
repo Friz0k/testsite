@@ -8,9 +8,7 @@ const { exec } = require('child_process');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Мидлвар для логирования всех зашедших пользователей
 app.use((req, res, next) => {
-    // Игнорируем запросы к статичным файлам (картинки, css), чтобы не спамить в логи
     if (!req.url.match(/\.(css|png|jpg|jpeg|gif|ico|js)$/)) {
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         const time = new Date().toLocaleString('ru-RU');
