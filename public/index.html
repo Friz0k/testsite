@@ -119,7 +119,7 @@
         .hero h1 span { background: linear-gradient(90deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero p { font-size: 20px; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
         
-        .section { padding: 80px 50px; max-width: 1500px; margin: 0 auto; scroll-margin-top: 90px; }
+        .section { padding: 80px 50px; max-width: 1600px; margin: 0 auto; scroll-margin-top: 90px; }
         .section-title { font-size: 36px; margin-bottom: 60px; text-align: center; color: var(--text); text-transform: uppercase; letter-spacing: 3px; border-bottom: 2px solid var(--primary); display: inline-block; padding-bottom: 10px; position: relative; left: 50%; transform: translateX(-50%); }
 
         .skills-layout { display: flex; gap: 40px; align-items: stretch; justify-content: space-between; flex-wrap: wrap; }
@@ -140,16 +140,16 @@
             display: flex; 
             flex-wrap: wrap; 
             justify-content: center; 
-            gap: 30px; 
-            padding: 20px; 
+            gap: 15px; 
+            padding: 10px 0; 
         }
         .project-card { 
-            flex: 1 1 calc(25% - 30px); 
-            min-width: 290px; 
-            max-width: 400px; 
+            flex: 0 1 calc(20% - 15px); 
+            min-width: 210px; 
+            max-width: 280px; 
             background: var(--card-bg); 
             border: 1px solid var(--border); 
-            border-radius: 20px; 
+            border-radius: 14px; 
             overflow: hidden; 
             transition: all 0.3s ease; 
             backdrop-filter: blur(10px); 
@@ -161,25 +161,25 @@
         }
         .project-card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(138, 43, 226, 0.2); }
 
-        .card-image { position: relative; height: 220px; overflow: hidden; }
-        .card-image-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(176, 38, 255, 0.15)); display: flex; align-items: center; justify-content: center; transition: transform 0.4s ease; font-size: 50px; color: var(--primary); }
+        .card-image { position: relative; height: 130px; overflow: hidden; }
+        .card-image-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(176, 38, 255, 0.15)); display: flex; align-items: center; justify-content: center; transition: transform 0.4s ease; font-size: 32px; color: var(--primary); }
         .card-image-placeholder img { width: 100%; height: 100%; object-fit: cover; }
         .project-card:hover .card-image-placeholder { transform: scale(1.05); }
         
-        .card-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(5,5,5,0.95)); padding: 1.5rem 1rem 1rem; opacity: 0; transition: opacity 0.3s ease; display: flex; justify-content: center; gap: 10px; }
+        .card-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(5,5,5,0.95)); padding: 1rem 0.5rem 0.5rem; opacity: 0; transition: opacity 0.3s ease; display: flex; justify-content: center; gap: 6px; }
         .project-card:hover .card-overlay { opacity: 1; }
 
-        .card-btn { background: var(--primary); color: white; padding: 6px 14px; border-radius: 6px; font-size: 13px; text-decoration: none; font-weight: 600; transition: background 0.2s; border: none; cursor: pointer; }
+        .card-btn { background: var(--primary); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; text-decoration: none; font-weight: 600; transition: background 0.2s; border: none; cursor: pointer; }
         .card-btn:hover { background: var(--primary-light); }
         .card-btn-details { background: rgba(255, 255, 255, 0.15); }
         .card-btn-details:hover { background: rgba(255, 255, 255, 0.3); }
 
-        .card-info { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
-        .card-info h3 { font-size: 22px; margin-bottom: 10px; }
-        .card-description { color: var(--text-muted); font-size: 14px; margin-bottom: 15px; line-height: 1.5; flex-grow: 1; }
+        .card-info { padding: 14px; flex-grow: 1; display: flex; flex-direction: column; }
+        .card-info h3 { font-size: 16px; margin-bottom: 6px; }
+        .card-description { color: var(--text-muted); font-size: 12px; margin-bottom: 10px; line-height: 1.4; flex-grow: 1; }
         
-        .card-tags { display: flex; gap: 8px; flex-wrap: wrap; }
-        .tag { padding: 4px 12px; background: rgba(138, 43, 226, 0.1); border-radius: 50px; font-size: 12px; color: var(--primary-light); border: 1px solid rgba(138, 43, 226, 0.3); font-weight: 600; }
+        .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tag { padding: 2px 8px; background: rgba(138, 43, 226, 0.1); border-radius: 50px; font-size: 10px; color: var(--primary-light); border: 1px solid rgba(138, 43, 226, 0.3); font-weight: 600; }
 
         #detailsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
         .modal-box { background: #121214; border: 1px solid var(--primary); border-radius: 20px; padding: 35px; width: 100%; max-width: 600px; position: relative; box-shadow: 0 20px 40px rgba(138, 43, 226, 0.4); text-align: center; }
@@ -198,10 +198,19 @@
         .contact-label { font-weight: 700; font-size: 18px; color: var(--text); transition: 0.3s; }
         .contact-item:hover .contact-label { color: var(--primary-light); }
 
+        @media (max-width: 1200px) {
+            .project-card { flex: 0 1 calc(33.333% - 15px); max-width: 320px; }
+        }
+
         @media (max-width: 900px) {
             .skills-layout { flex-direction: column; }
             .skills-illustration { min-height: 300px; width: 100%; }
             .holiday-widget { display: none; }
+            .project-card { flex: 0 1 calc(50% - 15px); max-width: 380px; }
+        }
+
+        @media (max-width: 600px) {
+            .project-card { flex: 0 1 100%; max-width: 100%; }
         }
     </style>
 </head>
@@ -354,98 +363,4 @@
 
         fetch('/api/settings')
             .then(res => res.json())
-            .then(data => {
-                if (data.illustrationUrl) {
-                    let img = document.getElementById('mainIllustration');
-                    let placeholder = document.getElementById('placeholderIllustration');
-                    img.src = data.illustrationUrl;
-                    img.style.display = 'block';
-                    placeholder.style.display = 'none';
-                }
-            })
-            .catch(err => console.error(err));
-
-        fetch('/api/projects')
-            .then(res => res.json())
-            .then(projects => {
-                globalProjects = projects || [];
-                const grid = document.getElementById('projectsGrid');
-                grid.innerHTML = '';
-                
-                if (globalProjects.length > 0) {
-                    globalProjects.forEach((p, index) => {
-                        const mediaContent = (p.imageUrl || p.image)
-                            ? `<img src="${p.imageUrl || p.image}" alt="${p.title}">` 
-                            : `<i class="fas fa-folder-open"></i>`;
-                        
-                        const tagsHtml = (p.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
-                        const delay = (index % 3) * -2; 
-                        const pathUrl = p.path || '';
-                        const shortDesc = p.shortDesc || p.desc || '';
-
-                        grid.innerHTML += `
-                            <div class="project-card" style="animation-delay: ${delay}s" onclick="openModal(${index})">
-                                <div class="card-image">
-                                    <div class="card-image-placeholder">${mediaContent}</div>
-                                    <div class="card-overlay">
-                                        ${pathUrl ? `<a href="${pathUrl}" target="_blank" class="card-btn" onclick="event.stopPropagation()">Тестировать</a>` : ''}
-                                        <button class="card-btn card-btn-details" onclick="event.stopPropagation(); openModal(${index})">Подробнее</button>
-                                    </div>
-                                </div>
-                                <div class="card-info">
-                                    <h3>${p.title || 'Проект'}</h3>
-                                    <p class="card-description">${shortDesc}</p>
-                                    <div class="card-tags">${tagsHtml}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">Проекты пока не добавлены.</p>';
-                }
-            })
-            .catch(err => console.error(err));
-
-        function openModal(index) {
-            const p = globalProjects[index];
-            if (!p) return;
-
-            document.getElementById('modalTitle').textContent = p.title || 'Проект';
-            document.getElementById('modalDesc').innerText = p.fullDesc || p.desc || 'Полное описание отсутствует.';
-            
-            let img = document.getElementById('modalImg');
-            const imgUrl = p.imageUrl || p.image;
-            if (imgUrl) {
-                img.src = imgUrl;
-                img.style.display = 'block';
-            } else {
-                img.style.display = 'none';
-            }
-
-            let actions = document.getElementById('modalActions');
-            actions.innerHTML = '';
-            if (p.path) {
-                let testBtn = document.createElement('a');
-                testBtn.className = 'card-btn';
-                testBtn.href = p.path;
-                testBtn.target = '_blank';
-                testBtn.textContent = 'Открыть и протестировать';
-                actions.appendChild(testBtn);
-            }
-
-            document.getElementById('detailsModal').style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('detailsModal').style.display = 'none';
-        }
-
-        window.onclick = function(event) {
-            let modal = document.getElementById('detailsModal');
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
-        }
-    </script>
-</body>
-</html>
+            .then(
