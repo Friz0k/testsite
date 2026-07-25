@@ -221,23 +221,27 @@
                 <label>Путь/Ссылка</label>
                 <input type="text" id="projPath" placeholder="Например: /systems/sa_lssd/">
                 
+                <label>Фото / Иконка проекта</label>
+                <img id="projImgPreview" class="preview-img" src="" alt="Нет фото" onerror="this.style.display='none'">
+                <input type="file" id="projImageFile" accept="image/*" style="margin-bottom: 20px; color: #fff;">
+
                 <label>Описание</label>
                 <textarea id="projDesc" rows="4" placeholder="Описание проекта..."></textarea>
                 
-                <button type="button" onclick="saveProject()">Сохранить проект</button>
+                <button type="button" onclick="saveProjectWithImage()">Сохранить проект</button>
             </div>
         </div>
 
         <div id="illustration" class="tab-content">
             <div class="admin-section">
-                <h3>Управление иллюстрацией</h3>
-                <label>Текущая иллюстрация</label>
+                <h3>Управление иллюстрацией (Арт сайта)</h3>
+                <label>Текущий арт / иллюстрация</label>
                 <img id="currentIllustration" class="preview-img" src="" alt="Нет иллюстрации" onerror="this.style.display='none'">
                 
-                <label>Загрузить новое фото с компьютера</label>
-                <input type="file" id="imageFile" accept="image/*" style="margin-bottom: 20px; color: #fff;">
+                <label>Загрузить новый арт с компьютера</label>
+                <input type="file" id="illustrationFile" accept="image/*" style="margin-bottom: 20px; color: #fff;">
                 
-                <button type="button" onclick="uploadIllustration()">Загрузить и сохранить</button>
+                <button type="button" onclick="uploadIllustration()">Загрузить и сохранить арт</button>
             </div>
         </div>
 
@@ -298,6 +302,7 @@
     }
 
     let allProjects = [];
+    let currentProjImageUrl = '';
 
     function loadProjects() {
         fetch('/api/projects')
@@ -318,24 +323,64 @@
 
     function selectProject() {
         let idx = document.getElementById('projectSelect').value;
+        let imgPreview = document.getElementById('projImgPreview');
         if (idx === "") {
             document.getElementById('projTitle').value = '';
             document.getElementById('projPath').value = '';
             document.getElementById('projDesc').value = '';
+            currentProjImageUrl = '';
+            imgPreview.src = '';
+            imgPreview.style.display = 'none';
         } else {
             let p = allProjects[idx];
             document.getElementById('projTitle').value = p.title || '';
             document.getElementById('projPath').value = p.path || '';
             document.getElementById('projDesc').value = p.desc || '';
+            currentProjImageUrl = p.imageUrl || '';
+            if (currentProjImageUrl) {
+                imgPreview.src = currentProjImageUrl;
+                imgPreview.style.display = 'block';
+            } else {
+                imgPreview.src = '';
+                imgPreview.style.display = 'none';
+            }
         }
     }
 
-    function saveProject() {
+    function saveProjectWithImage() {
+        let fileInput = document.getElementById('projImageFile');
+        if (fileInput.files.length > 0) {
+            let file = fileInput.files[0];
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: e.target.result, filename: file.name })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        currentProjImageUrl = data.url;
+                        saveProjectData();
+                    } else {
+                        alert('Ошибка загрузки фото проекта');
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        } else {
+            saveProjectData();
+        }
+    }
+
+    function saveProjectData() {
         let idx = document.getElementById('projectSelect').value;
         let projData = {
             title: document.getElementById('projTitle').value,
             path: document.getElementById('projPath').value,
-            desc: document.getElementById('projDesc').value
+            desc: document.getElementById('projDesc').value,
+            imageUrl: currentProjImageUrl
         };
         if (idx === "") {
             allProjects.push(projData);
@@ -350,7 +395,7 @@
         .then(res => res.json())
         .then(data => {
             if(data.success) {
-                alert('Проекты успешно сохранены!');
+                alert('Проект успешно сохранен!');
                 loadProjects();
             } else {
                 alert('Ошибка сохранения');
@@ -405,15 +450,15 @@
     }
 
     function uploadIllustration() {
-        let fileInput = document.getElementById('imageFile');
+        let fileInput = document.getElementById('illustrationFile');
         if(fileInput.files.length === 0) {
-            alert('Выберите файл изображения!');
+            alert('Выберите файл иллюстрации!');
             return;
         }
         let file = fileInput.files[0];
         let reader = new FileReader();
         reader.onload = function(e) {
-            fetch('/api/upload-illustration', {
+            fetch('/api/upload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ image: e.target.result, filename: file.name })
@@ -421,10 +466,26 @@
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    alert('Иллюстрация успешно загружена!');
-                    let img = document.getElementById('currentIllustration');
-                    img.src = data.url;
-                    img.style.display = 'block';
+                    let newUrl = data.url;
+                    fetch('/api/settings')
+                        .then(res => res.json())
+                        .then(settings => {
+                            settings.illustrationUrl = newUrl;
+                            return fetch('/api/settings', {
+                                method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(settings)
+                            });
+                        })
+                        .then(res => res.json())
+                        .then(stData => {
+                            if (stData.success) {
+                                alert('Иллюстрация успешно сохранена!');
+                                let img = document.getElementById('currentIllustration');
+                                img.src = newUrl;
+                                img.style.display = 'block';
+                            }
+                        });
                 } else {
                     alert('Ошибка загрузки');
                 }
