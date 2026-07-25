@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSPD • Единая система</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --black: #000000;
+            --dark: #0a0a0a;
+            --gray: #1a1a1a;
+            --light-gray: #2a2a2a;
+            --text: #ffffff;
+            --text-muted: #888888;
+            --white: #FFFFFF;
+            --border: #333333;
+            --pai-color: #ffb6e6;
+            --red: #ef4444;
+        }
+        body {
+            background: var(--black);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+        #particle-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
+        }
+        .container { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+        .header {
+            background: var(--gray); border-radius: 10px; padding: 30px; margin-bottom: 25px;
+            border: 1px solid var(--border); border-left: 5px solid var(--pai-color); text-align: center;
+        }
+        .header h1 { font-size: 32px; color: var(--white); margin-bottom: 5px; }
+        .reminder {
+            background: var(--dark); border-radius: 10px; padding: 20px; margin-bottom: 30px;
+            border: 1px solid var(--border); border-left: 5px solid var(--pai-color);
+        }
+        .reminder h2 { font-size: 24px; margin-bottom: 20px; color: var(--pai-color); display: flex; align-items: center; gap: 10px; }
+        .reminder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .reminder-card { background: var(--light-gray); padding: 15px; border-radius: 8px; border-left: 3px solid var(--pai-color); }
+        .reminder-card h3 { color: var(--pai-color); margin-bottom: 10px; font-size: 18px; }
+        .reminder-card ul { list-style: none; }
+        .reminder-card li { margin-bottom: 8px; padding-left: 20px; position: relative; }
+        .reminder-card li::before { content: "•"; color: var(--pai-color); font-weight: bold; position: absolute; left: 5px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn {
+            background: var(--dark); border: 1px solid var(--border); color: var(--text); padding: 12px 25px;
+            border-radius: 30px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .tab-btn.active { background: var(--pai-color); color: var(--black); border-color: var(--pai-color); }
+        .form-container {
+            display: none; background: var(--dark); border-radius: 10px; padding: 20px;
+            border: 1px solid var(--border); border-left: 5px solid var(--pai-color);
+        }
+        .form-container.active { display: block; }
+        .section-title {
+            font-size: 18px; margin-bottom: 20px; color: var(--white); padding-bottom: 10px;
+            border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px;
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 14px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
+        .required::after { content: " *"; color: var(--pai-color); font-weight: bold; }
+        input, select, textarea {
+            width: 100%; padding: 12px; background: var(--light-gray); border: 1px solid var(--border);
+            border-radius: 6px; color: var(--text); font-size: 14px; transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--pai-color); }
+        .radio-group { display: flex; gap: 30px; margin-top: 10px; }
+        .radio-group label { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 16px; cursor: pointer; }
+        .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        button {
+            padding: 15px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .submit-btn { background: var(--white); color: var(--black); }
+        .submit-btn:hover { background: #e0e0e0; }
+        .reset-btn { background: var(--dark); color: var(--text); border: 1px solid var(--border); }
+        .reset-btn:hover { background: var(--gray); }
+        .loading { display: none; text-align: center; padding: 30px; }
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid var(--pai-color); border-radius: 50%;
+            width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .result-message {
+            padding: 20px; border-radius: 8px; text-align: center; display: none;
+            white-space: pre-line; line-height: 1.6; margin: 20px 0; border: 1px solid;
+        }
+        .success { background: rgba(255,255,255,0.1); color: var(--white); border-color: var(--pai-color); display: block; }
+        .error { background: rgba(239,68,68,0.1); color: var(--red); border-color: var(--red); display: block; }
+        .footer { text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px; margin-top: 30px; border-top: 1px solid var(--border); }
+        .test-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-radius: 60px; margin-bottom: 30px; border: 2px solid var(--pai-color); }
+        .timer { font-size: 2rem; font-weight: bold; color: var(--pai-color); font-family: monospace; }
+        .questions-grid { display: flex; flex-direction: column; gap: 30px; max-height: 70vh; overflow-y: auto; padding: 10px 5px; }
+        .question-card { border: 2px solid var(--pai-color); border-radius: 30px; padding: 25px; background: rgba(0,0,0,0.4); }
+        .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; color: #ffb6e6; }
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        .option { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border: 1px solid var(--pai-color); border-radius: 40px; cursor: pointer; }
+        .option:hover { background: rgba(255,62,176,0.2); }
+        .option input { width: 20px; height: 20px; accent-color: var(--pai-color); cursor: pointer; }
+        .option label { flex: 1; cursor: pointer; font-size: 1.1rem; }
+        .info-message { text-align: center; color: var(--pai-color); font-size: 1.2rem; margin-top: 20px; }
+        .exam-card { text-align: center; padding: 30px; }
+        .discord-link-btn {
+            background: #5865F2; color: white; padding: 18px 30px; font-size: 1.3rem; border-radius: 50px;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 12px; border: none; cursor: pointer;
+        }
+        .discord-link-btn:hover { background: #4752c4; }
+        @media (max-width: 600px) { .reminder-grid, .buttons, .radio-group { grid-template-columns: 1fr; flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> LSPD • Система повышения кадетов</h1>
+        </div>
+        <div class="reminder">
+            <h2><i class="fas fa-info-circle"></i> Памятка по повышению</h2>
+            <div class="reminder-grid">
+                <div class="reminder-card">
+                    <h3>📈 Система повышения с 1 на 2</h3>
+                    <ul>
+                        <li>Поучаствовать в 1 задержании (должен быть указан жетон при посадке)</li>
+                        <li>Сдать онлайн‑тест</li>
+                        <li>Фото нахождения в канале ЧП</li>
+                        <li>Одобренный жетон</li>
+                        <li>Прослушать вводный инструктаж</li>
+                    </ul>
+                </div>
+                <div class="reminder-card">
+                    <h3>📈 Система повышения с 2 на 3</h3>
+                    <ul>
+                        <li>Выписать 5 штрафов</li>
+                        <li>Участие в 2 поставках (или 2 СО, дроп не в счёт)</li>
+                        <li>Участие в 3 аирдропах</li>
+                        <li>Выполнить РП‑задание (мин. 5 отыгровок, try удачная)</li>
+                        <li>Сдать экзамен по ПК, УК, Конституция</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="badge"><i class="fas fa-id-card"></i> Проверка жетонов</button>
+            <button class="tab-btn" data-tab="cadet"><i class="fas fa-graduation-cap"></i> Отчёты кадетов</button>
+            <button class="tab-btn" data-tab="test"><i class="fas fa-file-alt"></i> Тест 1→2</button>
+            <button class="tab-btn" data-tab="exam"><i class="fab fa-discord"></i> Экзамен 2→3</button>
+        </div>
+        
+        <!-- Блок проверки жетонов -->
+        <div id="badge-container" class="form-container active">
+            <div class="section-title"><i class="fas fa-id-card"></i> Проверка жетонов</div>
+            <div class="form-group">
+                <label class="required" for="badge-name">Ваш ник:</label>
+                <input type="text" id="badge-name" placeholder="Введите игровой никнейм">
+            </div>
+            <div class="form-group">
+                <label class="required" for="badge-messageLink">Ссылка на сообщение из канала "изменение жетонов":</label>
+                <input type="url" id="badge-messageLink" placeholder="https://discord.com/channels/...">
+            </div>
+            <div class="form-group">
+                <label class="required" for="badge-photoUrl">Ссылка на изображение (фотохостинг):</label>
+                <input type="url" id="badge-photoUrl" placeholder="https://i.imgur.com/example.jpg">
+            </div>
+            <div class="buttons">
+                <button type="button" class="submit-btn" id="badge-submit"><i class="fas fa-paper-plane"></i> Отправить</button>
+                <button type="button" class="reset-btn" id="badge-reset"><i class="fas fa-redo"></i> Очистить</button>
+            </div>
+            <div class="loading" id="badge-loading"><div class="spinner"></div><p>Отправка...</p></div>
+            <div class="result-message" id="badge-result"></div>
+        </div>
+
+        <!-- Блок отчетов кадетов -->
+        <div id="cadet-container" class="form-container">
+            <div class="section-title"><i class="fas fa-graduation-cap"></i> Отчёты кадетов</div>
+            <div class="card" style="background: var(--dark); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <div class="radio-group">
+                    <label><input type="radio" name="cadet-promotionType" value="1-2" checked> 1 → 2 ранг</label>
+                    <label><input type="radio" name="cadet-promotionType" value="2-3"> 2 → 3 ранг</label>
+                </div>
+            </div>
+            <div id="cadet-form-1-2">
+                <div class="form-group"><label class="required" for="cadet-nick12">Ваш ник:</label><input type="text" id="cadet-nick12" placeholder="Ник"></div>
+                <div class="form-group"><label class="required" for="cadet-discord12">Ваш Discord:</label><input type="text" id="cadet-discord12" placeholder="username#0000"></div>
+                <div class="form-group"><label class="required" for="cadet-badge12">Ссылка на одобренный жетон:</label><input type="url" id="cadet-badge12" placeholder="https://discord.com/channels/..."></div>
+                <div class="form-group"><label class="required" for="cadet-test12">Онлайн тест:</label><input type="url" id="cadet-test12" placeholder="https://discord.com/channels/..."></div>
+                <div class="form-group"><label class="required" for="cadet-arrest12">Доказательства задержания:</label><textarea id="cadet-arrest12" placeholder="Ссылка"></textarea></div>
+                <div class="form-group"><label class="required" for="cadet-lecture12">Вводная лекция:</label><input type="url" id="cadet-lecture12" placeholder="https://discord.com/channels/..."></div>
+                <div class="form-group"><label class="required" for="cadet-chp12">Вступление в ЧП Discord:</label><input type="url" id="cadet-chp12" placeholder="https://discord.com/channels/..."></div>
+            </div>
+            <div id="cadet-form-2-3" style="display: none;">
+                <div class="form-group"><label class="required" for="cadet-nick23">Ваш ник:</label><input type="text" id="cadet-nick23" placeholder="Ник"></div>
+                <div class="form-group"><label class="required" for="cadet-discord23">Ваш Discord:</label><input type="text" id="cadet-discord23" placeholder="username#0000"></div>
+                <div class="form-group"><label class="required" for="cadet-exam23">Экзамен 2-3:</label><input type="url" id="cadet-exam23" placeholder="https://discord.com/channels/..."></div>
+                <div class="form-group"><label class="required" for="cadet-fines23">5 штрафов:</label><textarea id="cadet-fines23" placeholder="Ссылки"></textarea></div>
+                <div class="form-group"><label class="required" for="cadet-supplies23">2 поставки:</label><textarea id="cadet-supplies23" placeholder="Ссылки"></textarea></div>
+                <div class="form-group"><label class="required" for="cadet-airdrops23">3 аирдропа:</label><textarea id="cadet-airdrops23" placeholder="Ссылки"></textarea></div>
+                <div class="form-group"><label class="required" for="cadet-rpTask23">РП задание:</label><textarea id="cadet-rpTask23" placeholder="Ссылка"></textarea></div>
+            </div>
+            <div class="buttons">
+                <button type="button" class="submit-btn" id="cadet-submit"><i class="fas fa-paper-plane"></i> Отправить отчёт</button>
+                <button type="button" class="reset-btn" id="cadet-reset"><i class="fas fa-redo"></i> Очистить</button>
+            </div>
+            <div class="loading" id="cadet-loading"><div class="spinner"></div><p>Отправка...</p></div>
+            <div class="result-message" id="cadet-result"></div>
+        </div>
+
+        <!-- Блок теста 1-2 -->
+        <div id="test-container" class="form-container">
+            <div class="section-title"><i class="fas fa-file-alt"></i> Тест на повышение 1→2</div>
+            <div class="form-group"><label class="required" for="test-nickname">Ваш ник:</label><input type="text" id="test-nickname" placeholder="Игровой никнейм"></div>
+            <div class="form-group"><label class="required" for="test-discord">Ваш Discord:</label><input type="text" id="test-discord" placeholder="username#0000"></div>
+            <button type="button" class="submit-btn" id="test-start-btn" style="margin-bottom: 20px;"><i class="fas fa-play"></i> Начать тест</button>
+            <div id="test-area" style="display: none;">
+                <div class="test-header">
+                    <span style="font-size:1.8rem; color:var(--pai-color);">1 ➔ 2 РАНГ</span>
+                    <span class="timer" id="test-timer">20:00</span>
+                </div>
+                <div id="test-questions" class="questions-grid"></div>
+                <div style="margin:20px 0; text-align:center;">
+                    <button type="button" class="submit-btn" id="test-finish-btn" style="margin: 0 auto;">Завершить тест</button>
+                </div>
+                <div id="test-message" class="info-message"></div>
+            </div>
+            <div class="loading" id="test-loading"><div class="spinner"></div><p>Отправка результатов...</p></div>
+        </div>
+
+        <!-- Блок экзамена -->
+        <div id="exam-container" class="form-container">
+            <div class="section-title"><i class="fab fa-discord"></i> Экзамен на повышение 2→3</div>
+            <div class="exam-card">
+                <p>Для сдачи экзамена по ПК, УК и Конституции перейдите в специальный Discord-канал.</p>
+                <a href="https://discord.com" target="_blank" class="discord-link-btn"><i class="fab fa-discord"></i> Перейти к экзамену в Discord</a>
+            </div>
+        </div>
+        <div class="footer">LSPD • Единая система</div>
+    </div>
+    <script>
+        (function() {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 3 + 1; this.speedX = (Math.random() - 0.5) * 0.5;
+                    this.speedY = (Math.random() - 0.5) * 0.3; this.opacity = Math.random() * 0.6 + 0.2;
+                    this.color = `rgba(255, 182, 230, ${this.opacity})`;
+                }
+                update() {
+                    this.x += this.speedX; this.y += this.speedY;
+                    if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
+                    if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
+                }
+                draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); }
+            }
+            function initParticles() { particles = []; for (let i = 0; i < 80; i++) particles.push(new Particle()); }
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let p of particles) { p.update(); p.draw(); }
+                requestAnimationFrame(animateParticles);
+            }
+            resizeCanvas(); initParticles(); animateParticles();
+            window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+
+            const tabs = document.querySelectorAll('.tab-btn');
+            const containers = {
+                badge: document.getElementById('badge-container'),
+                cadet: document.getElementById('cadet-container'),
+                test: document.getElementById('test-container'),
+                exam: document.getElementById('exam-container')
+            };
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.dataset.tab;
+                    tabs.forEach(t => t.classList.remove('active'));
+                    Object.values(containers).forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    containers[target].classList.add('active');
+                });
+            });
+
+            // Жетон LSPD
+            document.getElementById('badge-submit').addEventListener('click', () => {
+                const name = document.getElementById('badge-name').value.trim();
+                const messageLink = document.getElementById('badge-messageLink').value.trim();
+                const photoUrl = document.getElementById('badge-photoUrl').value.trim();
+                const loading = document.getElementById('badge-loading');
+                const resultDiv = document.getElementById('badge-result');
+
+                if (!name || !messageLink || !photoUrl) { alert('Заполните все поля'); return; }
+                loading.style.display = 'block'; resultDiv.style.display = 'none';
+
+                fetch('/api/lspd/badge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, messageLink, photoUrl })
+                })
+                .then(res => res.json())
+                .then(res => {
+                    loading.style.display = 'none';
+                    resultDiv.textContent = res.message;
+                    resultDiv.className = 'result-message ' + (res.success ? 'success' : 'error');
+                    resultDiv.style.display = 'block';
+                })
+                .catch(err => {
+                    loading.style.display = 'none';
+                    resultDiv.textContent = '❌ Ошибка: ' + err.message;
+                    resultDiv.className = 'result-message error';
+                    resultDiv.style.display = 'block';
+                });
+            });
+
+            document.getElementById('badge-reset').addEventListener('click', () => {
+                if (confirm('Очистить поля?')) {
+                    document.getElementById('badge-name').value = '';
+                    document.getElementById('badge-messageLink').value = '';
+                    document.getElementById('badge-photoUrl').value = '';
+                }
+            });
+
+            // Кадеты LSPD
+            const radio12 = document.querySelector('input[name="cadet-promotionType"][value="1-2"]');
+            const radio23 = document.querySelector('input[name="cadet-promotionType"][value="2-3"]');
+            const form12 = document.getElementById('cadet-form-1-2');
+            const form23 = document.getElementById('cadet-form-2-3');
+
+            function toggleForms() {
+                form12.style.display = radio12.checked ? 'block' : 'none';
+                form23.style.display = radio23.checked ? 'block' : 'none';
+            }
+            radio12.addEventListener('change', toggleForms);
+            radio23.addEventListener('change', toggleForms);
+
+            document.getElementById('cadet-submit').addEventListener('click', () => {
+                const is12 = radio12.checked;
+                const data = {
+                    type: is12 ? '1-2' : '2-3',
+                    nick: document.getElementById(is12 ? 'cadet-nick12' : 'cadet-nick23').value.trim(),
+                    discord: document.getElementById(is12 ? 'cadet-discord12' : 'cadet-discord23').value.trim(),
+                    badge: is12 ? document.getElementById('cadet-badge12').value.trim() : '',
+                    test: is12 ? document.getElementById('cadet-test12').value.trim() : '',
+                    arrest: is12 ? document.getElementById('cadet-arrest12').value.trim() : '',
+                    lecture: is12 ? document.getElementById('cadet-lecture12').value.trim() : '',
+                    chp: is12 ? document.getElementById('cadet-chp12').value.trim() : '',
+                    exam: !is12 ? document.getElementById('cadet-exam23').value.trim() : '',
+                    fines: !is12 ? document.getElementById('cadet-fines23').value.trim() : '',
+                    supplies: !is12 ? document.getElementById('cadet-supplies23').value.trim() : '',
+                    airdrops: !is12 ? document.getElementById('cadet-airdrops23').value.trim() : '',
+                    rpTask: !is12 ? document.getElementById('cadet-rpTask23').value.trim() : ''
+                };
+
+                if (!data.nick || !data.discord) { alert('Заполните обязательные поля'); return; }
+                const loading = document.getElementById('cadet-loading');
+                const resultDiv = document.getElementById('cadet-result');
+                loading.style.display = 'block'; resultDiv.style.display = 'none';
+
+                fetch('/api/lspd/cadet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                .then(res => res.json())
+                .then(res => {
+                    loading.style.display = 'none';
+                    resultDiv.textContent = res.message;
+                    resultDiv.className = 'result-message ' + (res.success ? 'success' : 'error');
+                    resultDiv.style.display = 'block';
+                })
+                .catch(err => {
+                    loading.style.display = 'none';
+                    resultDiv.textContent = '❌ Ошибка: ' + err.message;
+                    resultDiv.className = 'result-message error';
+                    resultDiv.style.display = 'block';
+                });
+            });
+
+            document.getElementById('cadet-reset').addEventListener('click', () => {
+                if (confirm('Очистить поля?')) {
+                    document.querySelectorAll('#cadet-container input, #cadet-container textarea').forEach(el => el.value = '');
+                }
+            });
+
+            // Тест LSPD 1-2
+            const questionsData = [
+                { question: "Какое гос.имущество можно хранить в рюкзаке?", options: [ "Стаб-паки, аптечки, броню, оружие.", "Аптечки, броню, оружие, патроны.", "Стаб-паки, аптечки, броню, анальгетик.", "Ничего из перечисленного." ], correct: ["Стаб-паки, аптечки, броню, оружие."] },
+                { question: "Со скольки до скольки рабочий день в LSPD?", options: [ "10:00 до 23:30", "11:00 до 21:00", "10:00 до 22:00", "09:00 до 22:00" ], correct: ["10:00 до 22:00"] },
+                { question: "Сколько пар наручников у сотрудника?", options: [ "2.", "3.", "4.", "∞." ], correct: ["2."] },
+                { question: "Сколько дается времени на телефонный звонок?", options: [ "3 минуты.", "5 минут.", "7 минут.", "10 минут." ], correct: ["3 минуты."] },
+                { question: "Что такое задержание?", options: [ "Мера кратковременного лишения человека права на свободу.", "Наказание за проступок.", "Это арест или заключение под стражу." ], correct: ["Мера кратковременного лишения человека права на свободу."] }
+            ];
+
+            const startBtn = document.getElementById('test-start-btn');
+            const testArea = document.getElementById('test-area');
+            const questionsDiv = document.getElementById('test-questions');
+            const timerSpan = document.getElementById('test-timer');
+            let timerInterval = null, timeLeft = 1200, testActive = false;
+
+            startBtn.addEventListener('click', () => {
+                const nickname = document.getElementById('test-nickname').value.trim();
+                const discord = document.getElementById('test-discord').value.trim();
+                if (!nickname || !discord) { alert('Заполните ник и Discord'); return; }
+
+                document.getElementById('test-nickname').disabled = true;
+                document.getElementById('test-discord').disabled = true;
+                startBtn.disabled = true;
+
+                let html = '';
+                questionsData.forEach((q, idx) => {
+                    html += `<div class="question-card" data-qidx="${idx}"><div class="question-text">${idx+1}. ${q.question}</div><div class="options">`;
+                    q.options.forEach((opt, optIdx) => {
+                        html += `<div class="option"><input type="radio" name="test-q${idx}" value="${opt}" id="q${idx}_${optIdx}"><label for="q${idx}_${optIdx}">${opt}</label></div>`;
+                    });
+                    html += `</div></div>`;
+                });
+                questionsDiv.innerHTML = html;
+                testArea.style.display = 'block';
+                testActive = true;
+                timeLeft = 1200;
+
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+                    timerSpan.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                    if (timeLeft <= 0) { clearInterval(timerInterval); finishTest(); }
+                }, 1000);
+            });
+
+            document.getElementById('test-finish-btn').addEventListener('click', () => {
+                if (testActive && confirm('Завершить тест?')) finishTest();
+            });
+
+            function finishTest() {
+                testActive = false; clearInterval(timerInterval);
+                let score = 0;
+                questionsData.forEach((q, idx) => {
+                    const checked = document.querySelector(`input[name="test-q${idx}"]:checked`);
+                    if (checked && q.correct.includes(checked.value)) score++;
+                });
+                const total = questionsData.length;
+                const passed = score >= 4;
+
+                fetch('/api/lspd/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nickname: document.getElementById('test-nickname').value.trim(),
+                        discordTag: document.getElementById('test-discord').value.trim(),
+                        score, total, passed
+                    })
+                })
+                .then(res => res.json())
+                .then(res => {
+                    alert(res.message);
+                    location.reload();
+                });
+            }
+        })();
+    </script>
+</body>
+</html>
