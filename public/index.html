@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
         :root {
             --primary: #8a2be2;
             --primary-light: #b026ff;
@@ -18,15 +19,59 @@
         }
 
         html { scroll-behavior: smooth; }
-        body { background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
         
-        header { background: #0a0a0a; padding: 20px 50px; border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        body { 
+            background-color: var(--bg);
+            color: var(--text); 
+            line-height: 1.6; 
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+            background: linear-gradient(-45deg, #050505, #11051f, #0a0a0a, #160824);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: floatOrb 20s infinite alternate;
+        }
+
+        .orb:nth-child(1) { width: 400px; height: 400px; background: #8a2be2; top: -10%; left: -10%; }
+        .orb:nth-child(2) { width: 500px; height: 500px; background: #b026ff; bottom: -20%; right: -10%; animation-delay: -5s; }
+        .orb:nth-child(3) { width: 300px; height: 300px; background: #4c1d95; top: 40%; left: 50%; animation-delay: -10s; }
+
+        @keyframes floatOrb {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(150px, 100px) scale(1.2); }
+        }
+        
+        header { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(10px); padding: 20px 50px; border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
         .logo { font-size: 26px; font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: 2px; }
         .logo span { color: var(--primary); }
         nav a { color: var(--text); text-decoration: none; margin-left: 30px; font-weight: 600; font-size: 14px; text-transform: uppercase; transition: color 0.3s; }
         nav a:hover { color: var(--primary-light); }
         
-        .hero { padding: 100px 50px; text-align: center; background: radial-gradient(circle at center, #1a0b2e 0%, var(--bg) 100%); border-bottom: 1px solid var(--border); }
+        .hero { padding: 100px 50px; text-align: center; border-bottom: 1px solid var(--border); background: radial-gradient(circle at center, rgba(26, 11, 46, 0.5) 0%, transparent 100%); }
         .hero h1 { font-size: 52px; margin-bottom: 20px; font-weight: 800; text-transform: uppercase; }
         .hero h1 span { background: linear-gradient(90deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero p { font-size: 20px; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
@@ -34,7 +79,6 @@
         .section { padding: 80px 50px; max-width: 1400px; margin: 0 auto; scroll-margin-top: 90px; }
         .section-title { font-size: 36px; margin-bottom: 60px; text-align: center; color: var(--text); text-transform: uppercase; letter-spacing: 3px; border-bottom: 2px solid var(--primary); display: inline-block; padding-bottom: 10px; position: relative; left: 50%; transform: translateX(-50%); }
 
-        /* НАВЫКИ */
         .skills-layout { display: flex; gap: 40px; align-items: stretch; justify-content: space-between; flex-wrap: wrap; }
         .skills-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; min-width: 60%; }
         .skill-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 30px 20px; transition: all 0.4s ease; position: relative; overflow: hidden; backdrop-filter: blur(10px); }
@@ -45,11 +89,10 @@
         .skill-card h3 { font-size: 20px; margin-bottom: 10px; font-weight: 700; }
         .skill-card p { color: var(--text-muted); font-size: 14px; }
         
-        .skills-illustration { flex: 0 0 350px; background: #0a0a0a; border: 2px dashed var(--primary); border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-light); text-align: center; padding: 20px; min-height: 400px; position: relative; overflow: hidden; }
+        .skills-illustration { flex: 0 0 350px; background: rgba(10, 10, 10, 0.6); border: 2px dashed var(--primary); border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-light); text-align: center; padding: 20px; min-height: 400px; position: relative; overflow: hidden; backdrop-filter: blur(5px); }
         .skills-illustration img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
         .skills-illustration i { font-size: 60px; margin-bottom: 20px; opacity: 0.5; }
 
-        /* ПРОЕКТЫ */
         .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; padding: 20px; }
         .project-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; backdrop-filter: blur(10px); text-decoration: none; color: inherit; display: flex; flex-direction: column; cursor: pointer; }
         .project-card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(138, 43, 226, 0.2); }
@@ -74,7 +117,6 @@
         .card-tags { display: flex; gap: 8px; flex-wrap: wrap; }
         .tag { padding: 4px 12px; background: rgba(138, 43, 226, 0.1); border-radius: 50px; font-size: 12px; color: var(--primary-light); border: 1px solid rgba(138, 43, 226, 0.3); font-weight: 600; }
 
-        /* МОДАЛЬНОЕ ОКНО */
         #detailsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
         .modal-box { background: #121214; border: 1px solid var(--primary); border-radius: 20px; padding: 35px; width: 100%; max-width: 600px; position: relative; box-shadow: 0 20px 40px rgba(138, 43, 226, 0.4); text-align: center; }
         .modal-close { position: absolute; top: 15px; right: 20px; font-size: 28px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
@@ -84,9 +126,8 @@
         .modal-desc { color: var(--text-muted); font-size: 15px; line-height: 1.6; text-align: left; margin-bottom: 25px; white-space: pre-wrap; }
         .modal-actions { display: flex; justify-content: center; gap: 15px; }
 
-        /* КОНТАКТЫ */
         .contact-grid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 20px; padding-bottom: 60px; }
-        .contact-item { display: flex; flex-direction: column; align-items: center; gap: 15px; cursor: pointer; text-decoration: none; color: inherit; transition: all 0.3s ease; background: var(--card-bg); padding: 30px; border-radius: 16px; border: 1px solid var(--border); width: 220px; }
+        .contact-item { display: flex; flex-direction: column; align-items: center; gap: 15px; cursor: pointer; text-decoration: none; color: inherit; transition: all 0.3s ease; background: var(--card-bg); padding: 30px; border-radius: 16px; border: 1px solid var(--border); width: 220px; backdrop-filter: blur(10px); }
         .contact-item:hover { transform: translateY(-10px); border-color: var(--primary); box-shadow: 0 10px 30px rgba(138, 43, 226, 0.2); }
         .contact-icon-wrapper { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--border); display: flex; justify-content: center; align-items: center; font-size: 36px; color: var(--primary-light); background: #11051f; transition: 0.4s ease; position: relative; }
         .contact-item:hover .contact-icon-wrapper { border-color: var(--primary-light); box-shadow: 0 0 20px rgba(176, 38, 255, 0.4); transform: scale(1.1); color: var(--text); background: var(--primary); }
@@ -100,6 +141,12 @@
     </style>
 </head>
 <body>
+    <div class="animated-bg">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
     <header>
         <div class="logo">FRIZ<span>WORLD</span></div>
         <nav>
@@ -114,7 +161,6 @@
         <p>Программист, специализирующийся на автоматизации процессов, создании масштабных веб-систем, баз данных и написании многофункциональных ботов.</p>
     </div>
 
-    <!-- ЧТО Я УМЕЮ -->
     <div class="section" id="skills">
         <h2 class="section-title">Что я умею</h2>
         <div class="skills-layout">
@@ -162,13 +208,11 @@
         </div>
     </div>
 
-    <!-- ПРОЕКТЫ -->
     <div class="section" id="projects">
         <h2 class="section-title">Мои Проекты</h2>
         <div class="projects-grid" id="projectsGrid"></div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО -->
     <div id="detailsModal">
         <div class="modal-box">
             <span class="modal-close" onclick="closeModal()">&times;</span>
@@ -179,7 +223,6 @@
         </div>
     </div>
 
-    <!-- КОНТАКТЫ -->
     <div class="section" id="contact">
         <h2 class="section-title">Контакты</h2>
         <div class="contact-grid">
