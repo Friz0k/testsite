@@ -12,6 +12,7 @@
             --accent-color: #7c3aed;
             --accent-hover: #6d28d9;
             --success-color: #22c55e;
+            --danger-color: #ef4444;
             --text-main: #ffffff;
             --text-muted: #a1a1aa;
         }
@@ -156,6 +157,9 @@
         .btn-success { background-color: var(--success-color); }
         .btn-success:hover { background-color: #16a34a; }
 
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-danger:hover { background-color: #dc2626; }
+
         pre {
             background-color: #050507;
             color: var(--success-color);
@@ -176,6 +180,11 @@
             margin-bottom: 15px;
             border: 1px solid var(--border-color);
             display: block;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
         }
     </style>
 </head>
@@ -203,17 +212,23 @@
                 <label>Название проекта</label>
                 <input type="text" id="projTitle" placeholder="Например: SA LSSD">
                 
-                <label>Путь/Ссылка</label>
+                <label>Путь / Ссылка для тестирования</label>
                 <input type="text" id="projPath" placeholder="Например: /systems/sa_lssd/">
                 
                 <label>Фото / Иконка проекта</label>
                 <img id="projImgPreview" class="preview-img" src="" alt="Нет фото" onerror="this.style.display='none'">
                 <input type="file" id="projImageFile" accept="image/*" style="margin-bottom: 20px; color: #fff;">
 
-                <label>Описание</label>
-                <textarea id="projDesc" rows="4" placeholder="Описание проекта..."></textarea>
+                <label>Неполное описание (для карточки на главной)</label>
+                <textarea id="projShortDesc" rows="2" placeholder="Краткое описание..."></textarea>
+
+                <label>Полное описание (для модального окна и тестирования)</label>
+                <textarea id="projFullDesc" rows="5" placeholder="Подробное описание системы..."></textarea>
                 
-                <button type="button" onclick="saveProjectWithImage()">Сохранить проект</button>
+                <div class="btn-group">
+                    <button type="button" onclick="saveProjectWithImage()">Сохранить проект</button>
+                    <button type="button" class="btn-danger" id="deleteBtn" onclick="deleteProject()" style="display: none;">Удалить проект</button>
+                </div>
             </div>
         </div>
 
@@ -298,6 +313,7 @@
                     opt.textContent = p.title || ('Проект ' + (index + 1));
                     select.appendChild(opt);
                 });
+                selectProject();
             });
     }
     loadProjects();
@@ -305,19 +321,23 @@
     function selectProject() {
         let idx = document.getElementById('projectSelect').value;
         let imgPreview = document.getElementById('projImgPreview');
+        let deleteBtn = document.getElementById('deleteBtn');
         if (idx === "") {
             document.getElementById('projTitle').value = '';
             document.getElementById('projPath').value = '';
-            document.getElementById('projDesc').value = '';
+            document.getElementById('projShortDesc').value = '';
+            document.getElementById('projFullDesc').value = '';
             currentProjImageUrl = '';
             imgPreview.src = '';
             imgPreview.style.display = 'none';
+            deleteBtn.style.display = 'none';
         } else {
             let p = allProjects[idx];
             document.getElementById('projTitle').value = p.title || '';
             document.getElementById('projPath').value = p.path || '';
-            document.getElementById('projDesc').value = p.desc || '';
-            currentProjImageUrl = p.imageUrl || '';
+            document.getElementById('projShortDesc').value = p.shortDesc || p.desc || '';
+            document.getElementById('projFullDesc').value = p.fullDesc || p.desc || '';
+            currentProjImageUrl = p.imageUrl || p.image || '';
             if (currentProjImageUrl) {
                 imgPreview.src = currentProjImageUrl;
                 imgPreview.style.display = 'block';
@@ -325,6 +345,7 @@
                 imgPreview.src = '';
                 imgPreview.style.display = 'none';
             }
+            deleteBtn.style.display = 'inline-block';
         }
     }
 
@@ -360,7 +381,8 @@
         let projData = {
             title: document.getElementById('projTitle').value,
             path: document.getElementById('projPath').value,
-            desc: document.getElementById('projDesc').value,
+            shortDesc: document.getElementById('projShortDesc').value,
+            fullDesc: document.getElementById('projFullDesc').value,
             imageUrl: currentProjImageUrl
         };
         if (idx === "") {
@@ -380,6 +402,29 @@
                 loadProjects();
             } else {
                 alert('Ошибка сохранения');
+            }
+        });
+    }
+
+    function deleteProject() {
+        let idx = document.getElementById('projectSelect').value;
+        if (idx === "") return;
+        if (!confirm('Вы уверены, что хотите удалить этот проект?')) return;
+
+        allProjects.splice(idx, 1);
+        fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(allProjects)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                alert('Проект успешно удален!');
+                document.getElementById('projectSelect').value = "";
+                loadProjects();
+            } else {
+                alert('Ошибка при удалении');
             }
         });
     }
