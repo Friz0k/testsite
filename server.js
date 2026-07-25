@@ -124,20 +124,26 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-    console.log('Попытка входа с данными:', req.body);
+    console.log('ПОЛУЧЕНЫ ДАННЫЕ ВХОДА:', req.body);
     
-    const username = req.body.username || req.body.user;
-    const password = req.body.password || req.body.pass;
+    const username = req.body.username || req.body.user || req.body.login || req.body.email;
+    const password = req.body.password || req.body.pass || req.body.pwd;
     
     const adminUser = process.env.ADMIN_USER || 'admin';
     const adminPass = process.env.ADMIN_PASS || 'admin';
 
     if (username === adminUser && password === adminPass) {
         res.setHeader('Set-Cookie', 'admin_auth=true; Path=/; HttpOnly');
-        res.redirect('/admin.html');
+        if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+            return res.json({ success: true, redirect: '/admin.html' });
+        }
+        return res.redirect('/admin.html');
     } else {
-        console.log(`Неверный логин или пароль. Введено: [${username} / ${password}]`);
-        res.redirect('/login?error=1');
+        console.log(`ОШИБКА ВХОДА. Введено: [${username} / ${password}]`);
+        if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+            return res.status(401).json({ success: false, error: 'Неверные данные' });
+        }
+        return res.redirect('/login?error=1');
     }
 });
 
