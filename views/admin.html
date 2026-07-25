@@ -84,9 +84,7 @@
             margin: 0 auto;
         }
 
-        .tab-content.active {
-            display: block;
-        }
+        .tab-content.active { display: block; }
 
         .admin-section {
             background-color: var(--panel-bg);
@@ -244,11 +242,7 @@
             <div class="admin-section">
                 <h3>Редактор кода проекта</h3>
                 <label>Выберите файл</label>
-                <select id="fileSelect" onchange="loadFileCode()">
-                    <option value="server.js">server.js</option>
-                    <option value="public/index.html">Главная страница (public/index.html)</option>
-                    <option value="views/admin.html">Админ-панель (views/admin.html)</option>
-                </select>
+                <select id="fileSelect" onchange="loadFileCode()"></select>
                 <textarea id="codeEditor"></textarea>
                 <button type="button" class="btn-success" onclick="saveFileCode()">Сохранить изменения в коде</button>
             </div>
@@ -490,15 +484,34 @@
     }
     fetchLogs();
 
+    function loadFileList() {
+        fetch('/api/list-files')
+            .then(res => res.json())
+            .then(files => {
+                let select = document.getElementById('fileSelect');
+                select.innerHTML = '';
+                if (files && files.length > 0) {
+                    files.forEach(f => {
+                        let opt = document.createElement('option');
+                        opt.value = f;
+                        opt.textContent = f;
+                        select.appendChild(opt);
+                    });
+                    loadFileCode();
+                }
+            });
+    }
+    loadFileList();
+
     function loadFileCode() {
         let file = document.getElementById('fileSelect').value;
+        if (!file) return;
         fetch('/api/file?path=' + encodeURIComponent(file))
             .then(res => res.json())
             .then(data => {
                 document.getElementById('codeEditor').value = data.content || '';
             });
     }
-    loadFileCode();
 
     function saveFileCode() {
         let file = document.getElementById('fileSelect').value;
