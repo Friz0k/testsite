@@ -1,124 +1,69 @@
+require('dotenv').config();
 const express = require('express');
+const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
-const multer = require('multer');
+const { exec } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, 'public', 'uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'media_' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Только изображения разрешены для загрузки!'), false);
-        }
-    }
-});
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'secret-key-frizworld',
+    resave: false,
+    saveUninitialized: false
+}));
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
-app.use((req, res, next) => {
-    const logMessage = `[ВИЗИТ] ${new Date().toLocaleString()} | IP: ${req.ip || req.connection.remoteAddress} | URL: ${req.originalUrl} | Агент: ${req.headers['user-agent'] || 'Неизвестно'}`;
-    console.log(logMessage);
-    
-    const logDir = path.join(__dirname, 'logs');
-    if (!fs.existsSync(logDir)) {
-        try { fs.mkdirSync(logDir, { recursive: true }); } catch (e) {}
-    }
-    try {
-        fs.appendFileSync(path.join(logDir, 'visits.log'), logMessage + '\n');
-    } catch (e) {}
-    
-    next();
-});
-
-const checkAuth = (req, res, next) => {
+const authMiddleware = (req, res, next) => {
     const cookies = req.headers.cookie || '';
-    console.log(`[DEBUG AUTH] Проверка URL: ${req.originalUrl} | Полученные куки: "${cookies}"`);
-    
-    if (cookies.includes('admin_auth=true')) {
-        console.log(`[DEBUG AUTH] Успешно: куки админа найдены для ${req.originalUrl}`);
+    if ((req.session && req.session.isAdmin) || cookies.includes('admin_auth=true')) {
         return next();
     }
-    
-    console.warn(`[DEBUG AUTH] Отказ в доступе: куки не найдены. Перенаправление на /login`);
     if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
         return res.status(401).json({ success: false, error: 'Доступ запрещен' });
     }
-    return res.redirect('/login');
+    res.redirect('/login');
 };
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-const projectsFilePath = path.join(__dirname, 'data', 'projects.json');
-const configFilePath = path.join(__dirname, 'data', 'config.json');
-const systemsDirPath = path.join(__dirname, 'public', 'systems');
 
 const getHtmlFile = (fileName) => {
     const viewsPath = path.join(__dirname, 'views', fileName);
     const publicPath = path.join(__dirname, 'public', fileName);
-    console.log(`[DEBUG FILE] Поиск файла ${fileName}...`);
-    console.log(` -> Проверка в views: ${viewsPath} (Существует: ${fs.existsSync(viewsPath)})`);
-    console.log(` -> Проверка в public: ${publicPath} (Существует: ${fs.existsSync(publicPath)})`);
-    
     if (fs.existsSync(viewsPath)) return viewsPath;
     if (fs.existsSync(publicPath)) return publicPath;
     return null;
 };
 
 app.get('/login', (req, res) => {
-    console.log('[DEBUG ROUTE] Запрошена страница /login');
     const filePath = getHtmlFile('login.html');
     if (filePath) {
         res.sendFile(filePath);
     } else {
-        console.error('[DEBUG ERROR] Файл login.html не найден ни в /views, ни в /public!');
         res.status(404).send('Файл login.html не найден');
     }
 });
 
 const handleLogin = (req, res) => {
-    console.log('[DEBUG LOGIN] Получен POST запрос на авторизацию.');
-    console.log('[DEBUG LOGIN] Тело запроса (req.body):', req.body);
-    
     const username = req.body.username || req.body.user || req.body.login || req.body.email;
     const password = req.body.password || req.body.pass || req.body.pwd;
     
     const adminUser = process.env.ADMIN_USER || 'admin';
     const adminPass = process.env.ADMIN_PASS || 'admin';
 
-    console.log(`[DEBUG LOGIN] Сравнение: введено [${username} / ${password}], ожидается [${adminUser} / ${adminPass}]`);
-
     if (username === adminUser && password === adminPass) {
-        console.log('[DEBUG LOGIN] Пароль верный! Установка куки admin_auth=true...');
+        if (req.session) req.session.isAdmin = true;
         res.setHeader('Set-Cookie', 'admin_auth=true; Path=/; HttpOnly');
         
         if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
-            console.log('[DEBUG LOGIN] Отправка JSON ответа об успешном входе.');
-            return res.json({ success: true, redirect: '/admin.html' });
+            return res.json({ success: true, redirect: '/admin' });
         }
-        console.log('[DEBUG LOGIN] Выполнение редиректа на /admin.html');
-        return res.redirect('/admin.html');
+        return res.redirect('/admin');
     } else {
-        console.warn('[DEBUG LOGIN] Ошибка входа: неверный логин или пароль!');
         if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
             return res.status(401).json({ success: false, error: 'Неверные данные' });
         }
@@ -129,89 +74,161 @@ const handleLogin = (req, res) => {
 app.post('/login', handleLogin);
 app.post('/api/auth', handleLogin);
 
-app.get(['/admin', '/admin.html'], checkAuth, (req, res) => {
-    console.log('[DEBUG ROUTE] Доступ к админке разрешен, поиск файла admin.html...');
+app.get(['/admin', '/admin.html'], authMiddleware, (req, res) => {
     const filePath = getHtmlFile('admin.html');
     if (filePath) {
-        console.log(`[DEBUG ROUTE] Отправка файла админки: ${filePath}`);
         res.sendFile(filePath);
     } else {
-        console.error('[DEBUG ERROR] Файл admin.html не найден ни в /views, ни в /public!');
         res.status(404).send('Файл admin.html не найден');
     }
 });
 
-app.get('/api/projects', (req, res) => {
-    if (!fs.existsSync(projectsFilePath)) {
-        return res.json([]);
-    }
-    try {
-        const data = fs.readFileSync(projectsFilePath, 'utf8');
-        res.json(JSON.parse(data));
-    } catch (err) {
-        res.status(500).json({ error: 'Ошибка чтения проектов' });
-    }
-});
+const dataDir = path.join(__dirname, 'data');
+const settingsFilePath = path.join(dataDir, 'settings.json');
+const projectsFilePath = path.join(dataDir, 'projects.json');
 
-app.post('/api/projects', checkAuth, (req, res) => {
-    try {
-        const dataDir = path.dirname(projectsFilePath);
-        if (!fs.existsSync(dataDir)) {
-            fs.mkdirSync(dataDir, { recursive: true });
-        }
-        fs.writeFileSync(projectsFilePath, JSON.stringify(req.body, null, 2), 'utf8');
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Ошибка сохранения проектов' });
+function ensureDataFiles() {
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
     }
-});
+    if (!fs.existsSync(settingsFilePath)) {
+        fs.writeFileSync(settingsFilePath, JSON.stringify({}));
+    }
+    if (!fs.existsSync(projectsFilePath)) {
+        fs.writeFileSync(projectsFilePath, JSON.stringify([]));
+    }
+}
+ensureDataFiles();
 
 app.get('/api/settings', (req, res) => {
-    if (!fs.existsSync(configFilePath)) {
-        return res.json({});
-    }
-    try {
-        const data = fs.readFileSync(configFilePath, 'utf8');
-        res.json(JSON.parse(data));
-    } catch (err) {
-        res.status(500).json({ error: 'Ошибка чтения настроек' });
-    }
-});
-
-app.post('/api/settings', checkAuth, (req, res) => {
-    try {
-        const dataDir = path.dirname(configFilePath);
-        if (!fs.existsSync(dataDir)) {
-            fs.mkdirSync(dataDir, { recursive: true });
+    ensureDataFiles();
+    fs.readFile(settingsFilePath, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Error' });
+        try {
+            res.json(JSON.parse(data));
+        } catch (e) {
+            res.json({});
         }
-        fs.writeFileSync(configFilePath, JSON.stringify(req.body, null, 2), 'utf8');
+    });
+});
+
+app.post('/api/settings', authMiddleware, (req, res) => {
+    ensureDataFiles();
+    fs.writeFile(settingsFilePath, JSON.stringify(req.body, null, 2), 'utf8', (err) => {
+        if (err) return res.status(500).json({ error: 'Error' });
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Ошибка сохранения настроек' });
-    }
+    });
 });
 
-app.post('/api/upload', checkAuth, upload.single('image'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'Файл не загружен' });
+app.post('/api/upload', authMiddleware, (req, res) => {
+    const { image, filename } = req.body;
+    if (!image) return res.status(400).json({ error: 'No image' });
+    
+    const uploadsDir = path.join(__dirname, 'public', 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
     }
-    res.json({ success: true, url: `/uploads/${req.file.filename}` });
+
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    const ext = filename ? path.extname(filename) : '.png';
+    const uniqueName = 'media_' + Date.now() + ext;
+    const filePath = path.join(uploadsDir, uniqueName);
+
+    fs.writeFile(filePath, base64Data, 'base64', (err) => {
+        if (err) return res.status(500).json({ error: 'Save error' });
+        res.json({ success: true, url: '/uploads/' + uniqueName });
+    });
 });
 
-app.get('/api/logs', checkAuth, (req, res) => {
-    const logPath = path.join(__dirname, 'logs', 'visits.log');
-    if (!fs.existsSync(logPath)) {
-        return res.json({ logs: 'Логов пока нет' });
-    }
+app.get('/api/projects', (req, res) => {
+    ensureDataFiles();
+    fs.readFile(projectsFilePath, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Error' });
+        try {
+            res.json(JSON.parse(data));
+        } catch (e) {
+            res.json([]);
+        }
+    });
+});
+
+app.post('/api/projects', authMiddleware, (req, res) => {
+    ensureDataFiles();
+    const projects = req.body;
+    fs.writeFile(projectsFilePath, JSON.stringify(projects, null, 2), 'utf8', (err) => {
+        if (err) return res.status(500).json({ error: 'Error' });
+        res.json({ success: true });
+    });
+});
+
+app.get('/api/logs', authMiddleware, (req, res) => {
+    exec('pm2 logs frizworld --lines 100 --nostream', (error, stdout, stderr) => {
+        if (error) {
+            return res.status(500).json({ error: stderr || error.message });
+        }
+        res.json({ logs: stdout });
+    });
+});
+
+function getFilesRecursive(dir, baseDir = dir) {
+    let results = [];
+    const list = fs.readdirSync(dir);
+    list.forEach(file => {
+        const filePath = path.join(dir, file);
+        const relativePath = path.relative(baseDir, filePath).replace(/\\/g, '/');
+        if (relativePath.startsWith('node_modules') || relativePath.startsWith('.git') || relativePath.startsWith('data') || relativePath.startsWith('public/uploads')) {
+            return;
+        }
+        const stat = fs.statSync(filePath);
+        if (stat && stat.isDirectory()) {
+            results = results.concat(getFilesRecursive(filePath, baseDir));
+        } else {
+            results.push(relativePath);
+        }
+    });
+    return results;
+}
+
+app.get('/api/list-files', authMiddleware, (req, res) => {
     try {
-        const data = fs.readFileSync(logPath, 'utf8');
-        res.json({ logs: data });
-    } catch (err) {
-        res.status(500).json({ error: 'Ошибка чтения логов' });
+        const files = getFilesRecursive(__dirname);
+        res.json(files);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 
-app.get('/api/list-files', checkAuth, (req, res) => {
-    const targetFiles = [
-        'server.js',
-        'package.json',
+app.get('/api/file', authMiddleware, (req, res) => {
+    const targetFile = req.query.path;
+    if (!targetFile) return res.status(400).json({ error: 'Path not specified' });
+    const filePath = path.join(__dirname, targetFile);
+    if (!filePath.startsWith(__dirname)) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) return res.status(404).json({ error: 'File not found' });
+        res.json({ content: data });
+    });
+});
+
+app.post('/api/file', authMiddleware, (req, res) => {
+    const { filePath, content } = req.body;
+    if (!filePath) return res.status(400).json({ error: 'Path not specified' });
+    const fullPath = path.join(__dirname, filePath);
+    if (!fullPath.startsWith(__dirname)) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+    fs.writeFile(fullPath, content, 'utf8', (err) => {
+        if (err) return res.status(500).json({ error: 'Save error' });
+        res.json({ success: true });
+    });
+});
+
+const FIB_CONFIG = {
+    DISCORD_WEBHOOK: 'https://discord.com/api/webhooks/1498677954937487370/PAVXARtu3bSeJodua89uIT8nFAAX1c_8FX0EMxZDMIukD2Y9Mnu_1M5gVMHZ4Vv8gvVW',
+    DISCORD_ROLE_ID: '839596804785176577'
+};
+
+const TEST_QUESTIONS = [
+    { id: 1, question: "Что, согласно УК, является основным источником уголовного права в штате Сан-Андреас?", options: [{ text: "Конституция штата.", correct: false }, { text: "Судебный Кодекс.", correct: false }, { text: "Уголовный Кодекс.", correct: true }, { text: "Процессуальный Кодекс.", correct: false }], type: "single", points: 1 },
+    { id: 2
