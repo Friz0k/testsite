@@ -124,7 +124,10 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-    const { username, password } = req.body;
+    console.log('Попытка входа с данными:', req.body);
+    
+    const username = req.body.username || req.body.user;
+    const password = req.body.password || req.body.pass;
     
     const adminUser = process.env.ADMIN_USER || 'admin';
     const adminPass = process.env.ADMIN_PASS || 'admin';
@@ -133,6 +136,7 @@ app.post('/login', (req, res) => {
         res.setHeader('Set-Cookie', 'admin_auth=true; Path=/; HttpOnly');
         res.redirect('/admin.html');
     } else {
+        console.log(`Неверный логин или пароль. Введено: [${username} / ${password}]`);
         res.redirect('/login?error=1');
     }
 });
@@ -147,6 +151,11 @@ app.use((req, res, next) => {
             res.status(404).send('Страница не найдена');
         }
     });
+});
+
+app.use((err, req, res, next) => {
+    console.error('Ошибка сервера:', err.stack);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
 });
 
 app.listen(PORT, () => {
