@@ -2,51 +2,70 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Frizworld Портфолио</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frizworld Systems</title>
     <style>
         :root {
             --bg-color: #09090b;
             --panel-bg: #121214;
-            --border-color: #7c3aed;
-            --accent-color: #a855f7;
+            --border-color: #27272a;
+            --accent-color: #7c3aed;
+            --accent-hover: #6d28d9;
             --text-main: #ffffff;
             --text-muted: #a1a1aa;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            padding: 40px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            padding: 20px;
         }
 
-        .container {
-            display: flex;
+        .main-wrapper {
+            display: grid;
+            grid-template-columns: 340px 1fr;
             gap: 40px;
-            max-width: 1000px;
+            max-width: 1100px;
             width: 100%;
-            align-items: center;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
         }
 
+        @media (max-width: 850px) {
+            .main-wrapper {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+        }
+
+        /* Блок иллюстрации слева */
         .illustration-box {
-            width: 350px;
-            height: 450px;
-            border: 2px dashed var(--border-color);
-            border-radius: 20px;
+            width: 100%;
+            height: 480px;
+            border: 2px dashed var(--accent-color);
+            border-radius: 14px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: var(--panel-bg);
+            background-color: #050507;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.2);
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.15);
         }
 
         .illustration-box img {
@@ -65,8 +84,8 @@
         }
 
         .placeholder-content svg {
-            width: 64px;
-            height: 64px;
+            width: 54px;
+            height: 54px;
             fill: var(--accent-color);
             margin-bottom: 15px;
         }
@@ -75,6 +94,7 @@
             color: var(--accent-color);
             font-size: 18px;
             margin-bottom: 8px;
+            font-weight: 600;
         }
 
         .placeholder-content p {
@@ -82,49 +102,94 @@
             font-size: 13px;
         }
 
-        .content-section { flex-grow: 1; }
-
-        h1 { font-size: 32px; margin-bottom: 20px; color: var(--text-main); }
-        p { color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
-
-        .projects-list {
+        /* Правая часть с контентом и проектами */
+        .content-section {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            justify-content: flex-start;
         }
 
-        .project-item {
-            background: var(--panel-bg);
-            padding: 15px 20px;
+        h1 {
+            font-size: 28px;
+            margin-bottom: 12px;
+            color: var(--text-main);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .project-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
-            border: 1px solid #27272a;
+            padding: 16px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: var(--text-main);
-            transition: border-color 0.2s;
+            transition: all 0.2s ease;
         }
 
-        .project-item:hover { border-color: var(--accent-color); }
+        .project-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
 
-        .btn-group { display: flex; gap: 10px; align-items: center; }
+        .project-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-main);
+        }
 
-        .btn-link, .btn-details {
-            padding: 6px 14px;
+        .project-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
             border-radius: 6px;
-            text-decoration: none;
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
+            text-decoration: none;
             border: none;
+            transition: background 0.2s;
         }
 
-        .btn-link { background: #7c3aed; color: #fff; }
-        .btn-link:hover { background: #6d28d9; }
+        .btn-open {
+            background-color: var(--accent-color);
+            color: #fff;
+        }
 
-        .btn-details { background: #27272a; color: #fff; }
-        .btn-details:hover { background: #3f3f46; }
+        .btn-open:hover {
+            background-color: var(--accent-hover);
+        }
 
+        .btn-details {
+            background-color: #27272a;
+            color: var(--text-main);
+        }
+
+        .btn-details:hover {
+            background-color: #3f3f46;
+        }
+
+        /* Модальное окно "Подробнее" */
         #detailsModal {
             display: none;
             position: fixed;
@@ -132,22 +197,22 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0, 0, 0, 0.8);
             z-index: 9999;
             justify-content: center;
             align-items: center;
+            padding: 20px;
         }
 
-        .modal-content {
-            background: var(--panel-bg);
-            padding: 30px;
+        .modal-box {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--accent-color);
             border-radius: 14px;
-            width: 90%;
-            max-width: 500px;
-            color: #fff;
+            padding: 30px;
+            width: 100%;
+            max-width: 480px;
             position: relative;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
             text-align: center;
         }
 
@@ -155,23 +220,43 @@
             position: absolute;
             top: 15px;
             right: 20px;
-            cursor: pointer;
             font-size: 24px;
             color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #fff;
         }
 
         .modal-img {
             width: 100%;
-            max-height: 200px;
+            max-height: 180px;
             object-fit: cover;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             display: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            color: var(--accent-color);
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .modal-desc {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+
+    <div class="main-wrapper">
+        <!-- Блок иллюстрации слева -->
         <div class="illustration-box" id="illustrationContainer">
             <img id="mainIllustration" src="" alt="Арт" style="display: none;">
             <div class="placeholder-content" id="placeholderText">
@@ -181,99 +266,111 @@
             </div>
         </div>
 
+        <!-- Контент справа -->
         <div class="content-section">
             <h1>Frizworld Systems</h1>
-            <p>Добро пожаловать в систему управления проектами и аттестациями.</p>
-            <div class="projects-list" id="projectsContainer"></div>
+            <p class="subtitle">Интегрированная система управления ведомствами, кадрами и аттестациями.</p>
+            <div class="projects-grid" id="projectsContainer">
+                <!-- Проекты загружаются автоматически -->
+            </div>
         </div>
     </div>
 
+    <!-- Модальное окно -->
     <div id="detailsModal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeDetails()">&times;</span>
-            <img id="modalImg" class="modal-img" src="" alt="Project Image">
-            <h3 id="modalTitle" style="color: var(--accent-color); margin-bottom: 15px; font-size: 22px;"></h3>
-            <p id="modalDesc" style="color: var(--text-muted); line-height: 1.6;"></p>
+        <div class="modal-box">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <img id="modalImg" class="modal-img" src="" alt="Фото проекта">
+            <h3 id="modalTitle" class="modal-title"></h3>
+            <p id="modalDesc" class="modal-desc"></p>
         </div>
     </div>
 
     <script>
-    fetch('/api/settings')
-        .then(res => res.json())
-        .then(data => {
-            if (data.illustrationUrl) {
-                let img = document.getElementById('mainIllustration');
-                let placeholder = document.getElementById('placeholderText');
-                img.src = data.illustrationUrl;
+        // Подгрузка иллюстрации сайта
+        fetch('/api/settings')
+            .then(res => res.json())
+            .then(data => {
+                if (data.illustrationUrl) {
+                    let img = document.getElementById('mainIllustration');
+                    let placeholder = document.getElementById('placeholderText');
+                    img.src = data.illustrationUrl;
+                    img.style.display = 'block';
+                    placeholder.style.display = 'none';
+                }
+            })
+            .catch(err => console.error(err));
+
+        // Подгрузка списка проектов
+        fetch('/api/projects')
+            .then(res => res.json())
+            .then(projects => {
+                let container = document.getElementById('projectsContainer');
+                container.innerHTML = '';
+                if (projects && projects.length > 0) {
+                    projects.forEach(p => {
+                        let card = document.createElement('div');
+                        card.className = 'project-card';
+
+                        let titleSpan = document.createElement('span');
+                        titleSpan.className = 'project-title';
+                        titleSpan.textContent = p.title || 'Система';
+                        card.appendChild(titleSpan);
+
+                        let actionsDiv = document.createElement('div');
+                        actionsDiv.className = 'project-actions';
+
+                        if (p.path) {
+                            let openBtn = document.createElement('a');
+                            openBtn.className = 'btn btn-open';
+                            openBtn.href = p.path;
+                            openBtn.textContent = 'Открыть';
+                            actionsDiv.appendChild(openBtn);
+                        }
+
+                        let detailsBtn = document.createElement('button');
+                        detailsBtn.className = 'btn btn-details';
+                        detailsBtn.textContent = 'Подробнее';
+                        detailsBtn.onclick = function() {
+                            openModal(p.title || 'Информация', p.desc || 'Описание отсутствует.', p.imageUrl || '');
+                        };
+                        actionsDiv.appendChild(detailsBtn);
+
+                        card.appendChild(actionsDiv);
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">Проекты пока не добавлены через админ-панель.</p>';
+                }
+            })
+            .catch(err => {
+                document.getElementById('projectsContainer').innerHTML = '<p style="color: #ef4444;">Ошибка загрузки проектов.</p>';
+            });
+
+        // Управление модальным окном
+        function openModal(title, desc, imageUrl) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalDesc').textContent = desc;
+            let img = document.getElementById('modalImg');
+            if (imageUrl) {
+                img.src = imageUrl;
                 img.style.display = 'block';
-                placeholder.style.display = 'none';
-            }
-        });
-
-    fetch('/api/projects')
-        .then(res => res.json())
-        .then(projects => {
-            let container = document.getElementById('projectsContainer');
-            container.innerHTML = '';
-            if (projects && projects.length > 0) {
-                projects.forEach(p => {
-                    let div = document.createElement('div');
-                    div.className = 'project-item';
-                    
-                    let span = document.createElement('span');
-                    span.textContent = p.title || 'Проект';
-                    div.appendChild(span);
-
-                    let btnGroup = document.createElement('div');
-                    btnGroup.className = 'btn-group';
-
-                    if (p.path) {
-                        let a = document.createElement('a');
-                        a.className = 'btn-link';
-                        a.href = p.path;
-                        a.textContent = 'Открыть';
-                        btnGroup.appendChild(a);
-                    }
-
-                    let btnDet = document.createElement('button');
-                    btnDet.className = 'btn-details';
-                    btnDet.textContent = 'Подробнее';
-                    btnDet.onclick = function() {
-                        openDetails(p.title || 'Проект', p.desc || 'Описание отсутствует.', p.imageUrl || '');
-                    };
-                    btnGroup.appendChild(btnDet);
-
-                    div.appendChild(btnGroup);
-                    container.appendChild(div);
-                });
             } else {
-                container.innerHTML = '<p style="color: var(--accent-color);">Проекты пока не добавлены.</p>';
+                img.style.display = 'none';
             }
-        });
-
-    function openDetails(title, desc, imageUrl) {
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalDesc').textContent = desc;
-        let img = document.getElementById('modalImg');
-        if (imageUrl) {
-            img.src = imageUrl;
-            img.style.display = 'block';
-        } else {
-            img.style.display = 'none';
+            document.getElementById('detailsModal').style.display = 'flex';
         }
-        document.getElementById('detailsModal').style.display = 'flex';
-    }
 
-    function closeDetails() {
-        document.getElementById('detailsModal').style.display = 'none';
-    }
-
-    window.onclick = function(event) {
-        let modal = document.getElementById('detailsModal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
+        function closeModal() {
+            document.getElementById('detailsModal').style.display = 'none';
         }
-    }
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('detailsModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
