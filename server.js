@@ -61,7 +61,7 @@ function ensureDataFiles() {
 }
 ensureDataFiles();
 
-app.get('/api/settings', authMiddleware, (req, res) => {
+app.get('/api/settings', (req, res) => {
     ensureDataFiles();
     fs.readFile(settingsFilePath, 'utf8', (err, data) => {
         if (err) return res.status(500).json({ error: 'Error' });
@@ -101,7 +101,7 @@ app.post('/api/upload', authMiddleware, (req, res) => {
     });
 });
 
-app.get('/api/projects', authMiddleware, (req, res) => {
+app.get('/api/projects', (req, res) => {
     ensureDataFiles();
     fs.readFile(projectsFilePath, 'utf8', (err, data) => {
         if (err) return res.status(500).json({ error: 'Error' });
@@ -131,8 +131,37 @@ app.get('/api/logs', authMiddleware, (req, res) => {
     });
 });
 
+function getFilesRecursive(dir, baseDir = dir) {
+    let results = [];
+    const list = fs.readdirSync(dir);
+    list.forEach(file => {
+        const filePath = path.join(dir, file);
+        const relativePath = path.relative(baseDir, filePath).replace(/\\/g, '/');
+        if (relativePath.startsWith('node_modules') || relativePath.startsWith('.git') || relativePath.startsWith('data') || relativePath.startsWith('public/uploads')) {
+            return;
+        }
+        const stat = fs.statSync(filePath);
+        if (stat && stat.isDirectory()) {
+            results = results.concat(getFilesRecursive(filePath, baseDir));
+        } else {
+            results.push(relativePath);
+        }
+    });
+    return results;
+}
+
+app.get('/api/list-files', authMiddleware, (req, res) => {
+    try {
+        const files = getFilesRecursive(__dirname);
+        res.json(files);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.get('/api/file', authMiddleware, (req, res) => {
-    const targetFile = req.query.path || 'server.js';
+    const targetFile = req.query.path;
+    if (!targetFile) return res.status(400).json({ error: 'Path not specified' });
     const filePath = path.join(__dirname, targetFile);
     if (!filePath.startsWith(__dirname)) {
         return res.status(403).json({ error: 'Access denied' });
