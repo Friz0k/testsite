@@ -1,7 +1,7 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const session = require('express-session');
-const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
 
@@ -12,7 +12,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'secret-key-frizworld',
+    secret: process.env.SESSION_SECRET || 'frizworld-secure-key-gta5rp-2026',
     resave: false,
     saveUninitialized: false
 }));
@@ -84,12 +84,16 @@ app.get(['/admin', '/admin.html'], authMiddleware, (req, res) => {
 });
 
 const dataDir = path.join(__dirname, 'data');
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
 const settingsFilePath = path.join(dataDir, 'settings.json');
 const projectsFilePath = path.join(dataDir, 'projects.json');
 
 function ensureDataFiles() {
     if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
+    }
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
     }
     if (!fs.existsSync(settingsFilePath)) {
         fs.writeFileSync(settingsFilePath, JSON.stringify({}));
@@ -124,12 +128,9 @@ app.post('/api/upload', authMiddleware, (req, res) => {
     const { image, filename } = req.body;
     if (!image) return res.status(400).json({ error: 'No image' });
     
-    const uploadsDir = path.join(__dirname, 'public', 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-    }
+    ensureDataFiles();
 
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    const base64Data = image.replace(/^data:image\/[a-zA-Z0-9-+.]+;base64,/i, '');
     const ext = filename ? path.extname(filename) : '.png';
     const uniqueName = 'media_' + Date.now() + ext;
     const filePath = path.join(uploadsDir, uniqueName);
@@ -231,4 +232,22 @@ const FIB_CONFIG = {
 
 const TEST_QUESTIONS = [
     { id: 1, question: "Что, согласно УК, является основным источником уголовного права в штате Сан-Андреас?", options: [{ text: "Конституция штата.", correct: false }, { text: "Судебный Кодекс.", correct: false }, { text: "Уголовный Кодекс.", correct: true }, { text: "Процессуальный Кодекс.", correct: false }], type: "single", points: 1 },
-    { id: 2
+    { id: 2, question: "Какой орган осуществляет надзор за законностью в штате?", options: [{ text: "FIB", correct: false }, { text: "Прокуратура", correct: true }, { text: "LSPD", correct: false }, { text: "Суд", correct: false }], type: "single", points: 1 }
+];
+
+app.get('/api/test-settings', (req, res) => {
+    ensureDataFiles();
+    fs.readFile(settingsFilePath, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Error' });
+        try {
+            const parsed = JSON.parse(data);
+            res.json(parsed.testSettings || { questions: TEST_QUESTIONS });
+        } catch (e) {
+            res.json({ questions: TEST_QUESTIONS });
+        }
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
