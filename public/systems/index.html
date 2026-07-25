@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Улики CID</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000; color: #fff; min-height: 100vh; padding: 20px;
+            font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center;
+        }
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .container { position: relative; z-index: 1; width: 100%; max-width: 900px; }
+        .card { background: rgba(0,0,0,0.9); border-radius: 10px; padding: 30px; border: 1px solid #fff; box-shadow: 0 0 15px rgba(255,255,255,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; color: #fff; letter-spacing: 1px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 13px; color: #fff; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; }
+        .required::after { content: " *"; color: #fff; }
+        input, textarea, select {
+            width: 100%; padding: 12px 15px; background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: #fff; font-size: 16px;
+        }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #fff; }
+        select option { background: #000; color: #fff; }
+        .evidence-row { margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 8px; }
+        .first-row-fields { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
+        .first-row-fields .input-wrap { flex: 1 1 180px; }
+        .description-row { display: flex; gap: 15px; align-items: flex-start; }
+        .description-row .input-wrap { flex: 1; }
+        .description-row textarea { width: 100%; min-height: 70px; resize: vertical; }
+        .input-wrap label { display: block; font-size: 12px; color: #a0a0a0; margin-bottom: 5px; }
+        .remove-evidence-btn {
+            background: #222; color: #fff; border: 1px solid #555; width: 42px; height: 42px;
+            border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; margin-top: 24px;
+        }
+        .add-btn {
+            background: transparent; border: 1px dashed rgba(255,255,255,0.3); color: #a0a0a0; padding: 12px;
+            border-radius: 8px; width: 100%; font-size: 14px; cursor: pointer; margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        button { padding: 14px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .submit-btn { background: rgba(255,255,255,0.1); color: white; border: 1px solid #fff; }
+        .reset-btn { background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+        .loading { display: none; text-align: center; padding: 20px; color: #a0a0a0; }
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #fff; border-radius: 50%; width: 36px; height: 36px; animation: spin 0.8s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .result-message { padding: 15px; border-radius: 8px; text-align: center; display: none; margin-top: 20px; font-size: 14px; border: 1px solid; }
+        .success { background: rgba(255,255,255,0.05); color: #fff; border-color: #fff; display: block; }
+        .error { background: rgba(255,255,255,0.05); color: #ffaaaa; border-color: #ff4444; display: block; }
+    </style>
+</head>
+<body>
+<canvas id="particle-canvas"></canvas>
+<div class="container">
+    <div class="card">
+        <div class="header"><h1><i class="fas fa-search"></i> Улики CID</h1></div>
+        <div class="form-group">
+            <label class="required" for="nickname">Никнейм</label>
+            <input type="text" id="nickname" placeholder="Alexandr Cop">
+        </div>
+        <div class="form-group">
+            <label class="required" for="badgeNumber">Номер жетона</label>
+            <input type="text" id="badgeNumber" placeholder="405">
+        </div>
+        <div id="evidence-list"></div>
+        <button type="button" class="add-btn" id="add-evidence-btn"><i class="fas fa-plus"></i> Добавить улику</button>
+        <div class="buttons">
+            <button type="button" class="submit-btn" id="submit-btn"><i class="fas fa-paper-plane"></i> Отправить</button>
+            <button type="button" class="reset-btn" id="reset-btn"><i class="fas fa-redo"></i> Очистить</button>
+        </div>
+        <div class="loading" id="loading"><div class="spinner"></div><p>Отправка данных...</p></div>
+        <div class="result-message" id="result"></div>
+    </div>
+</div>
+<script>
+    (function() {
+        const list = document.getElementById('evidence-list');
+        const addBtn = document.getElementById('add-evidence-btn');
+        let evidenceCount = 0;
+
+        function createEvidenceRow() {
+            const row = document.createElement('div');
+            row.className = 'evidence-row';
+            row.innerHTML = `<div class="first-row-fields">
+                <div class="input-wrap"><label>Название улики</label><input type="text" class="ev-name"></div>
+                <div class="input-wrap"><label>Организация</label><select class="ev-org"><option value="">Выберите...</option><option value="RM">RM</option><option value="YAK">YAK</option><option value="AM">AM</option><option value="MM">MM</option><option value="LSV">LSV</option><option value="ESB">ESB</option><option value="MG-13">MG-13</option><option value="FAM">FAM</option></select></div>
+                <div class="input-wrap"><label>Ссылка</label><input type="url" class="ev-link"></div>
+            </div>
+            <div class="description-row">
+                <div class="input-wrap"><label>Описание</label><textarea class="ev-desc"></textarea></div>
+                <button type="button" class="remove-evidence-btn"><i class="fas fa-times"></i></button>
+            </div>`;
+            row.querySelector('.remove-evidence-btn').addEventListener('click', () => { row.remove(); evidenceCount--; });
+            list.appendChild(row);
+            evidenceCount++;
+        }
+
+        addBtn.addEventListener('click', createEvidenceRow);
+        createEvidenceRow();
+
+        document.getElementById('submit-btn').addEventListener('click', () => {
+            const nickname = document.getElementById('nickname').value.trim();
+            const badgeNumber = document.getElementById('badgeNumber').value.trim();
+            if (!nickname || !badgeNumber) { alert('Заполните ник и жетон'); return; }
+
+            const rows = list.querySelectorAll('.evidence-row');
+            const evidences = [];
+            rows.forEach(r => {
+                const name = r.querySelector('.ev-name').value.trim();
+                if (name) {
+                    evidences.push({
+                        name,
+                        organization: r.querySelector('.ev-org').value,
+                        description: r.querySelector('.ev-desc').value.trim(),
+                        link: r.querySelector('.ev-link').value.trim()
+                    });
+                }
+            });
+
+            if (!evidences.length) { alert('Добавьте хотя бы одну улику'); return; }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+
+            fetch('/api/cid/evidence', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nickname, badgeNumber, evidences })
+            })
+            .then(res => res.json())
+            .then(res => {
+                document.getElementById('loading').style.display = 'none';
+                const rDiv = document.getElementById('result');
+                rDiv.textContent = res.message;
+                rDiv.className = 'result-message ' + (res.success ? 'success' : 'error');
+                rDiv.style.display = 'block';
+            })
+            .catch(err => {
+                document.getElementById('loading').style.display = 'none';
+                alert('Ошибка: ' + err.message);
+            });
+        });
+    })();
+</script>
+</body>
+</html>
