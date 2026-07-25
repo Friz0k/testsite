@@ -8,8 +8,8 @@ const { exec } = require('child_process');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secret-key',
@@ -18,6 +18,7 @@ app.use(session({
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 const authMiddleware = (req, res, next) => {
     if (req.session && req.session.isAdmin) {
@@ -43,17 +44,27 @@ app.get('/admin', authMiddleware, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
-const settingsFilePath = path.join(__dirname, 'data', 'settings.json');
+const dataDir = path.join(__dirname, 'data');
+const settingsFilePath = path.join(dataDir, 'settings.json');
+const projectsFilePath = path.join(dataDir, 'projects.json');
 
-app.get('/api/settings', authMiddleware, (req, res) => {
-    if (!fs.existsSync(path.dirname(settingsFilePath))) {
-        fs.mkdirSync(path.dirname(settingsFilePath), { recursive: true });
+function ensureDataFiles() {
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
     }
     if (!fs.existsSync(settingsFilePath)) {
         fs.writeFileSync(settingsFilePath, JSON.stringify({}));
     }
+    if (!fs.existsSync(projectsFilePath)) {
+        fs.writeFileSync(projectsFilePath, JSON.stringify([]));
+    }
+}
+ensureDataFiles();
+
+app.get('/api/settings', authMiddleware, (req, res) => {
+    ensureDataFiles();
     fs.readFile(settingsFilePath, 'utf8', (err, data) => {
-        if (err) return res.status(500).json({ error: 'Error reading settings' });
+        if (err) return res.status(500).json({ error: 'Error' });
         try {
             res.json(JSON.parse(data));
         } catch (e) {
@@ -63,11 +74,61 @@ app.get('/api/settings', authMiddleware, (req, res) => {
 });
 
 app.post('/api/settings', authMiddleware, (req, res) => {
-    if (!fs.existsSync(path.dirname(settingsFilePath))) {
-        fs.mkdirSync(path.dirname(settingsFilePath), { recursive: true });
-    }
+    ensureDataFiles();
     fs.writeFile(settingsFilePath, JSON.stringify(req.body, null, 2), 'utf8', (err) => {
-        if (err) return res.status(500).json({ error: 'Error saving settings' });
+        if (err) return res.status(500).json({ error: 'Error' });
+        res.json({ success: true });
+    });
+});
+
+app.post('/api/upload-illustration', authMiddleware, (req, res) => {
+    const { image, filename } = req.body;
+    if (!image) return res.status(400).json({ error: 'No image' });
+    
+    const uploadsDir = path.join(__dirname, 'public', 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    const ext = filename ? path.extname(filename) : '.png';
+    const uniqueName = 'illustration_' + Date.now() + ext;
+    const filePath = path.join(uploadsDir, uniqueName);
+
+    fs.writeFile(filePath, base64Data, 'base64', (err) => {
+        if (err) return res.status(500).json({ error: 'Save error' });
+        
+        const fileUrl = '/uploads/' + uniqueName;
+        ensureDataFiles();
+        let settings = {};
+        try {
+            settings = JSON.parse(fs.readFileSync(settingsFilePath, 'utf8'));
+        } catch (e) {}
+        
+        settings.illustrationUrl = fileUrl;
+        fs.writeFileSync(settingsFilePath, JSON.stringify(settings, null, 2));
+        
+        res.json({ success: true, url: fileUrl });
+    });
+});
+
+app.get('/api/projects', authMiddleware, (req, res) => {
+    ensureDataFiles();
+    fs.readFile(projectsFilePath, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Error' });
+        try {
+            res.json(JSON.parse(data));
+        } catch (e) {
+            res.json([]);
+        }
+    });
+});
+
+app.post('/api/projects', authMiddleware, (req, res) => {
+    ensureDataFiles();
+    const projects = req.body;
+    fs.writeFile(projectsFilePath, JSON.stringify(projects, null, 2), 'utf8', (err) => {
+        if (err) return res.status(500).json({ error: 'Error' });
         res.json({ success: true });
     });
 });
