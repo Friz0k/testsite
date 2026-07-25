@@ -13,11 +13,12 @@
             --text-muted: #a1a1aa;
         }
 
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
             padding: 40px;
             display: flex;
             justify-content: center;
@@ -81,26 +82,15 @@
             font-size: 13px;
         }
 
-        .content-section {
-            flex-grow: 1;
-        }
+        .content-section { flex-grow: 1; }
 
-        h1 {
-            font-size: 32px;
-            margin-bottom: 20px;
-            color: var(--text-main);
-        }
-
-        p {
-            color: var(--text-muted);
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
+        h1 { font-size: 32px; margin-bottom: 20px; color: var(--text-main); }
+        p { color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
 
         .projects-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
 
         .project-item {
@@ -111,39 +101,103 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            text-decoration: none;
             color: var(--text-main);
             transition: border-color 0.2s;
         }
 
-        .project-item:hover {
-            border-color: var(--accent-color);
+        .project-item:hover { border-color: var(--accent-color); }
+
+        .btn-group { display: flex; gap: 10px; align-items: center; }
+
+        .btn-link, .btn-details {
+            padding: 6px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-link { background: #7c3aed; color: #fff; }
+        .btn-link:hover { background: #6d28d9; }
+
+        .btn-details { background: #27272a; color: #fff; }
+        .btn-details:hover { background: #3f3f46; }
+
+        #detailsModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            padding: 30px;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 500px;
+            color: #fff;
+            position: relative;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--text-muted);
+        }
+
+        .modal-img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Блок иллюстрации, куда автоматически подставляется арт -->
         <div class="illustration-box" id="illustrationContainer">
             <img id="mainIllustration" src="" alt="Арт" style="display: none;">
             <div class="placeholder-content" id="placeholderText">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v4z"/></svg>
                 <h3>Место под иллюстрацию</h3>
-                <p>Загрузите арт через админ-панель</p>
+                <p>Добавь сюда свой арт в коде</p>
             </div>
         </div>
 
         <div class="content-section">
             <h1>Frizworld Systems</h1>
             <p>Добро пожаловать в систему управления проектами и аттестациями.</p>
-            <div class="projects-list" id="projectsContainer">
-                <!-- Проекты подгружаются динамически -->
-            </div>
+            <div class="projects-list" id="projectsContainer"></div>
+        </div>
+    </div>
+
+    <div id="detailsModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeDetails()">&times;</span>
+            <img id="modalImg" class="modal-img" src="" alt="Project Image">
+            <h3 id="modalTitle" style="color: var(--accent-color); margin-bottom: 15px; font-size: 22px;"></h3>
+            <p id="modalDesc" style="color: var(--text-muted); line-height: 1.6;"></p>
         </div>
     </div>
 
     <script>
-    // Загрузка настроек и подстановка арта на главную страницу
     fetch('/api/settings')
         .then(res => res.json())
         .then(data => {
@@ -156,7 +210,6 @@
             }
         });
 
-    // Загрузка списка проектов
     fetch('/api/projects')
         .then(res => res.json())
         .then(projects => {
@@ -164,16 +217,63 @@
             container.innerHTML = '';
             if (projects && projects.length > 0) {
                 projects.forEach(p => {
-                    let a = document.createElement('a');
-                    a.className = 'project-item';
-                    a.href = p.path || '#';
-                    a.innerHTML = `<span>${p.title || 'Проект'}</span> <span style="color: #7c3aed;">&rarr;</span>`;
-                    container.appendChild(a);
+                    let div = document.createElement('div');
+                    div.className = 'project-item';
+                    
+                    let span = document.createElement('span');
+                    span.textContent = p.title || 'Проект';
+                    div.appendChild(span);
+
+                    let btnGroup = document.createElement('div');
+                    btnGroup.className = 'btn-group';
+
+                    if (p.path) {
+                        let a = document.createElement('a');
+                        a.className = 'btn-link';
+                        a.href = p.path;
+                        a.textContent = 'Открыть';
+                        btnGroup.appendChild(a);
+                    }
+
+                    let btnDet = document.createElement('button');
+                    btnDet.className = 'btn-details';
+                    btnDet.textContent = 'Подробнее';
+                    btnDet.onclick = function() {
+                        openDetails(p.title || 'Проект', p.desc || 'Описание отсутствует.', p.imageUrl || '');
+                    };
+                    btnGroup.appendChild(btnDet);
+
+                    div.appendChild(btnGroup);
+                    container.appendChild(div);
                 });
             } else {
-                container.innerHTML = '<p style="color: #7c3aed;">Проекты пока не добавлены.</p>';
+                container.innerHTML = '<p style="color: var(--accent-color);">Проекты пока не добавлены.</p>';
             }
         });
+
+    function openDetails(title, desc, imageUrl) {
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalDesc').textContent = desc;
+        let img = document.getElementById('modalImg');
+        if (imageUrl) {
+            img.src = imageUrl;
+            img.style.display = 'block';
+        } else {
+            img.style.display = 'none';
+        }
+        document.getElementById('detailsModal').style.display = 'flex';
+    }
+
+    function closeDetails() {
+        document.getElementById('detailsModal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        let modal = document.getElementById('detailsModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    }
     </script>
 </body>
 </html>
