@@ -40,7 +40,36 @@ app.post('/login', (req, res) => {
 });
 
 app.get('/admin', authMiddleware, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+    res.sendFile(path.join(__dirname, 'views', 'admin.html'));
+});
+
+const settingsFilePath = path.join(__dirname, 'data', 'settings.json');
+
+app.get('/api/settings', authMiddleware, (req, res) => {
+    if (!fs.existsSync(path.dirname(settingsFilePath))) {
+        fs.mkdirSync(path.dirname(settingsFilePath), { recursive: true });
+    }
+    if (!fs.existsSync(settingsFilePath)) {
+        fs.writeFileSync(settingsFilePath, JSON.stringify({}));
+    }
+    fs.readFile(settingsFilePath, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Error reading settings' });
+        try {
+            res.json(JSON.parse(data));
+        } catch (e) {
+            res.json({});
+        }
+    });
+});
+
+app.post('/api/settings', authMiddleware, (req, res) => {
+    if (!fs.existsSync(path.dirname(settingsFilePath))) {
+        fs.mkdirSync(path.dirname(settingsFilePath), { recursive: true });
+    }
+    fs.writeFile(settingsFilePath, JSON.stringify(req.body, null, 2), 'utf8', (err) => {
+        if (err) return res.status(500).json({ error: 'Error saving settings' });
+        res.json({ success: true });
+    });
 });
 
 app.get('/api/logs', authMiddleware, (req, res) => {
