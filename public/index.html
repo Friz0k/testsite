@@ -2,209 +2,178 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friz World developer portal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Frizworld Портфолио</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         :root {
-            --primary: #8a2be2;
-            --primary-light: #b026ff;
-            --bg: #050505;
-            --card-bg: rgba(15, 15, 40, 0.4);
-            --border: rgba(138, 43, 226, 0.3);
-            --text: #ffffff;
-            --text-muted: #cccccc;
+            --bg-color: #09090b;
+            --panel-bg: #121214;
+            --border-color: #7c3aed;
+            --accent-color: #a855f7;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
         }
 
-        body { background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
-        
-        header { background: #0a0a0a; padding: 20px 50px; border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 26px; font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: 2px; }
-        .logo span { color: var(--primary); }
-        nav a { color: var(--text); text-decoration: none; margin-left: 30px; font-weight: 600; font-size: 14px; text-transform: uppercase; transition: color 0.3s; }
-        nav a:hover { color: var(--primary-light); }
-        
-        .hero { padding: 100px 50px; text-align: center; background: radial-gradient(circle at center, #1a0b2e 0%, var(--bg) 100%); border-bottom: 1px solid var(--border); }
-        .hero h1 { font-size: 52px; margin-bottom: 20px; font-weight: 800; text-transform: uppercase; }
-        .hero h1 span { background: linear-gradient(90deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero p { font-size: 20px; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
-        
-        .section { padding: 80px 50px; max-width: 1400px; margin: 0 auto; }
-        .section-title { font-size: 36px; margin-bottom: 60px; text-align: center; color: var(--text); text-transform: uppercase; letter-spacing: 3px; border-bottom: 2px solid var(--primary); display: inline-block; padding-bottom: 10px; position: relative; left: 50%; transform: translateX(-50%); }
-
-        /* НАВЫКИ */
-        .skills-layout { display: flex; gap: 40px; align-items: stretch; justify-content: space-between; flex-wrap: wrap; }
-        .skills-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; min-width: 60%; }
-        .skill-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 30px 20px; transition: all 0.4s ease; position: relative; overflow: hidden; backdrop-filter: blur(10px); }
-        .skill-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--primary-light)); transform: scaleX(0); transition: transform 0.4s ease; transform-origin: left; }
-        .skill-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 15px 30px rgba(138, 43, 226, 0.15); }
-        .skill-card:hover::before { transform: scaleX(1); }
-        .skill-icon { font-size: 36px; color: var(--primary-light); margin-bottom: 15px; }
-        .skill-card h3 { font-size: 20px; margin-bottom: 10px; font-weight: 700; }
-        .skill-card p { color: var(--text-muted); font-size: 14px; }
-        
-        .skills-illustration { flex: 0 0 350px; background: #0a0a0a; border: 2px dashed var(--primary); border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-light); text-align: center; padding: 40px; min-height: 400px; position: relative; overflow: hidden; }
-        .skills-illustration i { font-size: 60px; margin-bottom: 20px; opacity: 0.5; }
-
-        /* ПРОЕКТЫ */
-        .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; padding: 20px; }
-        .project-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; backdrop-filter: blur(10px); text-decoration: none; color: inherit; display: flex; flex-direction: column; animation: float 6s ease-in-out infinite; }
-        .project-card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(138, 43, 226, 0.2); }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        .card-image { position: relative; height: 220px; overflow: hidden; }
-        .card-image-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(176, 38, 255, 0.15)); display: flex; align-items: center; justify-content: center; transition: transform 0.4s ease; font-size: 50px; color: var(--primary); }
-        .card-image-placeholder img { width: 100%; height: 100%; object-fit: cover; }
-        .project-card:hover .card-image-placeholder { transform: scale(1.05); }
-        
-        .card-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(5,5,5,0.95)); padding: 1.5rem 1rem 1rem; opacity: 0; transition: opacity 0.3s ease; color: white; font-weight: 600; text-align: center; }
-        .project-card:hover .card-overlay { opacity: 1; }
+        .container {
+            display: flex;
+            gap: 40px;
+            max-width: 1000px;
+            width: 100%;
+            align-items: center;
+        }
 
-        .card-info { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
-        .card-info h3 { font-size: 22px; margin-bottom: 10px; }
-        .card-description { color: var(--text-muted); font-size: 14px; margin-bottom: 15px; line-height: 1.5; flex-grow: 1; }
-        
-        .card-tags { display: flex; gap: 8px; flex-wrap: wrap; }
-        .tag { padding: 4px 12px; background: rgba(138, 43, 226, 0.1); border-radius: 50px; font-size: 12px; color: var(--primary-light); border: 1px solid rgba(138, 43, 226, 0.3); font-weight: 600; }
+        .illustration-box {
+            width: 350px;
+            height: 450px;
+            border: 2px dashed var(--border-color);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--panel-bg);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.2);
+        }
 
-        /* КОНТАКТЫ */
-        .contact-grid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 20px; padding-bottom: 60px; }
-        .contact-item { display: flex; flex-direction: column; align-items: center; gap: 15px; cursor: pointer; text-decoration: none; color: inherit; transition: all 0.3s ease; background: var(--card-bg); padding: 30px; border-radius: 16px; border: 1px solid var(--border); width: 220px; }
-        .contact-item:hover { transform: translateY(-10px); border-color: var(--primary); box-shadow: 0 10px 30px rgba(138, 43, 226, 0.2); }
-        .contact-icon-wrapper { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--border); display: flex; justify-content: center; align-items: center; font-size: 36px; color: var(--primary-light); background: #11051f; transition: 0.4s ease; position: relative; }
-        .contact-item:hover .contact-icon-wrapper { border-color: var(--primary-light); box-shadow: 0 0 20px rgba(176, 38, 255, 0.4); transform: scale(1.1); color: var(--text); background: var(--primary); }
-        .contact-label { font-weight: 700; font-size: 18px; color: var(--text); transition: 0.3s; }
-        .contact-item:hover .contact-label { color: var(--primary-light); }
+        .illustration-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
 
-        @media (max-width: 900px) {
-            .skills-layout { flex-direction: column; }
-            .skills-illustration { min-height: 300px; width: 100%; }
+        .placeholder-content {
+            text-align: center;
+            padding: 20px;
+            z-index: 1;
+        }
+
+        .placeholder-content svg {
+            width: 64px;
+            height: 64px;
+            fill: var(--accent-color);
+            margin-bottom: 15px;
+        }
+
+        .placeholder-content h3 {
+            color: var(--accent-color);
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .placeholder-content p {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .content-section {
+            flex-grow: 1;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        p {
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .projects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .project-item {
+            background: var(--panel-bg);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 1px solid #27272a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: border-color 0.2s;
+        }
+
+        .project-item:hover {
+            border-color: var(--accent-color);
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="logo">FRIZ<span>WORLD</span></div>
-        <nav>
-            <a href="#skills">Навыки</a>
-            <a href="#projects">Проекты</a>
-            <a href="#contact">Контакты</a>
-        </nav>
-    </header>
-
-    <div class="hero">
-        <h1>Системная <span>разработка</span></h1>
-        <p>Программист, специализирующийся на автоматизации процессов, создании масштабных веб-систем, баз данных и написании многофункциональных ботов.</p>
-    </div>
-
-    <!-- ЧТО Я УМЕЮ -->
-    <div class="section" id="skills">
-        <h2 class="section-title">Что я умею</h2>
-        <div class="skills-layout">
-            <div class="skills-grid">
-                <div class="skill-card">
-                    <i class="fab fa-python skill-icon"></i>
-                    <h3>Python & Discord.py</h3>
-                    <p>Разработка и развертывание сложных Discord-ботов (Foxhole, Deadly), работа с массивами данных и API, хостинг на Render.</p>
-                </div>
-                <div class="skill-card">
-                    <i class="fas fa-server skill-icon"></i>
-                    <h3>GTA5RP Web Systems</h3>
-                    <p>Проектирование веб-панелей для гос. структур (LSSD, LSPD, GOV), системы отчетности кадетов, учет улик CID и переаттестации.</p>
-                </div>
-                <div class="skill-card">
-                    <i class="fas fa-gamepad skill-icon"></i>
-                    <h3>GameDev (RageMP)</h3>
-                    <p>Опыт программирования на Majestic RP: поддержка и оптимизация клиент-серверной архитектуры игрового мода.</p>
-                </div>
-                <div class="skill-card">
-                    <i class="fab fa-js skill-icon"></i>
-                    <h3>Web (JS, HTML, CSS)</h3>
-                    <p>Создание адаптивных и интерактивных интерфейсов, связка фронтенда с бэкендом, интеграция с Node.js.</p>
-                </div>
-                <div class="skill-card">
-                    <i class="fas fa-database skill-icon"></i>
-                    <h3>1С Разработка</h3>
-                    <p>Профильное образование и практические навыки в настройке, администрировании и программировании бизнес-логики.</p>
-                </div>
-                <div class="skill-card">
-                    <i class="fas fa-cogs skill-icon"></i>
-                    <h3>Интеграции</h3>
-                    <p>Связывание различных сервисов между собой, автоматизация сбора данных и рассылка динамических уведомлений.</p>
-                </div>
-            </div>
-            
-            <div class="skills-illustration">
-                <i class="fas fa-user-astronaut"></i>
-                <span>Место под иллюстрацию</span>
-                <p style="font-size: 12px; margin-top: 10px; font-weight: normal; opacity: 0.5;">Добавь сюда свой арт в коде</p>
+    <div class="container">
+        <!-- Блок иллюстрации, куда автоматически подставляется арт -->
+        <div class="illustration-box" id="illustrationContainer">
+            <img id="mainIllustration" src="" alt="Арт" style="display: none;">
+            <div class="placeholder-content" id="placeholderText">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v4z"/></svg>
+                <h3>Место под иллюстрацию</h3>
+                <p>Загрузите арт через админ-панель</p>
             </div>
         </div>
-    </div>
 
-    <!-- ПРОЕКТЫ -->
-    <div class="section" id="projects">
-        <h2 class="section-title">Мои Проекты</h2>
-        <div class="projects-grid" id="projectsGrid">
-            <!-- Динамическая загрузка -->
-        </div>
-    </div>
-
-    <!-- КОНТАКТЫ -->
-    <div class="section" id="contact">
-        <h2 class="section-title">Контакты</h2>
-        <div class="contact-grid">
-            <a href="https://t.me/frizworld" target="_blank" class="contact-item">
-                <div class="contact-icon-wrapper"><i class="fab fa-telegram-plane"></i></div>
-                <div class="contact-label">Telegram</div>
-            </a>
-            
-            <a href="#" class="contact-item">
-                <div class="contact-icon-wrapper"><i class="fab fa-discord"></i></div>
-                <div class="contact-label">Discord</div>
-            </a>
-
-            <a href="mailto:frizworld@mail.ru" class="contact-item">
-                <div class="contact-icon-wrapper"><i class="fas fa-envelope"></i></div>
-                <div class="contact-label">E-Mail</div>
-            </a>
+        <div class="content-section">
+            <h1>Frizworld Systems</h1>
+            <p>Добро пожаловать в систему управления проектами и аттестациями.</p>
+            <div class="projects-list" id="projectsContainer">
+                <!-- Проекты подгружаются динамически -->
+            </div>
         </div>
     </div>
 
     <script>
-        fetch('/api/projects')
-            .then(res => res.json())
-            .then(projects => {
-                const grid = document.getElementById('projectsGrid');
-                grid.innerHTML = '';
-                projects.forEach((p, index) => {
-                    const mediaContent = p.image 
-                        ? `<img src="${p.image}" alt="${p.title}">` 
-                        : `<i class="fas fa-folder-open"></i>`;
-                    
-                    const tagsHtml = (p.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
-                    const delay = (index % 3) * -2; 
-                    
-                    grid.innerHTML += `
-                        <a href="${p.link}" target="_blank" class="project-card" style="animation-delay: ${delay}s">
-                            <div class="card-image">
-                                <div class="card-image-placeholder">${mediaContent}</div>
-                                <div class="card-overlay"><span>Подробнее →</span></div>
-                            </div>
-                            <div class="card-info">
-                                <h3>${p.title}</h3>
-                                <p class="card-description">${p.desc}</p>
-                                <div class="card-tags">${tagsHtml}</div>
-                            </div>
-                        </a>
-                    `;
+    // Загрузка настроек и подстановка арта на главную страницу
+    fetch('/api/settings')
+        .then(res => res.json())
+        .then(data => {
+            if (data.illustrationUrl) {
+                let img = document.getElementById('mainIllustration');
+                let placeholder = document.getElementById('placeholderText');
+                img.src = data.illustrationUrl;
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+            }
+        });
+
+    // Загрузка списка проектов
+    fetch('/api/projects')
+        .then(res => res.json())
+        .then(projects => {
+            let container = document.getElementById('projectsContainer');
+            container.innerHTML = '';
+            if (projects && projects.length > 0) {
+                projects.forEach(p => {
+                    let a = document.createElement('a');
+                    a.className = 'project-item';
+                    a.href = p.path || '#';
+                    a.innerHTML = `<span>${p.title || 'Проект'}</span> <span style="color: #7c3aed;">&rarr;</span>`;
+                    container.appendChild(a);
                 });
-            });
+            } else {
+                container.innerHTML = '<p style="color: #7c3aed;">Проекты пока не добавлены.</p>';
+            }
+        });
     </script>
 </body>
 </html>
