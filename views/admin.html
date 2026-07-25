@@ -2,230 +2,316 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Админ-панель Friz World</title>
+    <title>Админ-панель Frizworld</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background: #050505; color: #fff; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 280px; background: #0a0a0a; border-right: 2px solid #8a2be2; padding: 40px 20px; display: flex; flex-direction: column; gap: 15px; }
-        .sidebar h2 { color: #fff; margin-bottom: 30px; font-size: 22px; text-transform: uppercase; text-align: center; }
-        .sidebar h2 span { color: #8a2be2; }
-        .menu-btn { background: #11051f; border: 1px solid #2a114d; color: #fff; padding: 15px; border-radius: 8px; cursor: pointer; text-align: left; font-weight: 600; text-transform: uppercase; transition: 0.3s; }
-        .menu-btn:hover, .menu-btn.active { background: #8a2be2; border-color: #b026ff; box-shadow: 0 0 15px rgba(138,43,226,0.4); }
-        
-        .content { flex: 1; padding: 40px; overflow-y: auto; }
-        .panel { display: none; }
-        .panel.active { display: block; }
-        h1 { font-size: 28px; margin-bottom: 30px; border-bottom: 2px solid #1a0b2e; padding-bottom: 10px; text-transform: uppercase; }
-        .card { background: #0a0a0a; border: 1px solid #2a114d; border-radius: 12px; padding: 30px; margin-bottom: 20px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #ccc; font-size: 13px; text-transform: uppercase; font-weight: 600; }
-        input[type="text"], input[type="number"], textarea { width: 100%; padding: 12px; background: #000; border: 1px solid #4a1587; border-radius: 6px; color: #fff; font-size: 15px; outline: none; }
-        textarea { height: 100px; resize: vertical; }
-        input:focus, textarea:focus { border-color: #b026ff; }
-        .btn { background: #8a2be2; color: #fff; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        .btn:hover { background: #b026ff; box-shadow: 0 0 15px rgba(176,38,255,0.4); }
-        .btn-danger { background: #ff3333; }
-        .btn-danger:hover { background: #ff5555; }
-        
-        .project-item { display: flex; justify-content: space-between; align-items: center; background: #11051f; padding: 15px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #2a114d; }
-        .question-box { background: #11051f; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #2a114d; }
+        :root {
+            --bg-color: #09090b;
+            --panel-bg: #121214;
+            --border-color: #27272a;
+            --accent-color: #7c3aed;
+            --accent-hover: #6d28d9;
+            --success-color: #22c55e;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 30px 20px;
+        }
+
+        .admin-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            text-align: center;
+            margin-bottom: 35px;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .admin-section {
+            background-color: var(--panel-bg);
+            padding: 30px;
+            border-radius: 14px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        h2 {
+            color: var(--text-main);
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            font-weight: 600;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        textarea#codeEditor {
+            height: 450px;
+            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            color: #c084fc;
+            background-color: #050507;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: var(--text-main);
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #16a34a;
+        }
+
+        pre {
+            background-color: #050507;
+            color: var(--success-color);
+            padding: 18px;
+            border-radius: 8px;
+            height: 350px;
+            overflow-y: auto;
+            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            font-size: 13px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>АДМИН <span>ПАНЕЛЬ</span></h2>
-        <button class="menu-btn active" onclick="switchTab('projectsTab')">Управление проектами</button>
-        <button class="menu-btn" onclick="switchTab('configTab')">Переменные и Конфиг</button>
-        <button class="menu-btn" onclick="switchTab('testTab')">Вопросы переаттестации</button>
-        <button class="menu-btn" onclick="window.location.href='/'" style="margin-top:auto; background:#000;">На сайт</button>
-        <button class="menu-btn" onclick="window.location.href='/logout'" style="background:#220000; border-color:#550000;">Выйти</button>
-    </div>
-
-    <div class="content">
-        <div id="projectsTab" class="panel active">
-            <h1>Добавить / Удалить проекты</h1>
-            <div class="card">
-                <form id="projectForm" onsubmit="addProject(event)">
-                    <div class="form-group"><label>Название проекта</label><input type="text" id="pTitle" required></div>
-                    <div class="form-group"><label>Описание</label><textarea id="pDesc" required></textarea></div>
-                    <div class="form-group"><label>Теги (через запятую)</label><input type="text" id="pTags" placeholder="Python, Web, GTA5RP"></div>
-                    <div class="form-group"><label>Ссылка (О проекте / GitHub)</label><input type="text" id="pLink" placeholder="https://github.com/..."></div>
-                    <div class="form-group"><label>Иллюстрация (Картинка)</label><input type="file" id="pImage" accept="image/*" style="color:#fff;"></div>
-                    <button type="submit" class="btn">Добавить проект</button>
-                </form>
-            </div>
-            <div class="card">
-                <h3 style="margin-bottom:15px;">Существующие проекты</h3>
-                <div id="projectsList">Загрузка...</div>
-            </div>
+    <div class="admin-container">
+        <h1>Панель управления Frizworld</h1>
+        
+        <div class="admin-section">
+            <h2>Глобальные переменные</h2>
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label>ВЕБХУК LSSD</label>
+                    <input type="text" id="webhook_lssd" name="webhook_lssd">
+                </div>
+                <div class="form-group">
+                    <label>ВЕБХУК LSPD</label>
+                    <input type="text" id="webhook_lspd" name="webhook_lspd">
+                </div>
+                <div class="form-group">
+                    <label>ВЕБХУК GOV</label>
+                    <input type="text" id="webhook_gov" name="webhook_gov">
+                </div>
+                <div class="form-group">
+                    <label>ВЕБХУК CID</label>
+                    <input type="text" id="webhook_cid" name="webhook_cid">
+                </div>
+                <div class="form-group">
+                    <label>ВЕБХУК FIB</label>
+                    <input type="text" id="webhook_fib" name="webhook_fib">
+                </div>
+                <div class="form-group">
+                    <label>ID РОЛЕЙ ДЛЯ УПОМИНАНИЯ (ЧЕРЕЗ ЗАПЯТУЮ)</label>
+                    <input type="text" id="role_ids" name="role_ids">
+                </div>
+                <div class="form-group">
+                    <label>БАЛЛОВАЯ СИСТЕМА (НАСТРОЙКИ ТЕКСТОМ / JSON)</label>
+                    <textarea id="points_system" name="points_system" rows="6"></textarea>
+                </div>
+                <button type="button" onclick="saveSettings()">СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
+            </form>
         </div>
 
-        <div id="configTab" class="panel">
-            <h1>Глобальные переменные</h1>
-            <div class="card">
-                <form id="configForm" onsubmit="saveConfig(event)">
-                    <div class="form-group"><label>Вебхук LSSD</label><input type="text" id="whLssd"></div>
-                    <div class="form-group"><label>Вебхук LSPD</label><input type="text" id="whLspd"></div>
-                    <div class="form-group"><label>Вебхук GOV</label><input type="text" id="whGov"></div>
-                    <div class="form-group"><label>Вебхук CID</label><input type="text" id="whCid"></div>
-                    <div class="form-group"><label>Вебхук FIB</label><input type="text" id="whFib"></div>
-                    <div class="form-group"><label>ID ролей для упоминания (через запятую)</label><input type="text" id="roleIds"></div>
-                    <div class="form-group"><label>Балловая система (Настройки текстом / JSON)</label><textarea id="pointsSys"></textarea></div>
-                    <button type="submit" class="btn">Сохранить изменения</button>
-                </form>
+        <div class="admin-section">
+            <h2>Управление иллюстрацией</h2>
+            <div class="form-group">
+                <label>ССЫЛКА НА ИЛЛЮСТРАЦИЮ</label>
+                <input type="text" id="illustrationUrl" placeholder="Вставьте прямую ссылку на фото">
             </div>
+            <button type="button" onclick="saveIllustration()">СОХРАНИТЬ ИЛЛЮСТРАЦИЮ</button>
         </div>
 
-        <div id="testTab" class="panel">
-            <h1>Настройка тестов и вопросов</h1>
-            <div class="card">
-                <div style="display:flex; gap:20px; margin-bottom:20px;">
-                    <div style="flex:1;"><label>Всего вопросов в тесте</label><input type="number" id="testCount"></div>
-                    <div style="flex:1;"><label>Проходной балл</label><input type="number" id="testPassing"></div>
-                </div>
-                <h3 style="margin-bottom:15px;">Список вопросов</h3>
-                <div id="questionsList"></div>
-                <button type="button" class="btn" onclick="addQuestionField()" style="margin-top:15px;">+ Добавить вопрос</button>
-                <div style="margin-top: 30px;">
-                    <button type="button" class="btn" onclick="saveTestConfig()" style="background:#00ffaa; color:#000;">Сохранить тест на сервер</button>
-                </div>
+        <div class="admin-section">
+            <h2>Логи сервера в реальном времени</h2>
+            <button type="button" onclick="fetchLogs()" style="margin-bottom: 15px;">ОБНОВИТЬ ЛОГИ</button>
+            <pre id="serverLogs">Загрузка логов...</pre>
+        </div>
+
+        <div class="admin-section">
+            <h2>Редактор кода проекта</h2>
+            <div class="form-group">
+                <label>ВЫБЕРИТЕ ФАЙЛ ДЛЯ РЕДАКТИРОВАНИЯ</label>
+                <select id="fileSelect" onchange="loadFileCode()">
+                    <option value="server.js">server.js</option>
+                    <option value="public/index.html">Главная страница (public/index.html)</option>
+                    <option value="public/admin.html">Админ-панель (public/admin.html)</option>
+                </select>
             </div>
+            <textarea id="codeEditor"></textarea>
+            <button type="button" class="btn-success" onclick="saveFileCode()">СОХРАНИТЬ И ПРИМЕНИТЬ КОД</button>
         </div>
     </div>
 
     <script>
-        let globalConfig = {};
-
-        function switchTab(id) {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        function loadAdminData() {
-            fetch('/api/projects').then(res => res.json()).then(projects => {
-                const list = document.getElementById('projectsList');
-                list.innerHTML = '';
-                projects.forEach(p => {
-                    list.innerHTML += `
-                        <div class="project-item">
-                            <span><b>${p.title}</b></span>
-                            <button class="btn btn-danger" onclick="deleteProject(${p.id})">Удалить</button>
-                        </div>
-                    `;
-                });
-            });
-
-            fetch('/api/config').then(res => res.json()).then(cfg => {
-                globalConfig = cfg;
-                document.getElementById('whLssd').value = cfg.webhooks?.lssd || '';
-                document.getElementById('whLspd').value = cfg.webhooks?.lspd || '';
-                document.getElementById('whGov').value = cfg.webhooks?.gov || '';
-                document.getElementById('whCid').value = cfg.webhooks?.cid || '';
-                document.getElementById('whFib').value = cfg.webhooks?.fib || '';
-                document.getElementById('roleIds').value = cfg.roles || '';
-                document.getElementById('pointsSys').value = cfg.pointsSystem || '';
-                
-                document.getElementById('testCount').value = cfg.testSettings?.questionsCount || 0;
-                document.getElementById('testPassing').value = cfg.testSettings?.passingScore || 0;
-                
-                renderQuestions(cfg.testSettings?.questions || []);
-            });
-        }
-
-        function addProject(e) {
-            e.preventDefault();
-            const formData = new FormData();
-            formData.append('title', document.getElementById('pTitle').value);
-            formData.append('desc', document.getElementById('pDesc').value);
-            formData.append('tags', document.getElementById('pTags').value);
-            formData.append('link', document.getElementById('pLink').value);
-            formData.append('image', document.getElementById('pImage').files[0]);
-
-            fetch('/api/projects', { method: 'POST', body: formData })
-                .then(res => res.json())
-                .then(data => {
-                    alert(data.message);
-                    document.getElementById('projectForm').reset();
-                    loadAdminData();
-                });
-        }
-
-        function deleteProject(id) {
-            if(!confirm('Точно удалить проект?')) return;
-            fetch(`/api/projects/${id}`, { method: 'DELETE' })
-                .then(res => res.json())
-                .then(data => {
-                    alert(data.message);
-                    loadAdminData();
-                });
-        }
-
-        function saveConfig(e) {
-            e.preventDefault();
-            globalConfig.webhooks.lssd = document.getElementById('whLssd').value;
-            globalConfig.webhooks.lspd = document.getElementById('whLspd').value;
-            globalConfig.webhooks.gov = document.getElementById('whGov').value;
-            globalConfig.webhooks.cid = document.getElementById('whCid').value;
-            globalConfig.webhooks.fib = document.getElementById('whFib').value;
-            globalConfig.roles = document.getElementById('roleIds').value;
-            globalConfig.pointsSystem = document.getElementById('pointsSys').value;
-
-            sendConfigToServer();
-        }
-
-        function renderQuestions(questions) {
-            const container = document.getElementById('questionsList');
-            container.innerHTML = '';
-            questions.forEach((q, idx) => {
-                container.innerHTML += `
-                    <div class="question-box">
-                        <label>Вопрос #${idx+1}</label>
-                        <input type="text" class="q-text" value="${q.q}" style="margin-bottom:10px;">
-                        <label>Варианты ответа (через запятую)</label>
-                        <input type="text" class="q-opts" value="${q.options.join(', ')}" style="margin-bottom:10px;">
-                        <label>Индекс правильного ответа (с 0)</label>
-                        <input type="number" class="q-corr" value="${q.correct}" style="width:100px;">
-                    </div>
-                `;
-            });
-        }
-
-        function addQuestionField() {
-            if(!globalConfig.testSettings) globalConfig.testSettings = { questions: [] };
-            globalConfig.testSettings.questions.push({ q: "Новый вопрос?", options: ["Ответ 1", "Ответ 2"], correct: 0 });
-            renderQuestions(globalConfig.testSettings.questions);
-        }
-
-        function saveTestConfig() {
-            globalConfig.testSettings.questionsCount = parseInt(document.getElementById('testCount').value);
-            globalConfig.testSettings.passingScore = parseInt(document.getElementById('testPassing').value);
-            
-            const boxes = document.querySelectorAll('.question-box');
-            const newQ = [];
-            boxes.forEach(b => {
-                newQ.push({
-                    q: b.querySelector('.q-text').value,
-                    options: b.querySelector('.q-opts').value.split(',').map(s => s.trim()),
-                    correct: parseInt(b.querySelector('.q-corr').value)
-                });
-            });
-            globalConfig.testSettings.questions = newQ;
-            sendConfigToServer();
-        }
-
-        function sendConfigToServer() {
-            fetch('/api/config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(globalConfig)
-            })
+    function loadSettings() {
+        fetch('/api/settings')
             .then(res => res.json())
-            .then(data => alert(data.message));
-        }
+            .then(data => {
+                document.getElementById('webhook_lssd').value = data.webhook_lssd || '';
+                document.getElementById('webhook_lspd').value = data.webhook_lspd || '';
+                document.getElementById('webhook_gov').value = data.webhook_gov || '';
+                document.getElementById('webhook_cid').value = data.webhook_cid || '';
+                document.getElementById('webhook_fib').value = data.webhook_fib || '';
+                document.getElementById('role_ids').value = data.role_ids || '';
+                document.getElementById('points_system').value = data.points_system || '';
+                if(data.illustrationUrl) {
+                    document.getElementById('illustrationUrl').value = data.illustrationUrl;
+                }
+            })
+            .catch(err => console.error(err));
+    }
+    loadSettings();
 
-        window.onload = loadAdminData;
+    function saveSettings() {
+        let body = {
+            webhook_lssd: document.getElementById('webhook_lssd').value,
+            webhook_lspd: document.getElementById('webhook_lspd').value,
+            webhook_gov: document.getElementById('webhook_gov').value,
+            webhook_cid: document.getElementById('webhook_cid').value,
+            webhook_fib: document.getElementById('webhook_fib').value,
+            role_ids: document.getElementById('role_ids').value,
+            points_system: document.getElementById('points_system').value,
+            illustrationUrl: document.getElementById('illustrationUrl').value
+        };
+        fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                alert('Настройки успешно сохранены!');
+            } else {
+                alert('Ошибка при сохранении настроек');
+            }
+        })
+        .catch(err => alert('Ошибка соединения'));
+    }
+
+    function saveIllustration() {
+        let url = document.getElementById('illustrationUrl').value;
+        localStorage.setItem('site_illustration', url);
+        saveSettings();
+    }
+
+    function fetchLogs() {
+        fetch('/api/logs')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('serverLogs').innerText = data.logs || 'Логов пока нет';
+            })
+            .catch(err => {
+                document.getElementById('serverLogs').innerText = 'Ошибка загрузки логов';
+            });
+    }
+    fetchLogs();
+    setInterval(fetchLogs, 10000);
+
+    function loadFileCode() {
+        let file = document.getElementById('fileSelect').value;
+        fetch('/api/file?path=' + encodeURIComponent(file))
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('codeEditor').value = data.content || '';
+            })
+            .catch(err => alert('Ошибка загрузки файла'));
+    }
+    loadFileCode();
+
+    function saveFileCode() {
+        let file = document.getElementById('fileSelect').value;
+        let content = document.getElementById('codeEditor').value;
+        fetch('/api/file', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filePath: file, content: content })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                alert('Код успешно сохранен и применен на сервере!');
+            } else {
+                alert('Ошибка при сохранении: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        })
+        .catch(err => alert('Ошибка соединения с сервером'));
+    }
     </script>
 </body>
 </html>
