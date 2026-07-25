@@ -409,9 +409,9 @@
     function deleteProject() {
         let idx = document.getElementById('projectSelect').value;
         if (idx === "") return;
-        if (!confirm('Вы уверены, что хотите удалить этот проект?')) return;
-
+        
         allProjects.splice(idx, 1);
+        
         fetch('/api/projects', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -422,6 +422,9 @@
             if(data.success) {
                 alert('Проект успешно удален!');
                 document.getElementById('projectSelect').value = "";
+                currentProjImageUrl = '';
+                document.getElementById('projImgPreview').src = '';
+                document.getElementById('projImgPreview').style.display = 'none';
                 loadProjects();
             } else {
                 alert('Ошибка при удалении');
