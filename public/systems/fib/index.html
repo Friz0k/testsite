@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIB Recertification System</title>
+    <style>
+        :root {
+            --fib-color: #0055ff;
+            --fib-dark: #002266;
+            --bg: #030712;
+            --panel-bg: #111827;
+            --border: #1f2937;
+            --text: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+
+        .container { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 16px; padding: 40px; width: 100%; max-width: 600px; box-shadow: 0 20px 50px rgba(0, 85, 255, 0.1); position: relative; overflow: hidden; }
+        
+        .container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--fib-dark), var(--fib-color)); }
+
+        h1 { text-align: center; color: #fff; font-size: 28px; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 2px; }
+        p.subtitle { text-align: center; color: var(--text-muted); margin-bottom: 30px; font-size: 14px; }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 12px 15px; background: #1f2937; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 14px; outline: none; transition: border-color 0.3s; }
+        input:focus, select:focus { border-color: var(--fib-color); }
+
+        .btn-submit { width: 100%; padding: 14px; background: var(--fib-color); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: background 0.3s; margin-top: 10px; }
+        .btn-submit:hover { background: #0044cc; }
+
+        .back-link { display: block; text-align: center; margin-top: 25px; color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.3s; }
+        .back-link:hover { color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FIB Recertification</h1>
+        <p class="subtitle">Система учета переаттестации агентов Federal Investigation Bureau</p>
+        
+        <form id="fibForm">
+            <div class="form-group">
+                <label>Имя Фамилия Агента</label>
+                <input type="text" id="agentName" placeholder="Name Surname" required>
+            </div>
+            <div class="form-group">
+                <label>Номер бейджа (ID)</label>
+                <input type="number" id="agentId" placeholder="12345" required>
+            </div>
+            <div class="form-group">
+                <label>Отдел</label>
+                <select id="agentDepartment" required>
+                    <option value="">-- Выберите отдел --</option>
+                    <option value="CID">CID (Criminal Investigative Division)</option>
+                    <option value="HRB">HRB (Human Resources Branch)</option>
+                    <option value="FA">FA (FIB Academy)</option>
+                    <option value="NSB">NSB (National Security Branch)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Статус переаттестации</label>
+                <select id="certStatus" required>
+                    <option value="">-- Выберите статус --</option>
+                    <option value="Сдал">Сдал (Успешно)</option>
+                    <option value="Не сдал">Не сдал (Провал)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-submit">Зафиксировать результат</button>
+        </form>
+        
+        <a href="/" class="back-link">← Вернуться на главную</a>
+    </div>
+
+    <script>
+        document.getElementById('fibForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('agentName').value;
+            const badge = document.getElementById('agentId').value;
+            const dept = document.getElementById('agentDepartment').value;
+            const status = document.getElementById('certStatus').value;
+
+            alert('Результат сохранен!\n\nАгент: ' + name + '\nБейдж: ' + badge + '\nОтдел: ' + dept + '\nСтатус: ' + status);
+            this.reset();
+        });
+    </script>
+</body>
+</html>
