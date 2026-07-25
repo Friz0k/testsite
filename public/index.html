@@ -363,4 +363,100 @@
 
         fetch('/api/settings')
             .then(res => res.json())
-            .then(
+            .then(data => {
+                if (data.illustrationUrl) {
+                    let img = document.getElementById('mainIllustration');
+                    let placeholder = document.getElementById('placeholderIllustration');
+                    img.src = data.illustrationUrl;
+                    img.style.display = 'block';
+                    placeholder.style.display = 'none';
+                }
+            })
+            .catch(err => console.error(err));
+
+        fetch('/api/projects')
+            .then(res => res.json())
+            .then(projects => {
+                globalProjects = projects || [];
+                const grid = document.getElementById('projectsGrid');
+                grid.innerHTML = '';
+                
+                if (globalProjects.length > 0) {
+                    globalProjects.forEach((p, index) => {
+                        const imgSource = p.imageUrl || p.image;
+                        const mediaContent = imgSource
+                            ? `<img src="${imgSource}" alt="${p.title}">` 
+                            : `<i class="fas fa-folder-open"></i>`;
+                        
+                        const tagsHtml = (p.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+                        const delay = (index % 3) * -2; 
+                        const pathUrl = p.path || p.link || '';
+                        const shortDesc = p.shortDesc || p.desc || '';
+
+                        grid.innerHTML += `
+                            <div class="project-card" style="animation-delay: ${delay}s" onclick="openModal(${index})">
+                                <div class="card-image">
+                                    <div class="card-image-placeholder">${mediaContent}</div>
+                                    <div class="card-overlay">
+                                        ${pathUrl ? `<a href="${pathUrl}" target="_blank" class="card-btn" onclick="event.stopPropagation()">Тестировать</a>` : ''}
+                                        <button class="card-btn card-btn-details" onclick="event.stopPropagation(); openModal(${index})">Подробнее</button>
+                                    </div>
+                                </div>
+                                <div class="card-info">
+                                    <h3>${p.title || 'Проект'}</h3>
+                                    <p class="card-description">${shortDesc}</p>
+                                    <div class="card-tags">${tagsHtml}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">Проекты пока не добавлены.</p>';
+                }
+            })
+            .catch(err => console.error(err));
+
+        function openModal(index) {
+            const p = globalProjects[index];
+            if (!p) return;
+
+            document.getElementById('modalTitle').textContent = p.title || 'Проект';
+            document.getElementById('modalDesc').innerText = p.fullDesc || p.desc || 'Полное описание отсутствует.';
+            
+            let img = document.getElementById('modalImg');
+            const imgUrl = p.imageUrl || p.image;
+            if (imgUrl) {
+                img.src = imgUrl;
+                img.style.display = 'block';
+            } else {
+                img.style.display = 'none';
+            }
+
+            let actions = document.getElementById('modalActions');
+            actions.innerHTML = '';
+            const pathUrl = p.path || p.link;
+            if (pathUrl) {
+                let testBtn = document.createElement('a');
+                testBtn.className = 'card-btn';
+                testBtn.href = pathUrl;
+                testBtn.target = '_blank';
+                testBtn.textContent = 'Открыть и протестировать';
+                actions.appendChild(testBtn);
+            }
+
+            document.getElementById('detailsModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('detailsModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
