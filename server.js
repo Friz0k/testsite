@@ -1,8 +1,15 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+const fs = require('fs');
+
+const envPath = path.resolve(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath, encoding: 'utf8' });
+} else {
+    require('dotenv').config();
+}
+
 const express = require('express');
 const session = require('express-session');
-const fs = require('fs');
 const { exec } = require('child_process');
 
 const app = express();
@@ -49,11 +56,11 @@ app.get('/login', (req, res) => {
 });
 
 const handleLogin = (req, res) => {
-    const username = req.body.username || req.body.user || req.body.login || req.body.email;
-    const password = req.body.password || req.body.pass || req.body.pwd;
+    const username = (req.body.username || req.body.user || req.body.login || req.body.email || '').trim();
+    const password = (req.body.password || req.body.pass || req.body.pwd || '').trim();
     
-    const adminUser = process.env.ADMIN_USER || 'admin';
-    const adminPass = process.env.ADMIN_PASS || 'admin';
+    const adminUser = (process.env.ADMIN_USER || 'admin').trim();
+    const adminPass = (process.env.ADMIN_PASS || 'admin').trim();
 
     if (username === adminUser && password === adminPass) {
         if (req.session) req.session.isAdmin = true;
