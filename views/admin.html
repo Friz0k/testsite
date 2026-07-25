@@ -16,11 +16,7 @@
             --text-muted: #a1a1aa;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             background-color: var(--bg-color);
@@ -135,9 +131,7 @@
             border-color: var(--accent-color);
         }
 
-        textarea {
-            resize: vertical;
-        }
+        textarea { resize: vertical; }
 
         textarea#codeEditor {
             height: 450px;
@@ -159,17 +153,10 @@
             transition: background 0.2s;
         }
 
-        button:hover {
-            background-color: var(--accent-hover);
-        }
+        button:hover { background-color: var(--accent-hover); }
 
-        .btn-success {
-            background-color: var(--success-color);
-        }
-
-        .btn-success:hover {
-            background-color: #16a34a;
-        }
+        .btn-success { background-color: var(--success-color); }
+        .btn-success:hover { background-color: #16a34a; }
 
         pre {
             background-color: #050507;
@@ -235,7 +222,7 @@
         <div id="illustration" class="tab-content">
             <div class="admin-section">
                 <h3>Управление иллюстрацией (Арт сайта)</h3>
-                <label>Текущий арт / иллюстрация</label>
+                <label>Текущий арт</label>
                 <img id="currentIllustration" class="preview-img" src="" alt="Нет иллюстрации" onerror="this.style.display='none'">
                 
                 <label>Загрузить новый арт с компьютера</label>
@@ -473,7 +460,7 @@
                             settings.illustrationUrl = newUrl;
                             return fetch('/api/settings', {
                                 method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+                                headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(settings)
                             });
                         })
