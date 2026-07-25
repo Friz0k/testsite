@@ -1,1070 +1,580 @@
 <!DOCTYPE html>
-
 <html lang="ru">
-
 <head>
-
     <meta charset="UTF-8">
-
     <title>Админ-панель Frizworld</title>
-
     <style>
-
         :root {
-
             --bg-color: #09090b;
-
             --sidebar-bg: #121214;
-
             --panel-bg: #18181b;
-
             --border-color: #27272a;
-
             --accent-color: #7c3aed;
-
             --accent-hover: #6d28d9;
-
             --success-color: #22c55e;
-
+            --danger-color: #ef4444;
             --text-main: #ffffff;
-
             --text-muted: #a1a1aa;
-
         }
-
-
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-
-
         body {
-
             background-color: var(--bg-color);
-
             color: var(--text-main);
-
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
             display: flex;
-
             height: 100vh;
-
             overflow: hidden;
-
         }
-
-
 
         .sidebar {
-
             width: 280px;
-
             background-color: var(--sidebar-bg);
-
             border-right: 1px solid var(--border-color);
-
             display: flex;
-
             flex-direction: column;
-
             padding: 20px 0;
-
         }
-
-
 
         .sidebar h2 {
-
             color: var(--accent-color);
-
             font-size: 18px;
-
             padding: 0 20px 20px 20px;
-
             border-bottom: 1px solid var(--border-color);
-
             text-align: center;
-
         }
-
-
 
         .nav-links {
-
             list-style: none;
-
             padding: 15px 10px;
-
             flex-grow: 1;
-
         }
-
-
 
         .nav-links li {
-
             padding: 12px 15px;
-
             margin-bottom: 5px;
-
             border-radius: 8px;
-
             cursor: pointer;
-
             color: var(--text-muted);
-
             font-size: 14px;
-
             font-weight: 500;
-
             transition: all 0.2s;
-
         }
-
-
 
         .nav-links li:hover {
-
             background-color: rgba(124, 58, 237, 0.1);
-
             color: var(--text-main);
-
         }
-
-
 
         .nav-links li.active {
-
             background-color: var(--accent-color);
-
             color: var(--text-main);
-
             font-weight: 600;
-
         }
-
-
 
         .content-area {
-
             flex-grow: 1;
-
             padding: 40px;
-
             overflow-y: auto;
-
         }
-
-
 
         .tab-content {
-
             display: none;
-
             max-width: 900px;
-
             margin: 0 auto;
-
         }
-
-
 
         .tab-content.active { display: block; }
 
-
-
         .admin-section {
-
             background-color: var(--panel-bg);
-
             padding: 30px;
-
             border-radius: 12px;
-
             border: 1px solid var(--border-color);
-
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-
             margin-bottom: 20px;
-
         }
-
-
 
         h3 {
-
             margin-top: 0;
-
             margin-bottom: 20px;
-
             font-size: 20px;
-
             color: var(--text-main);
-
             border-bottom: 1px solid var(--border-color);
-
             padding-bottom: 12px;
-
         }
-
-
 
         label {
-
             display: block;
-
             margin-bottom: 8px;
-
             color: var(--text-muted);
-
             font-size: 13px;
-
             font-weight: 600;
-
             text-transform: uppercase;
-
         }
-
-
 
         input[type="text"], select, textarea {
-
             width: 100%;
-
             padding: 12px;
-
             margin-bottom: 20px;
-
             background-color: var(--bg-color);
-
             color: var(--text-main);
-
             border: 1px solid var(--border-color);
-
             border-radius: 8px;
-
             font-size: 14px;
-
         }
-
-
 
         input[type="text"]:focus, select:focus, textarea:focus {
-
             outline: none;
-
             border-color: var(--accent-color);
-
         }
-
-
 
         textarea { resize: vertical; }
 
-
-
         textarea#codeEditor {
-
             height: 450px;
-
             font-family: monospace;
-
             color: #c084fc;
-
             background-color: #050507;
-
             font-size: 13px;
-
         }
-
-
 
         button {
-
             background-color: var(--accent-color);
-
             color: var(--text-main);
-
             padding: 12px 25px;
-
             border: none;
-
             border-radius: 8px;
-
             cursor: pointer;
-
             font-size: 14px;
-
             font-weight: 600;
-
             transition: background 0.2s;
-
         }
-
-
 
         button:hover { background-color: var(--accent-hover); }
 
-
-
         .btn-success { background-color: var(--success-color); }
-
         .btn-success:hover { background-color: #16a34a; }
 
-
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-danger:hover { background-color: #dc2626; }
 
         pre {
-
             background-color: #050507;
-
             color: var(--success-color);
-
             padding: 15px;
-
             border-radius: 8px;
-
             height: 350px;
-
             overflow-y: auto;
-
             font-family: monospace;
-
             font-size: 13px;
-
             border: 1px solid var(--border-color);
-
             margin-bottom: 15px;
-
         }
-
-
 
         .preview-img {
-
             max-width: 200px;
-
             max-height: 150px;
-
             border-radius: 8px;
-
             margin-bottom: 15px;
-
             border: 1px solid var(--border-color);
-
             display: block;
-
         }
 
+        .btn-group {
+            display: flex;
+            gap: 15px;
+        }
     </style>
-
 </head>
-
 <body>
-
     <div class="sidebar">
-
         <h2>Frizworld Admin</h2>
-
         <ul class="nav-links">
-
             <li class="active" onclick="switchTab('projects', this)">1. Добавление проектов</li>
-
             <li onclick="switchTab('illustration', this)">2. Управление иллюстрацией</li>
-
             <li onclick="switchTab('logs', this)">3. Логи сервера</li>
-
             <li onclick="switchTab('code', this)">4. Редактор кода проекта</li>
-
             <li onclick="switchTab('contacts', this)">5. Изменение контактов</li>
-
         </ul>
-
     </div>
-
-
 
     <div class="content-area">
-
         <div id="projects" class="tab-content active">
-
             <div class="admin-section">
-
                 <h3>Управление проектами</h3>
-
                 <label>Выберите проект для редактирования</label>
-
                 <select id="projectSelect" onchange="selectProject()">
-
                     <option value="">-- Создать новый проект --</option>
-
                 </select>
-
                 
-
                 <label>Название проекта</label>
-
                 <input type="text" id="projTitle" placeholder="Например: SA LSSD">
-
                 
-
-                <label>Путь/Ссылка</label>
-
+                <label>Путь / Ссылка для тестирования</label>
                 <input type="text" id="projPath" placeholder="Например: /systems/sa_lssd/">
-
                 
-
                 <label>Фото / Иконка проекта</label>
-
                 <img id="projImgPreview" class="preview-img" src="" alt="Нет фото" onerror="this.style.display='none'">
-
                 <input type="file" id="projImageFile" accept="image/*" style="margin-bottom: 20px; color: #fff;">
 
+                <label>Неполное описание (для карточки на главной)</label>
+                <textarea id="projShortDesc" rows="2" placeholder="Краткое описание..."></textarea>
 
-
-                <label>Описание</label>
-
-                <textarea id="projDesc" rows="4" placeholder="Описание проекта..."></textarea>
-
+                <label>Полное описание (для модального окна и тестирования)</label>
+                <textarea id="projFullDesc" rows="5" placeholder="Подробное описание системы..."></textarea>
                 
-
-                <button type="button" onclick="saveProjectWithImage()">Сохранить проект</button>
-
+                <div class="btn-group">
+                    <button type="button" onclick="saveProjectWithImage()">Сохранить проект</button>
+                    <button type="button" class="btn-danger" id="deleteBtn" onclick="deleteProject()" style="display: none;">Удалить проект</button>
+                </div>
             </div>
-
         </div>
-
-
 
         <div id="illustration" class="tab-content">
-
             <div class="admin-section">
-
                 <h3>Управление иллюстрацией (Арт сайта)</h3>
-
                 <label>Текущий арт</label>
-
                 <img id="currentIllustration" class="preview-img" src="" alt="Нет иллюстрации" onerror="this.style.display='none'">
-
                 
-
                 <label>Загрузить новый арт с компьютера</label>
-
                 <input type="file" id="illustrationFile" accept="image/*" style="margin-bottom: 20px; color: #fff;">
-
                 
-
                 <button type="button" onclick="uploadIllustration()">Загрузить и сохранить арт</button>
-
             </div>
-
         </div>
-
-
 
         <div id="logs" class="tab-content">
-
             <div class="admin-section">
-
                 <h3>Логи сервера в реальном времени</h3>
-
                 <button type="button" onclick="fetchLogs()" style="margin-bottom: 15px;">Обновить логи</button>
-
                 <pre id="serverLogs">Загрузка логов...</pre>
-
             </div>
-
         </div>
-
-
 
         <div id="code" class="tab-content">
-
             <div class="admin-section">
-
                 <h3>Редактор кода проекта</h3>
-
                 <label>Выберите файл</label>
-
                 <select id="fileSelect" onchange="loadFileCode()"></select>
-
                 <textarea id="codeEditor"></textarea>
-
                 <button type="button" class="btn-success" onclick="saveFileCode()">Сохранить изменения в коде</button>
-
             </div>
-
         </div>
-
-
 
         <div id="contacts" class="tab-content">
-
             <div class="admin-section">
-
                 <h3>Изменение контактов и вебхуков</h3>
-
                 <label>Вебхук LSSD</label>
-
                 <input type="text" id="webhook_lssd">
-
                 
-
                 <label>Вебхук LSPD</label>
-
                 <input type="text" id="webhook_lspd">
-
                 
-
                 <label>Вебхук GOV</label>
-
                 <input type="text" id="webhook_gov">
-
                 
-
                 <label>Вебхук CID</label>
-
                 <input type="text" id="webhook_cid">
-
                 
-
                 <label>Вебхук FIB</label>
-
                 <input type="text" id="webhook_fib">
-
                 
-
                 <label>ID ролей для упоминания (через запятую)</label>
-
                 <input type="text" id="role_ids">
-
                 
-
                 <button type="button" onclick="saveSettings()">Сохранить контакты</button>
-
             </div>
-
         </div>
-
     </div>
 
-
-
     <script>
-
     function switchTab(tabId, element) {
-
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-
         document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
-
         document.getElementById(tabId).classList.add('active');
-
         element.classList.add('active');
-
     }
-
-
 
     let allProjects = [];
-
     let currentProjImageUrl = '';
 
-
-
     function loadProjects() {
-
         fetch('/api/projects')
-
             .then(res => res.json())
-
             .then(data => {
-
                 allProjects = data || [];
-
                 let select = document.getElementById('projectSelect');
-
                 select.innerHTML = '<option value="">-- Создать новый проект --</option>';
-
                 allProjects.forEach((p, index) => {
-
                     let opt = document.createElement('option');
-
                     opt.value = index;
-
                     opt.textContent = p.title || ('Проект ' + (index + 1));
-
                     select.appendChild(opt);
-
                 });
-
+                selectProject();
             });
-
     }
-
     loadProjects();
 
-
-
     function selectProject() {
-
         let idx = document.getElementById('projectSelect').value;
-
         let imgPreview = document.getElementById('projImgPreview');
-
+        let deleteBtn = document.getElementById('deleteBtn');
         if (idx === "") {
-
             document.getElementById('projTitle').value = '';
-
             document.getElementById('projPath').value = '';
-
-            document.getElementById('projDesc').value = '';
-
+            document.getElementById('projShortDesc').value = '';
+            document.getElementById('projFullDesc').value = '';
             currentProjImageUrl = '';
-
             imgPreview.src = '';
-
             imgPreview.style.display = 'none';
-
+            deleteBtn.style.display = 'none';
         } else {
-
             let p = allProjects[idx];
-
             document.getElementById('projTitle').value = p.title || '';
-
             document.getElementById('projPath').value = p.path || '';
-
-            document.getElementById('projDesc').value = p.desc || '';
-
-            currentProjImageUrl = p.imageUrl || '';
-
+            document.getElementById('projShortDesc').value = p.shortDesc || p.desc || '';
+            document.getElementById('projFullDesc').value = p.fullDesc || p.desc || '';
+            currentProjImageUrl = p.imageUrl || p.image || '';
             if (currentProjImageUrl) {
-
                 imgPreview.src = currentProjImageUrl;
-
                 imgPreview.style.display = 'block';
-
             } else {
-
                 imgPreview.src = '';
-
                 imgPreview.style.display = 'none';
-
             }
-
+            deleteBtn.style.display = 'inline-block';
         }
-
     }
-
-
 
     function saveProjectWithImage() {
-
         let fileInput = document.getElementById('projImageFile');
-
         if (fileInput.files.length > 0) {
-
             let file = fileInput.files[0];
-
             let reader = new FileReader();
-
             reader.onload = function(e) {
-
                 fetch('/api/upload', {
-
                     method: 'POST',
-
                     headers: { 'Content-Type': 'application/json' },
-
                     body: JSON.stringify({ image: e.target.result, filename: file.name })
-
                 })
-
                 .then(res => res.json())
-
                 .then(data => {
-
                     if (data.success) {
-
                         currentProjImageUrl = data.url;
-
                         saveProjectData();
-
                     } else {
-
                         alert('Ошибка загрузки фото проекта');
-
                     }
-
                 });
-
             };
-
             reader.readAsDataURL(file);
-
         } else {
-
             saveProjectData();
-
         }
-
     }
-
-
 
     function saveProjectData() {
-
         let idx = document.getElementById('projectSelect').value;
-
         let projData = {
-
             title: document.getElementById('projTitle').value,
-
             path: document.getElementById('projPath').value,
-
-            desc: document.getElementById('projDesc').value,
-
+            shortDesc: document.getElementById('projShortDesc').value,
+            fullDesc: document.getElementById('projFullDesc').value,
             imageUrl: currentProjImageUrl
-
         };
-
         if (idx === "") {
-
             allProjects.push(projData);
-
         } else {
-
             allProjects[idx] = projData;
-
         }
-
         fetch('/api/projects', {
-
             method: 'POST',
-
             headers: { 'Content-Type': 'application/json' },
-
             body: JSON.stringify(allProjects)
-
         })
-
         .then(res => res.json())
-
         .then(data => {
-
             if(data.success) {
-
                 alert('Проект успешно сохранен!');
-
                 loadProjects();
-
             } else {
-
                 alert('Ошибка сохранения');
-
             }
-
         });
-
     }
 
+    function deleteProject() {
+        let idx = document.getElementById('projectSelect').value;
+        if (idx === "") return;
+        if (!confirm('Вы уверены, что хотите удалить этот проект?')) return;
 
+        allProjects.splice(idx, 1);
+        fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(allProjects)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                alert('Проект успешно удален!');
+                document.getElementById('projectSelect').value = "";
+                loadProjects();
+            } else {
+                alert('Ошибка при удалении');
+            }
+        });
+    }
 
     function loadSettings() {
-
         fetch('/api/settings')
-
             .then(res => res.json())
-
             .then(data => {
-
                 document.getElementById('webhook_lssd').value = data.webhook_lssd || '';
-
                 document.getElementById('webhook_lspd').value = data.webhook_lspd || '';
-
                 document.getElementById('webhook_gov').value = data.webhook_gov || '';
-
                 document.getElementById('webhook_cid').value = data.webhook_cid || '';
-
                 document.getElementById('webhook_fib').value = data.webhook_fib || '';
-
                 document.getElementById('role_ids').value = data.role_ids || '';
-
                 if(data.illustrationUrl) {
-
                     let img = document.getElementById('currentIllustration');
-
                     img.src = data.illustrationUrl;
-
                     img.style.display = 'block';
-
                 }
-
             });
-
     }
-
     loadSettings();
 
-
-
     function saveSettings() {
-
         fetch('/api/settings')
-
             .then(res => res.json())
-
             .then(currentData => {
-
                 currentData.webhook_lssd = document.getElementById('webhook_lssd').value;
-
                 currentData.webhook_lspd = document.getElementById('webhook_lspd').value;
-
                 currentData.webhook_gov = document.getElementById('webhook_gov').value;
-
                 currentData.webhook_cid = document.getElementById('webhook_cid').value;
-
                 currentData.webhook_fib = document.getElementById('webhook_fib').value;
-
                 currentData.role_ids = document.getElementById('role_ids').value;
 
-
-
                 return fetch('/api/settings', {
-
                     method: 'POST',
-
                     headers: { 'Content-Type': 'application/json' },
-
                     body: JSON.stringify(currentData)
-
                 });
-
             })
-
             .then(res => res.json())
-
             .then(data => {
-
                 if(data.success) {
-
                     alert('Контакты успешно сохранены!');
-
                 } else {
-
                     alert('Ошибка сохранения');
-
                 }
-
             });
-
     }
-
-
 
     function uploadIllustration() {
-
         let fileInput = document.getElementById('illustrationFile');
-
         if(fileInput.files.length === 0) {
-
             alert('Выберите файл иллюстрации!');
-
             return;
-
         }
-
         let file = fileInput.files[0];
-
         let reader = new FileReader();
-
         reader.onload = function(e) {
-
             fetch('/api/upload', {
-
                 method: 'POST',
-
                 headers: { 'Content-Type': 'application/json' },
-
                 body: JSON.stringify({ image: e.target.result, filename: file.name })
-
             })
-
             .then(res => res.json())
-
             .then(data => {
-
                 if(data.success) {
-
                     let newUrl = data.url;
-
                     fetch('/api/settings')
-
                         .then(res => res.json())
-
                         .then(settings => {
-
                             settings.illustrationUrl = newUrl;
-
                             return fetch('/api/settings', {
-
                                 method: 'POST',
-
                                 headers: { 'Content-Type': 'application/json' },
-
                                 body: JSON.stringify(settings)
-
                             });
-
                         })
-
                         .then(res => res.json())
-
                         .then(stData => {
-
                             if (stData.success) {
-
                                 alert('Иллюстрация успешно сохранена!');
-
                                 let img = document.getElementById('currentIllustration');
-
                                 img.src = newUrl;
-
                                 img.style.display = 'block';
-
                             }
-
                         });
-
                 } else {
-
                     alert('Ошибка загрузки');
-
                 }
-
             });
-
         };
-
         reader.readAsDataURL(file);
-
     }
-
-
 
     function fetchLogs() {
-
         fetch('/api/logs')
-
             .then(res => res.json())
-
             .then(data => {
-
                 document.getElementById('serverLogs').innerText = data.logs || 'Логов пока нет';
-
             });
-
     }
-
     fetchLogs();
 
-
-
     function loadFileList() {
-
         fetch('/api/list-files')
-
             .then(res => res.json())
-
             .then(files => {
-
                 let select = document.getElementById('fileSelect');
-
                 select.innerHTML = '';
-
                 if (files && files.length > 0) {
-
                     files.forEach(f => {
-
                         let opt = document.createElement('option');
-
                         opt.value = f;
-
                         opt.textContent = f;
-
                         select.appendChild(opt);
-
                     });
-
                     loadFileCode();
-
                 }
-
             });
-
     }
-
     loadFileList();
 
-
-
     function loadFileCode() {
-
         let file = document.getElementById('fileSelect').value;
-
         if (!file) return;
-
         fetch('/api/file?path=' + encodeURIComponent(file))
-
             .then(res => res.json())
-
             .then(data => {
-
                 document.getElementById('codeEditor').value = data.content || '';
-
             });
-
     }
-
-
 
     function saveFileCode() {
-
         let file = document.getElementById('fileSelect').value;
-
         let content = document.getElementById('codeEditor').value;
-
         fetch('/api/file', {
-
             method: 'POST',
-
             headers: { 'Content-Type': 'application/json' },
-
             body: JSON.stringify({ filePath: file, content: content })
-
         })
-
         .then(res => res.json())
-
         .then(data => {
-
             if(data.success) {
-
                 alert('Код успешно сохранен и применен!');
-
             } else {
-
                 alert('Ошибка: ' + data.error);
-
             }
-
         });
-
     }
-
     </script>
-
 </body>
-
-</html> 
-
+</html>
