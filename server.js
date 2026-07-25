@@ -34,7 +34,6 @@ const upload = multer({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
     const logMessage = `[ВИЗИТ] ${new Date().toLocaleString()} | IP: ${req.ip || req.connection.remoteAddress} | URL: ${req.originalUrl} | Агент: ${req.headers['user-agent'] || 'Неизвестно'}`;
@@ -51,6 +50,16 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use('/admin.html', (req, res, next) => {
+    const cookies = req.headers.cookie || '';
+    if (!cookies.includes('admin_auth=true')) {
+        return res.redirect('/login');
+    }
+    next();
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
+
 const projectsFilePath = path.join(__dirname, 'data', 'projects.json');
 const systemsDirPath = path.join(__dirname, 'public', 'systems');
 
@@ -62,12 +71,15 @@ app.get('/api/projects', (req, res) => {
         const data = fs.readFileSync(projectsFilePath, 'utf8');
         res.json(JSON.parse(data));
     } catch (err) {
-        console.error('Ошибка чтения projects.json:', err);
         res.status(500).json({ error: 'Ошибка чтения проектов' });
     }
 });
 
 app.post('/api/projects', (req, res) => {
+    const cookies = req.headers.cookie || '';
+    if (!cookies.includes('admin_auth=true')) {
+        return res.status(403).json({ error: 'Доступ запрещен' });
+    }
     try {
         const dataDir = path.dirname(projectsFilePath);
         if (!fs.existsSync(dataDir)) {
@@ -76,14 +88,17 @@ app.post('/api/projects', (req, res) => {
         fs.writeFileSync(projectsFilePath, JSON.stringify(req.body, null, 2), 'utf8');
         res.json({ success: true });
     } catch (err) {
-        console.error('Ошибка сохранения projects.json:', err);
         res.status(500).json({ error: 'Ошибка сохранения проектов' });
     }
 });
 
 app.post('/api/upload', upload.single('image'), (req, res) => {
+    const cookies = req.headers.cookie || '';
+    if (!cookies.includes('admin_auth=true')) {
+        return res.status(403).json({ error: 'Доступ запрещен' });
+    }
     if (!req.file) {
-        return res.status(400).json({ error: 'Файл не загружен или имеет неверный формат' });
+        return res.status(400).json({ error: 'Файл не загружен' });
     }
     res.json({ url: `/uploads/${req.file.filename}` });
 });
@@ -105,11 +120,7 @@ app.get('/api/systems', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    const loginPath = path.join(__dirname, 'public', 'login.html');
-    if (!fs.existsSync(loginPath)) {
-        return res.status(404).send('Файл login.html не найден на сервере');
-    }
-    res.sendFile(loginPath);
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 app.post('/login', (req, res) => {
@@ -119,6 +130,7 @@ app.post('/login', (req, res) => {
     const adminPass = process.env.ADMIN_PASS || 'admin';
 
     if (username === adminUser && password === adminPass) {
+        res.setHeader('Set-Cookie', 'admin_auth=true; Path=/; HttpOnly');
         res.redirect('/admin.html');
     } else {
         res.redirect('/login?error=1');
@@ -129,14 +141,6 @@ app.get('/admin', (req, res) => {
     res.redirect('/admin.html');
 });
 
-app.get('/admin.html', (req, res) => {
-    const adminPath = path.join(__dirname, 'public', 'admin.html');
-    if (!fs.existsSync(adminPath)) {
-        return res.status(404).send('Файл admin.html не найден на сервере');
-    }
-    res.sendFile(adminPath);
-});
-
 app.use((req, res, next) => {
     res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
         if (err) {
@@ -145,11 +149,6 @@ app.use((req, res, next) => {
     });
 });
 
-app.use((err, req, res, next) => {
-    console.error('Непредвиденная ошибка сервера:', err.stack);
-    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-});
-
 app.listen(PORT, () => {
-    console.log(`Сервер успешно запущен и работает на порту ${PORT}`);
+    console.log(`Сервер запущен на порту ${PORT}`);
 });
