@@ -26,6 +26,7 @@
             line-height: 1.6; 
             overflow-x: hidden;
             position: relative;
+            zoom: 0.8; 
         }
 
         .animated-bg {
@@ -76,7 +77,7 @@
         .hero h1 span { background: linear-gradient(90deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero p { font-size: 20px; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
         
-        .section { padding: 80px 50px; max-width: 1400px; margin: 0 auto; scroll-margin-top: 90px; }
+        .section { padding: 80px 50px; max-width: 1500px; margin: 0 auto; scroll-margin-top: 90px; }
         .section-title { font-size: 36px; margin-bottom: 60px; text-align: center; color: var(--text); text-transform: uppercase; letter-spacing: 3px; border-bottom: 2px solid var(--primary); display: inline-block; padding-bottom: 10px; position: relative; left: 50%; transform: translateX(-50%); }
 
         .skills-layout { display: flex; gap: 40px; align-items: stretch; justify-content: space-between; flex-wrap: wrap; }
@@ -90,11 +91,32 @@
         .skill-card p { color: var(--text-muted); font-size: 14px; }
         
         .skills-illustration { flex: 0 0 350px; background: rgba(10, 10, 10, 0.6); border: 2px dashed var(--primary); border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-light); text-align: center; padding: 20px; min-height: 400px; position: relative; overflow: hidden; backdrop-filter: blur(5px); }
-        .skills-illustration img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+        .skills-illustration img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; border-radius: 18px; }
         .skills-illustration i { font-size: 60px; margin-bottom: 20px; opacity: 0.5; }
 
-        .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; padding: 20px; }
-        .project-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; backdrop-filter: blur(10px); text-decoration: none; color: inherit; display: flex; flex-direction: column; cursor: pointer; }
+        .projects-grid { 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 30px; 
+            padding: 20px; 
+        }
+        .project-card { 
+            flex: 1 1 calc(25% - 30px); 
+            min-width: 290px; 
+            max-width: 400px; 
+            background: var(--card-bg); 
+            border: 1px solid var(--border); 
+            border-radius: 20px; 
+            overflow: hidden; 
+            transition: all 0.3s ease; 
+            backdrop-filter: blur(10px); 
+            text-decoration: none; 
+            color: inherit; 
+            display: flex; 
+            flex-direction: column; 
+            cursor: pointer; 
+        }
         .project-card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(138, 43, 226, 0.2); }
 
         .card-image { position: relative; height: 220px; overflow: hidden; }
@@ -116,6 +138,29 @@
         
         .card-tags { display: flex; gap: 8px; flex-wrap: wrap; }
         .tag { padding: 4px 12px; background: rgba(138, 43, 226, 0.1); border-radius: 50px; font-size: 12px; color: var(--primary-light); border: 1px solid rgba(138, 43, 226, 0.3); font-weight: 600; }
+
+        .holiday-interactive {
+            background: linear-gradient(135deg, rgba(138,43,226,0.1), rgba(15,15,40,0.6));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            max-width: 800px;
+            margin: 40px auto 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s;
+        }
+        .holiday-interactive:hover { transform: scale(1.02); border-color: var(--primary); }
+        .holiday-icon { font-size: 40px; color: var(--primary-light); margin-bottom: 15px; animation: bounce 2s infinite; }
+        .holiday-title { font-size: 24px; font-weight: 700; margin-bottom: 10px; color: #fff; }
+        .holiday-desc { color: var(--text-muted); font-size: 16px; }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-15px); }
+            60% { transform: translateY(-7px); }
+        }
 
         #detailsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
         .modal-box { background: #121214; border: 1px solid var(--primary); border-radius: 20px; padding: 35px; width: 100%; max-width: 600px; position: relative; box-shadow: 0 20px 40px rgba(138, 43, 226, 0.4); text-align: center; }
@@ -198,12 +243,8 @@
             </div>
             
             <div class="skills-illustration" id="illustrationContainer">
-                <img id="mainIllustration" src="" alt="Арт" style="display: none;">
-                <div id="placeholderIllustration" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <i class="fas fa-user-astronaut"></i>
-                    <span>Место под иллюстрацию</span>
-                    <p style="font-size: 12px; margin-top: 10px; font-weight: normal; opacity: 0.5;">Добавь сюда свой арт в коде</p>
-                </div>
+                <img id="mainIllustration" src="https://i.pinimg.com/originals/e8/38/5f/e8385f0ef42475e6db9fb3fccf99f345.gif" alt="Арт" style="display: block;">
+                <div id="placeholderIllustration" style="display: none;"></div>
             </div>
         </div>
     </div>
@@ -211,6 +252,12 @@
     <div class="section" id="projects">
         <h2 class="section-title">Мои Проекты</h2>
         <div class="projects-grid" id="projectsGrid"></div>
+        
+        <div class="holiday-interactive" id="holidayBox">
+            <div class="holiday-icon"><i class="fas fa-calendar-alt"></i></div>
+            <div class="holiday-title" id="holidayTitle">Проверка системного календаря...</div>
+            <div class="holiday-desc" id="holidayDesc">Синхронизация данных</div>
+        </div>
     </div>
 
     <div id="detailsModal">
@@ -245,6 +292,41 @@
 
     <script>
         let globalProjects = [];
+
+        function loadHoliday() {
+            const date = new Date();
+            const day = date.getDate();
+            const month = date.getMonth() + 1; 
+            
+            let hTitle = "Отличный день для кодинга!";
+            let hDesc = "Никаких багов, только чистый код и успешные деплои.";
+
+            if (month === 8 && day === 2) {
+                hTitle = "🎉 С ЮБИЛЕЕМ! ТВОЙ 20-Й ДЕНЬ РОЖДЕНИЯ! 🎂";
+                hDesc = "Желаю бесконечного онлайна, идеальной компиляции с первого раза и мощнейших серверов! Пусть все проекты взлетают до небес!";
+                document.querySelector('.holiday-icon').innerHTML = '<i class="fas fa-birthday-cake"></i>';
+            } else if (day === 256) { 
+                hTitle = "С Днем Программиста! (День 256)";
+                hDesc = "Пусть код пишется сам, а серверы никогда не падают.";
+                document.querySelector('.holiday-icon').innerHTML = '<i class="fas fa-laptop-code"></i>';
+            } else {
+                const funHolidays = [
+                    { t: "День системного администратора (в душе)", d: "Самое время проверить, не забился ли диск на 100%!" },
+                    { t: "Международный день без багов", d: "Легенда гласит, что такой день существует, но его никто не видел." },
+                    { t: "День деплоя в пятницу вечером", d: "Самый экстремальный праздник для любого программиста." },
+                    { t: "День чистого кода", d: "Когда всё красиво, понятно и даже есть комментарии." },
+                    { t: "Праздник святого Кофеина", d: "Главный спонсор всех ночных разработок и ботов для Discord." },
+                    { t: "День «Оно работает на моем компе!»", d: "Официальный праздник всех разработчиков." }
+                ];
+                const selected = funHolidays[day % funHolidays.length];
+                hTitle = selected.t;
+                hDesc = selected.d;
+            }
+
+            document.getElementById('holidayTitle').textContent = hTitle;
+            document.getElementById('holidayDesc').textContent = hDesc;
+        }
+        loadHoliday();
 
         fetch('/api/settings')
             .then(res => res.json())
