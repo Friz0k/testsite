@@ -17,6 +17,7 @@
             --text-muted: #cccccc;
         }
 
+        html { scroll-behavior: smooth; }
         body { background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
         
         header { background: #0a0a0a; padding: 20px 50px; border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
@@ -30,7 +31,7 @@
         .hero h1 span { background: linear-gradient(90deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero p { font-size: 20px; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
         
-        .section { padding: 80px 50px; max-width: 1400px; margin: 0 auto; }
+        .section { padding: 80px 50px; max-width: 1400px; margin: 0 auto; scroll-margin-top: 90px; }
         .section-title { font-size: 36px; margin-bottom: 60px; text-align: center; color: var(--text); text-transform: uppercase; letter-spacing: 3px; border-bottom: 2px solid var(--primary); display: inline-block; padding-bottom: 10px; position: relative; left: 50%; transform: translateX(-50%); }
 
         /* НАВЫКИ */
@@ -44,27 +45,21 @@
         .skill-card h3 { font-size: 20px; margin-bottom: 10px; font-weight: 700; }
         .skill-card p { color: var(--text-muted); font-size: 14px; }
         
-        /* Блок иллюстрации слева от навыков с поддержкой загрузки из админки */
         .skills-illustration { flex: 0 0 350px; background: #0a0a0a; border: 2px dashed var(--primary); border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-light); text-align: center; padding: 20px; min-height: 400px; position: relative; overflow: hidden; }
         .skills-illustration img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
         .skills-illustration i { font-size: 60px; margin-bottom: 20px; opacity: 0.5; }
 
         /* ПРОЕКТЫ */
         .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; padding: 20px; }
-        .project-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; backdrop-filter: blur(10px); text-decoration: none; color: inherit; display: flex; flex-direction: column; animation: float 6s ease-in-out infinite; cursor: pointer; }
+        .project-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; backdrop-filter: blur(10px); text-decoration: none; color: inherit; display: flex; flex-direction: column; cursor: pointer; }
         .project-card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(138, 43, 226, 0.2); }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
 
         .card-image { position: relative; height: 220px; overflow: hidden; }
         .card-image-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(176, 38, 255, 0.15)); display: flex; align-items: center; justify-content: center; transition: transform 0.4s ease; font-size: 50px; color: var(--primary); }
         .card-image-placeholder img { width: 100%; height: 100%; object-fit: cover; }
         .project-card:hover .card-image-placeholder { transform: scale(1.05); }
         
-        .card-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(5,5,5,0.95)); padding: 1.5rem 1rem 1rem; opacity: 0; transition: opacity 0.3s ease; color: white; font-weight: 600; text-align: center; display: flex; justify-content: center; gap: 10px; }
+        .card-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(5,5,5,0.95)); padding: 1.5rem 1rem 1rem; opacity: 0; transition: opacity 0.3s ease; display: flex; justify-content: center; gap: 10px; }
         .project-card:hover .card-overlay { opacity: 1; }
 
         .card-btn { background: var(--primary); color: white; padding: 6px 14px; border-radius: 6px; font-size: 13px; text-decoration: none; font-weight: 600; transition: background 0.2s; }
@@ -79,7 +74,7 @@
         .card-tags { display: flex; gap: 8px; flex-wrap: wrap; }
         .tag { padding: 4px 12px; background: rgba(138, 43, 226, 0.1); border-radius: 50px; font-size: 12px; color: var(--primary-light); border: 1px solid rgba(138, 43, 226, 0.3); font-weight: 600; }
 
-        /* МОДАЛЬНОЕ ОКНО "Подробнее" */
+        /* МОДАЛЬНОЕ ОКНО */
         #detailsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
         .modal-box { background: #121214; border: 1px solid var(--primary); border-radius: 20px; padding: 35px; width: 100%; max-width: 550px; position: relative; box-shadow: 0 20px 40px rgba(138, 43, 226, 0.4); text-align: center; }
         .modal-close { position: absolute; top: 15px; right: 20px; font-size: 28px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
@@ -126,12 +121,12 @@
                 <div class="skill-card">
                     <i class="fab fa-python skill-icon"></i>
                     <h3>Python & Discord.py</h3>
-                    <p>Разработка и развертывание сложных Discord-ботов (Foxhole, Deadly), работа с массивами данных и API, хостинг на Render.</p>
+                    <p>Разработка и развертывание сложных Discord-ботов , работа с массивами данных и API, хостинг.</p>
                 </div>
                 <div class="skill-card">
                     <i class="fas fa-server skill-icon"></i>
                     <h3>GTA5RP Web Systems</h3>
-                    <p>Проектирование веб-панелей для гос. структур (LSSD, LSPD, GOV), системы отчетности кадетов, учет улик CID и переаттестации.</p>
+                    <p>Проектирование веб-панелей для гос. структур (LSSD, LSPD, GOV, FIB, EMS), системы отчетности, переаттестации.</p>
                 </div>
                 <div class="skill-card">
                     <i class="fas fa-gamepad skill-icon"></i>
@@ -155,7 +150,6 @@
                 </div>
             </div>
             
-            <!-- Иллюстрация слева, подтягивающаяся из админки -->
             <div class="skills-illustration" id="illustrationContainer">
                 <img id="mainIllustration" src="" alt="Арт" style="display: none;">
                 <div id="placeholderIllustration" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
@@ -175,7 +169,7 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ДЛЯ КНОПКИ ПОДРОБНЕЕ -->
+    <!-- МОДАЛЬНОЕ ОКНО -->
     <div id="detailsModal">
         <div class="modal-box">
             <span class="modal-close" onclick="closeModal()">&times;</span>
@@ -189,17 +183,17 @@
     <div class="section" id="contact">
         <h2 class="section-title">Контакты</h2>
         <div class="contact-grid">
-            <a href="https://t.me/frizworld" target="_blank" class="contact-item">
+            <a href="https://t.me/friz_world" target="_blank" class="contact-item">
                 <div class="contact-icon-wrapper"><i class="fab fa-telegram-plane"></i></div>
                 <div class="contact-label">Telegram</div>
             </a>
             
-            <a href="#" class="contact-item">
+            <a href="https://discord.gg/CrfHznNWT" target="_blank" class="contact-item">
                 <div class="contact-icon-wrapper"><i class="fab fa-discord"></i></div>
                 <div class="contact-label">Discord</div>
             </a>
 
-            <a href="mailto:frizworld@mail.ru" class="contact-item">
+            <a href="mailto:friz_world@mail.ru" class="contact-item">
                 <div class="contact-icon-wrapper"><i class="fas fa-envelope"></i></div>
                 <div class="contact-label">E-Mail</div>
             </a>
@@ -207,7 +201,6 @@
     </div>
 
     <script>
-        // Подгрузка главной иллюстрации из настроек админки
         fetch('/api/settings')
             .then(res => res.json())
             .then(data => {
@@ -219,9 +212,8 @@
                     placeholder.style.display = 'none';
                 }
             })
-            .catch(err => console.error('Ошибка загрузки настроек:', err));
+            .catch(err => console.error(err));
 
-        // Динамическая загрузка проектов
         fetch('/api/projects')
             .then(res => res.json())
             .then(projects => {
@@ -234,23 +226,21 @@
                             : `<i class="fas fa-folder-open"></i>`;
                         
                         const tagsHtml = (p.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
-                        const delay = (index % 3) * -2; 
                         
-                        // Безопасные данные для передачи в модальное окно
                         const title = (p.title || 'Проект').replace(/'/g, "\\'");
                         const desc = (p.desc || 'Описание отсутствует.').replace(/'/g, "\\'").replace(/\n/g, ' ');
                         const imgUrl = (p.image || p.imageUrl || '');
 
                         grid.innerHTML += `
-                            <div class="project-card" style="animation-delay: ${delay}s">
-                                <div class="card-image" onclick="openModal('${title}', '${desc}', '${imgUrl}')">
+                            <div class="project-card" onclick="openModal('${title}', '${desc}', '${imgUrl}')">
+                                <div class="card-image">
                                     <div class="card-image-placeholder">${mediaContent}</div>
                                     <div class="card-overlay">
                                         ${p.link ? `<a href="${p.link}" target="_blank" class="card-btn" onclick="event.stopPropagation()">Открыть</a>` : ''}
-                                        <button class="card-btn card-btn-details" onclick="openModal('${title}', '${desc}', '${imgUrl}')">Подробнее</button>
+                                        <button class="card-btn card-btn-details" onclick="event.stopPropagation(); openModal('${title}', '${desc}', '${imgUrl}')">Подробнее</button>
                                     </div>
                                 </div>
-                                <div class="card-info" onclick="openModal('${title}', '${desc}', '${imgUrl}')">
+                                <div class="card-info">
                                     <h3>${p.title}</h3>
                                     <p class="card-description">${p.desc}</p>
                                     <div class="card-tags">${tagsHtml}</div>
@@ -262,11 +252,10 @@
                     grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">Проекты пока не добавлены.</p>';
                 }
             })
-            .catch(err => console.error('Ошибка загрузки проектов:', err));
+            .catch(err => console.error(err));
 
-        // Функции управления модальным окном
         function openModal(title, desc, imageUrl) {
-            document.getElementById('modalTitletextContent' in document.createElement('div') ? 'modalTitle' : 'modalTitle').textContent = title;
+            document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalDesc').textContent = desc;
             let img = document.getElementById('modalImg');
             if (imageUrl) {
