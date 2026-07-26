@@ -1,10 +1,12 @@
 {
   "fib": {
     "webhooks": {
-      "main": "https://discord.com/api/webhooks/1498677954937487370/PAVXARtu3bSeJodua89uIT8nFAAX1c_8FX0EMxZDMIukD2Y9Mnu_1M5gVMHZ4Vv8gvVW"
+      "main": "https://discord.com/api/webhooks/1498677954937487370/PAVXARtu3bSeJodua89uIT8nFAAX1c_8FX0EMxZDMIukD2Y9Mnu_1M5gVMHZ4Vv8gvVW",
+      "cid_evidence": "https://discord.com/api/webhooks/1498680408114466858/76641VpuV_QpXI2Vv50brus5oaGmGwd_z10u6WF6y5ugp5sFPiatfJpz83fPi_AcwTxP"
     },
     "roles": {
-      "ping": ""
+      "ping": "",
+      "cid_evidence": "713076289916895303 769244242744311869"
     },
     "testSettings": {
       "passingScore": 0,
@@ -45,14 +47,6 @@
     },
     "testPassingScore": 20,
     "testQuestions": []
-  },
-  "cid": {
-    "webhooks": {
-      "evidence": "https://discord.com/api/webhooks/1498680408114466858/76641VpuV_QpXI2Vv50brus5oaGmGwd_z10u6WF6y5ugp5sFPiatfJpz83fPi_AcwTxP"
-    },
-    "roles": {
-      "evidence": "713076289916895303 769244242744311869"
-    }
   },
   "gov": {
     "webhooks": {
