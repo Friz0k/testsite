@@ -1,3 +1,4 @@
+// server.js
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
@@ -5,6 +6,8 @@ const fs = require('fs');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const http = require('http');
+const crypto = require('crypto');
+const authMiddleware = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -208,17 +211,6 @@ app.use((req, res, next) => {
 
 app.use(express.static(DIR_PUBLIC));
 
-const requireAdmin = (req, res, next) => {
-    const isAdmin = req.signedCookies && req.signedCookies.admin_auth === 'true';
-    if (!isAdmin) {
-        if (req.xhr || req.path.startsWith('/api/')) {
-            return res.status(403).json({ error: 'Auth required' });
-        }
-        return res.redirect('/login');
-    }
-    next();
-};
-
 app.get('/login', (req, res) => {
     const loginPath = path.join(DIR_VIEWS, 'login.html');
     if (!fs.existsSync(loginPath)) {
@@ -250,12 +242,80 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
-app.get('/admin', requireAdmin, (req, res) => {
+app.get('/admin', authMiddleware, (req, res) => {
     const adminPath = path.join(DIR_VIEWS, 'admin.html');
     if (!fs.existsSync(adminPath)) {
         return res.status(500).send('Error 500');
     }
     res.sendFile(adminPath);
+});
+
+app.use('/api', authMiddleware);
+
+app.get('/api/tokens', (req, res) => {
+    if (!req.isSuperAdmin) {
+        return res.status(403).json({ error: 'Superadmin required' });
+    }
+    try {
+        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
+        const config = JSON.parse(data);
+        res.json({ success: true, tokens: config.apiTokens || [] });
+    } catch (err) {
+        res.status(500).json({ error: 'Read error' });
+    }
+});
+
+app.post('/api/tokens/create', (req, res) => {
+    if (!req.isSuperAdmin) {
+        return res.status(403).json({ error: 'Superadmin required' });
+    }
+    try {
+        const { name, systems, permissions } = req.body;
+        if (!name || !systems || systems.length === 0) {
+            return res.status(400).json({ error: 'Invalid parameters' });
+        }
+
+        const newToken = {
+            id: Date.now().toString(),
+            token: 'friz_' + crypto.randomBytes(24).toString('hex'),
+            name: name.trim(),
+            systems: Array.isArray(systems) ? systems : [systems],
+            permissions: Array.isArray(permissions) ? permissions : ['settings'],
+            createdAt: new Date().toISOString(),
+            active: true
+        };
+
+        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
+        const config = JSON.parse(data);
+        if (!config.apiTokens) config.apiTokens = [];
+        
+        config.apiTokens.push(newToken);
+        fs.writeFileSync(FILE_SETTINGS, JSON.stringify(config, null, 2), 'utf8');
+
+        res.json({ success: true, token: newToken });
+    } catch (err) {
+        res.status(500).json({ error: 'Write error' });
+    }
+});
+
+app.delete('/api/tokens/:id', (req, res) => {
+    if (!req.isSuperAdmin) {
+        return res.status(403).json({ error: 'Superadmin required' });
+    }
+    try {
+        const tokenId = req.params.id;
+        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
+        const config = JSON.parse(data);
+        
+        if (config.apiTokens) {
+            config.apiTokens = config.apiTokens.filter(t => t.id !== tokenId);
+            fs.writeFileSync(FILE_SETTINGS, JSON.stringify(config, null, 2), 'utf8');
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Delete error' });
+    }
 });
 
 app.get('/api/projects', (req, res) => {
@@ -267,7 +327,10 @@ app.get('/api/projects', (req, res) => {
     }
 });
 
-app.post('/api/projects', requireAdmin, (req, res) => {
+app.post('/api/projects', (req, res) => {
+    if (!req.isSuperAdmin) {
+        return res.status(403).json({ error: 'Superadmin required' });
+    }
     try {
         fs.writeFileSync(FILE_PROJECTS, JSON.stringify(req.body, null, 2), 'utf8');
         res.json({ success: true });
@@ -285,16 +348,30 @@ app.get('/api/settings', (req, res) => {
     }
 });
 
-app.post('/api/settings', requireAdmin, (req, res) => {
+app.post('/api/settings', (req, res) => {
     try {
-        fs.writeFileSync(FILE_SETTINGS, JSON.stringify(req.body, null, 2), 'utf8');
+        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
+        const currentConfig = JSON.parse(data);
+        const newConfig = req.body;
+
+        if (!req.isSuperAdmin && req.tokenData) {
+            req.tokenData.systems.forEach(sys => {
+                if (newConfig[sys]) {
+                    currentConfig[sys] = newConfig[sys];
+                }
+            });
+            fs.writeFileSync(FILE_SETTINGS, JSON.stringify(currentConfig, null, 2), 'utf8');
+            return res.json({ success: true, scoped: true });
+        }
+
+        fs.writeFileSync(FILE_SETTINGS, JSON.stringify(newConfig, null, 2), 'utf8');
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Write error' });
     }
 });
 
-app.post('/api/upload', requireAdmin, upload.single('image'), (req, res) => {
+app.post('/api/upload', upload.single('image'), (req, res) => {
     try {
         if (req.body.image && req.body.image.startsWith('data:image')) {
             const matches = req.body.image.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
@@ -317,7 +394,10 @@ app.post('/api/upload', requireAdmin, upload.single('image'), (req, res) => {
     }
 });
 
-app.get('/api/logs', requireAdmin, (req, res) => {
+app.get('/api/logs', (req, res) => {
+    if (!req.isSuperAdmin) {
+        return res.status(403).json({ error: 'Superadmin required' });
+    }
     try {
         const typeAlias = { visits: 'access', errors: 'error', access: 'access', error: 'error', app: 'app' };
         const type = typeAlias[req.query.type] || 'access';
@@ -338,7 +418,7 @@ app.get('/api/logs', requireAdmin, (req, res) => {
     }
 });
 
-app.get('/api/list-files', requireAdmin, (req, res) => {
+app.get('/api/list-files', (req, res) => {
     try {
         const getFilesRecursive = (dir, base = '') => {
             let results = [];
@@ -366,7 +446,7 @@ app.get('/api/list-files', requireAdmin, (req, res) => {
     }
 });
 
-app.get('/api/file', requireAdmin, (req, res) => {
+app.get('/api/file', (req, res) => {
     try {
         const filePathParam = req.query.path;
 
@@ -388,7 +468,7 @@ app.get('/api/file', requireAdmin, (req, res) => {
     }
 });
 
-app.post('/api/file', requireAdmin, (req, res) => {
+app.post('/api/file', (req, res) => {
     try {
         const { filePath, content } = req.body;
 
