@@ -3,17 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ-панель Frizworld</title>
+    <title>Frizworld Admin Panel</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥶</text></svg>">
-    <script>
-        let savedTheme = localStorage.getItem('theme');
-        if (!savedTheme) {
-            savedTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        document.documentElement.setAttribute('data-theme', savedTheme);
-    </script>
     <style>
-        :root[data-theme="dark"] {
+        :root {
             --bg-color: #09090b;
             --sidebar-bg: #121214;
             --panel-bg: #18181b;
@@ -27,27 +20,12 @@
             --input-bg: #09090b;
         }
 
-        :root[data-theme="light"] {
-            --bg-color: #f4f4f5;
-            --sidebar-bg: #ffffff;
-            --panel-bg: #ffffff;
-            --border-color: #e4e4e7;
-            --accent-color: #6d28d9;
-            --accent-hover: #5b21b6;
-            --success-color: #16a34a;
-            --danger-color: #dc2626;
-            --text-main: #18181b;
-            --text-muted: #71717a;
-            --input-bg: #ffffff;
-        }
-
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            transition: background-color 0.3s, color 0.3s;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             scrollbar-width: none;
-            -ms-overflow-style: none;
         }
 
         *::-webkit-scrollbar {
@@ -57,7 +35,6 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
             height: 100vh;
             overflow: hidden;
@@ -79,11 +56,21 @@
             padding: 0 20px 20px 20px;
             border-bottom: 1px solid var(--border-color);
             text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .nav-category {
+            padding: 10px 20px 5px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            font-weight: bold;
         }
 
         .nav-links {
             list-style: none;
-            padding: 15px 10px;
+            padding: 0 10px;
             flex-grow: 1;
             overflow-y: auto;
         }
@@ -96,6 +83,9 @@
             color: var(--text-muted);
             font-size: 14px;
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .nav-links li:hover {
@@ -108,30 +98,27 @@
             color: #ffffff;
         }
 
-        .theme-toggle-btn {
+        .logout-btn {
             margin: 10px 20px;
             padding: 10px;
             background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
+            text-align: center;
         }
 
-        .theme-toggle-btn:hover {
-            background: var(--border-color);
+        .logout-btn:hover {
+            background: var(--danger-color);
+            color: #fff;
         }
 
         .content-area {
             flex-grow: 1;
             padding: 20px 40px;
             overflow-y: auto;
-            position: relative;
-        }
-
-        .header-mobile {
-            display: none;
         }
 
         .tab-content {
@@ -146,14 +133,8 @@
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .admin-section {
@@ -170,6 +151,7 @@
             font-size: 22px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 12px;
+            color: var(--text-main);
         }
 
         .form-grid {
@@ -191,7 +173,7 @@
             text-transform: uppercase;
         }
 
-        input[type="text"], select, textarea {
+        input[type="text"], input[type="file"], select, textarea {
             width: 100%;
             padding: 12px;
             margin-bottom: 15px;
@@ -207,12 +189,12 @@
             border-color: var(--accent-color);
         }
 
-        textarea#codeEditor {
-            height: 500px;
+        textarea#codeEditor, textarea.json-editor {
+            height: 300px;
             font-family: monospace;
             color: #c084fc;
-            font-size: 14px;
             background-color: #050507;
+            white-space: pre;
         }
 
         button {
@@ -229,13 +211,8 @@
             background-color: var(--accent-hover);
         }
 
-        .btn-success {
-            background-color: var(--success-color);
-        }
-
-        .btn-danger {
-            background-color: var(--danger-color);
-        }
+        .btn-success { background-color: var(--success-color); }
+        .btn-danger { background-color: var(--danger-color); }
 
         .btn-group {
             display: flex;
@@ -244,12 +221,12 @@
             flex-wrap: wrap;
         }
 
-        pre {
+        pre.logs-view {
             background-color: #050507;
             color: #22c55e;
             padding: 15px;
             border-radius: 8px;
-            height: 450px;
+            height: 500px;
             overflow-y: auto;
             font-family: monospace;
             font-size: 13px;
@@ -266,72 +243,35 @@
             margin-bottom: 15px;
             object-fit: cover;
         }
-
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-            .sidebar {
-                position: absolute;
-                left: -300px;
-                top: 0;
-                height: 100%;
-                transition: left 0.3s ease;
-                box-shadow: 5px 0 15px rgba(0,0,0,0.5);
-            }
-            .sidebar.open {
-                left: 0;
-            }
-            .header-mobile {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 15px 20px;
-                background-color: var(--panel-bg);
-                border-bottom: 1px solid var(--border-color);
-            }
-            .menu-btn {
-                background: none;
-                color: var(--text-main);
-                font-size: 24px;
-                padding: 0;
-            }
-            .content-area {
-                padding: 15px;
-            }
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            .btn-group {
-                flex-direction: column;
-            }
-            button {
-                width: 100%;
-            }
-        }
     </style>
 </head>
 <body>
 
-    <div class="header-mobile">
-        <h2 style="color: var(--accent-color); font-size: 18px;">Frizworld Admin</h2>
-        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-    </div>
-
     <div class="sidebar" id="sidebar">
-        <h2 class="desktop-only">Frizworld Admin</h2>
+        <h2>Frizworld Admin</h2>
+        
+        <div class="nav-category">Сайт</div>
         <ul class="nav-links">
-            <li class="active" onclick="switchTab('projects', this)">📦 Управление проектами</li>
-            <li onclick="switchTab('illustration', this)">🎨 Арт сайта</li>
+            <li class="active" onclick="switchTab('projects', this)">📦 Проекты</li>
+            <li onclick="switchTab('illustration', this)">🎨 Арт на главной</li>
             <li onclick="switchTab('logs', this)">📊 Логи сервера</li>
             <li onclick="switchTab('code', this)">💻 Редактор кода</li>
-            <li onclick="switchTab('contacts', this)">⚙️ Контакты и Webhook</li>
         </ul>
-        <button class="theme-toggle-btn" onclick="toggleTheme()">🌓 Сменить тему</button>
-        <button class="theme-toggle-btn" onclick="window.location.href='/logout'" style="color: var(--danger-color); border-color: var(--danger-color);">Выйти</button>
+
+        <div class="nav-category">Фракции</div>
+        <ul class="nav-links">
+            <li onclick="switchTab('faction_fib', this)">🦅 FIB & CID</li>
+            <li onclick="switchTab('faction_lssd', this)">🤠 LSSD</li>
+            <li onclick="switchTab('faction_lspd', this)">🚓 LSPD</li>
+            <li onclick="switchTab('faction_gov', this)">⚖️ GOV</li>
+            <li onclick="switchTab('faction_ems', this)">🚑 EMS</li>
+            <li onclick="switchTab('faction_deadly', this)">💀 DEADLY</li>
+        </ul>
+
+        <button class="logout-btn" onclick="window.location.href='/logout'">Выйти</button>
     </div>
 
-    <div class="content-area" onclick="closeSidebarOnClick()">
+    <div class="content-area">
         
         <div id="projects" class="tab-content active">
             <div class="admin-section">
@@ -345,24 +285,21 @@
                     <div>
                         <label>Название проекта</label>
                         <input type="text" id="projTitle" placeholder="Например: SA LSSD">
-                        
                         <label>Ссылка / Путь</label>
-                        <input type="text" id="projPath" placeholder="/systems/sa_lssd/">
+                        <input type="text" id="projPath" placeholder="/systems/lssd/lssd.SA.html">
                     </div>
                     <div>
                         <label>Изображение</label>
                         <img id="projImgPreview" class="preview-img" src="" alt="Превью" style="display:none;">
-                        <input type="file" id="projImageFile" accept="image/*" style="color: var(--text-main);">
+                        <input type="file" id="projImageFile" accept="image/*">
                     </div>
-                    
                     <div class="full-width">
                         <label>Краткое описание (на главную)</label>
-                        <textarea id="projShortDesc" rows="2" placeholder="Пара слов о проекте..."></textarea>
+                        <textarea id="projShortDesc" rows="2"></textarea>
                     </div>
-                    
                     <div class="full-width">
                         <label>Полное описание</label>
-                        <textarea id="projFullDesc" rows="4" placeholder="Подробное описание системы..."></textarea>
+                        <textarea id="projFullDesc" rows="4"></textarea>
                     </div>
                 </div>
                 
@@ -383,8 +320,8 @@
                     </div>
                     <div>
                         <label>Загрузить новый</label>
-                        <input type="file" id="illustrationFile" accept="image/*" style="color: var(--text-main);">
-                        <button type="button" onclick="uploadIllustration()" style="margin-top: 15px;">Загрузить и применить</button>
+                        <input type="file" id="illustrationFile" accept="image/*">
+                        <button type="button" onclick="uploadIllustration()">Загрузить и применить</button>
                     </div>
                 </div>
             </div>
@@ -407,14 +344,14 @@
                         <button type="button" id="autoRefreshBtn" onclick="toggleAutoRefresh()" class="btn-success">Автообновление: ВЫКЛ</button>
                     </div>
                 </div>
-                <pre id="serverLogs">Загрузка логов...</pre>
+                <pre id="serverLogs" class="logs-view">Загрузка логов...</pre>
             </div>
         </div>
 
         <div id="code" class="tab-content">
             <div class="admin-section">
                 <h3>Встроенный редактор кода</h3>
-                <label>Файл для редактирования (из папки public)</label>
+                <label>Файл для редактирования (папка public)</label>
                 <select id="fileSelect" onchange="loadFileCode()"></select>
                 <textarea id="codeEditor" spellcheck="false"></textarea>
                 <div class="btn-group">
@@ -423,82 +360,170 @@
             </div>
         </div>
 
-        <div id="contacts" class="tab-content">
+        <div id="faction_fib" class="tab-content">
             <div class="admin-section">
-                <h3>Webhooks и Настройки</h3>
+                <h3>🦅 Настройки FIB & CID</h3>
                 <div class="form-grid">
                     <div>
-                        <label>LSSD Webhook</label>
-                        <input type="text" id="webhook_lssd">
-                        <label>LSPD Webhook</label>
-                        <input type="text" id="webhook_lspd">
-                        <label>GOV Webhook</label>
-                        <input type="text" id="webhook_gov">
+                        <label>Вебхук: Переаттестация FIB</label>
+                        <input type="text" id="fib_webhook_main">
+                        <label>Вебхук: Улики CID</label>
+                        <input type="text" id="fib_webhook_cid">
                     </div>
                     <div>
-                        <label>CID Webhook</label>
-                        <input type="text" id="webhook_cid">
-                        <label>FIB Webhook</label>
-                        <input type="text" id="webhook_fib">
-                        <label>ID ролей для пинга (через запятую)</label>
-                        <input type="text" id="role_ids">
+                        <label>Роль (ID): Пинги FIB</label>
+                        <input type="text" id="fib_role_ping">
+                        <label>Роль (ID): Пинги CID</label>
+                        <input type="text" id="fib_role_cid">
+                    </div>
+                    <div class="full-width">
+                        <label>Настройки тестов FIB (Массив вопросов JSON)</label>
+                        <textarea id="fib_test_json" class="json-editor"></textarea>
                     </div>
                 </div>
-                <button type="button" onclick="saveSettings()">Сохранить настройки</button>
+                <button type="button" onclick="saveFactionSettings('fib')">💾 Сохранить FIB & CID</button>
+            </div>
+        </div>
+
+        <div id="faction_lssd" class="tab-content">
+            <div class="admin-section">
+                <h3>🤠 Настройки LSSD</h3>
+                <div class="form-grid">
+                    <div>
+                        <label>Вебхук IID: Еженедельные отчёты</label>
+                        <input type="text" id="lssd_webhook_report">
+                        <label>Вебхук IID: Повышения</label>
+                        <input type="text" id="lssd_webhook_promotion">
+                        <label>Вебхук SA: Проверка жетонов</label>
+                        <input type="text" id="lssd_webhook_badge">
+                        <label>Вебхук SA: Отчёты кадетов</label>
+                        <input type="text" id="lssd_webhook_cadet">
+                        <label>Вебхук SA: Результаты тестов</label>
+                        <input type="text" id="lssd_webhook_test">
+                    </div>
+                    <div>
+                        <label>Роли IID (через пробел)</label>
+                        <input type="text" id="lssd_role_iid">
+                        <label>Роли SA (через пробел)</label>
+                        <input type="text" id="lssd_role_sa">
+                    </div>
+                    <div class="full-width">
+                        <label>Вопросы для теста SA (Массив JSON)</label>
+                        <textarea id="lssd_test_json" class="json-editor"></textarea>
+                    </div>
+                </div>
+                <button type="button" onclick="saveFactionSettings('lssd')">💾 Сохранить LSSD</button>
+            </div>
+        </div>
+
+        <div id="faction_lspd" class="tab-content">
+            <div class="admin-section">
+                <h3>🚓 Настройки LSPD</h3>
+                <div class="form-grid">
+                    <div>
+                        <label>Вебхук: Заявления</label>
+                        <input type="text" id="lspd_webhook_application">
+                        <label>Вебхук: Жетоны</label>
+                        <input type="text" id="lspd_webhook_badge">
+                        <label>Вебхук: Отчёты кадетов</label>
+                        <input type="text" id="lspd_webhook_cadet">
+                        <label>Вебхук: Тесты</label>
+                        <input type="text" id="lspd_webhook_test">
+                    </div>
+                    <div>
+                        <label>Роли: Заявления</label>
+                        <input type="text" id="lspd_role_application">
+                        <label>Роли: Жетоны</label>
+                        <input type="text" id="lspd_role_badge">
+                        <label>Роли: Кадеты</label>
+                        <input type="text" id="lspd_role_cadet">
+                        <label>Роли: Тесты</label>
+                        <input type="text" id="lspd_role_test">
+                    </div>
+                    <div class="full-width">
+                        <label>Вопросы для теста LSPD (Массив JSON)</label>
+                        <textarea id="lspd_test_json" class="json-editor"></textarea>
+                    </div>
+                </div>
+                <button type="button" onclick="saveFactionSettings('lspd')">💾 Сохранить LSPD</button>
+            </div>
+        </div>
+
+        <div id="faction_gov" class="tab-content">
+            <div class="admin-section">
+                <h3>⚖️ Настройки GOV</h3>
+                <div class="form-grid">
+                    <div>
+                        <label>Вебхук: Тест адвокатов</label>
+                        <input type="text" id="gov_webhook_test">
+                    </div>
+                    <div>
+                        <label>Роль (ID): Пинги</label>
+                        <input type="text" id="gov_role_test">
+                    </div>
+                    <div class="full-width">
+                        <label>Настройки тестов адвокатов (Массив JSON)</label>
+                        <textarea id="gov_test_json" class="json-editor"></textarea>
+                    </div>
+                </div>
+                <button type="button" onclick="saveFactionSettings('gov')">💾 Сохранить GOV</button>
+            </div>
+        </div>
+
+        <div id="faction_ems" class="tab-content">
+            <div class="admin-section">
+                <h3>🚑 Настройки EMS</h3>
+                <div class="form-grid">
+                    <div>
+                        <label>Вебхук: Основной</label>
+                        <input type="text" id="ems_webhook_main">
+                    </div>
+                    <div>
+                        <label>Роль (ID): Пинги</label>
+                        <input type="text" id="ems_role_main">
+                    </div>
+                </div>
+                <button type="button" onclick="saveFactionSettings('ems')">💾 Сохранить EMS</button>
+            </div>
+        </div>
+
+        <div id="faction_deadly" class="tab-content">
+            <div class="admin-section">
+                <h3>💀 Настройки Семьи DEADLY</h3>
+                <div class="form-grid">
+                    <div>
+                        <label>Вебхук: Заявки в семью</label>
+                        <input type="text" id="deadly_webhook_application">
+                    </div>
+                    <div>
+                        <label>Роль (ID): Пинги</label>
+                        <input type="text" id="deadly_role_ping">
+                    </div>
+                </div>
+                <button type="button" onclick="saveFactionSettings('deadly')">💾 Сохранить DEADLY</button>
             </div>
         </div>
 
     </div>
 
     <script>
-        function toggleTheme() {
-            const root = document.documentElement;
-            const currentTheme = root.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            root.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        }
-
-        const sidebar = document.getElementById('sidebar');
-        
-        function toggleSidebar() {
-            sidebar.classList.toggle('open');
-        }
-        
-        function closeSidebarOnClick() {
-            if (window.innerWidth <= 768) {
-                sidebar.classList.remove('open');
-            }
-        }
-
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
-            
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
-            
-            closeSidebarOnClick();
-            
-            if (tabId === 'logs') {
-                fetchLogs();
-            }
+            if (tabId === 'logs') fetchLogs();
         }
 
         async function apiCall(url, options = {}) {
             try {
                 const res = await fetch(url, options);
-                
                 if (res.status === 403) {
-                    alert('Сессия истекла. Пожалуйста, авторизуйтесь заново.');
+                    alert('Сессия истекла. Авторизуйтесь заново.');
                     window.location.href = '/login';
                     return null;
                 }
-                
-                if (!res.ok) {
-                    throw new Error(`Ошибка ${res.status}`);
-                }
-                
+                if (!res.ok) throw new Error(`Ошибка ${res.status}`);
                 return await res.json();
             } catch (err) {
                 console.error(err);
@@ -512,17 +537,13 @@
 
         async function loadProjects() {
             const data = await apiCall('/api/projects');
-            
             if (!data) return;
-            
-            allProjects = data || [];
+            allProjects = data;
             const select = document.getElementById('projectSelect');
             select.innerHTML = '<option value="">➕ Создать новый проект</option>';
-            
             allProjects.forEach((p, index) => {
                 select.innerHTML += `<option value="${index}">${p.title || 'Проект ' + (index + 1)}</option>`;
             });
-            
             selectProject();
         }
 
@@ -530,7 +551,6 @@
             const idx = document.getElementById('projectSelect').value;
             const img = document.getElementById('projImgPreview');
             const delBtn = document.getElementById('deleteBtn');
-            
             if (idx === "") {
                 document.getElementById('projTitle').value = '';
                 document.getElementById('projPath').value = '';
@@ -546,21 +566,18 @@
                 document.getElementById('projShortDesc').value = p.shortDesc || '';
                 document.getElementById('projFullDesc').value = p.fullDesc || '';
                 currentProjImageUrl = p.imageUrl || '';
-                
                 if (currentProjImageUrl) {
                     img.src = currentProjImageUrl;
                     img.style.display = 'block';
                 } else {
                     img.style.display = 'none';
                 }
-                
                 delBtn.style.display = 'inline-block';
             }
         }
 
         function saveProjectWithImage() {
             const fileInput = document.getElementById('projImageFile');
-            
             if (fileInput.files.length > 0) {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
@@ -569,7 +586,6 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ image: e.target.result })
                     });
-                    
                     if (data && data.success) {
                         currentProjImageUrl = data.url;
                         saveProjectData();
@@ -590,19 +606,14 @@
                 fullDesc: document.getElementById('projFullDesc').value,
                 imageUrl: currentProjImageUrl
             };
-            
-            if (idx === "") {
-                allProjects.push(projData);
-            } else {
-                allProjects[idx] = projData;
-            }
+            if (idx === "") allProjects.push(projData);
+            else allProjects[idx] = projData;
 
             const data = await apiCall('/api/projects', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(allProjects)
             });
-            
             if (data && data.success) {
                 alert('Проект сохранен!');
                 loadProjects();
@@ -611,71 +622,142 @@
 
         async function deleteProject() {
             const idx = document.getElementById('projectSelect').value;
-            
-            if (idx === "" || !confirm('Точно удалить проект?')) {
-                return;
-            }
-            
+            if (idx === "" || !confirm('Точно удалить проект?')) return;
             allProjects.splice(idx, 1);
-            
             const data = await apiCall('/api/projects', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(allProjects)
             });
-            
             if (data && data.success) {
                 document.getElementById('projectSelect').value = "";
                 loadProjects();
             }
         }
 
-        async function loadSettings() {
+        let globalConfig = {};
+
+        async function loadConfig() {
             const data = await apiCall('/api/settings');
-            
             if (!data) return;
-            
-            ['lssd', 'lspd', 'gov', 'cid', 'fib'].forEach(dep => {
-                document.getElementById(`webhook_${dep}`).value = data[`webhook_${dep}`] || '';
-            });
-            
-            document.getElementById('role_ids').value = data.role_ids || '';
-            
+            globalConfig = data;
+
             if (data.illustrationUrl) {
-                const img = document.getElementById('currentIllustration');
-                img.src = data.illustrationUrl;
-                img.style.display = 'block';
+                document.getElementById('currentIllustration').src = data.illustrationUrl;
+                document.getElementById('currentIllustration').style.display = 'block';
+            }
+
+            if(data.fib) {
+                document.getElementById('fib_webhook_main').value = data.fib.webhooks?.main || '';
+                document.getElementById('fib_webhook_cid').value = data.fib.webhooks?.cid_evidence || '';
+                document.getElementById('fib_role_ping').value = data.fib.roles?.ping || '';
+                document.getElementById('fib_role_cid').value = data.fib.roles?.cid_evidence || '';
+                document.getElementById('fib_test_json').value = JSON.stringify(data.fib.testSettings?.questions || [], null, 2);
+            }
+
+            if(data.lssd) {
+                document.getElementById('lssd_webhook_report').value = data.lssd.webhooks?.report || '';
+                document.getElementById('lssd_webhook_promotion').value = data.lssd.webhooks?.promotion || '';
+                document.getElementById('lssd_webhook_badge').value = data.lssd.webhooks?.badge || '';
+                document.getElementById('lssd_webhook_cadet').value = data.lssd.webhooks?.cadet || '';
+                document.getElementById('lssd_webhook_test').value = data.lssd.webhooks?.test || '';
+                document.getElementById('lssd_role_iid').value = data.lssd.roles?.iid || '';
+                document.getElementById('lssd_role_sa').value = data.lssd.roles?.sa || '';
+                document.getElementById('lssd_test_json').value = JSON.stringify(data.lssd.testQuestions || [], null, 2);
+            }
+
+            if(data.lspd) {
+                document.getElementById('lspd_webhook_application').value = data.lspd.webhooks?.application || '';
+                document.getElementById('lspd_webhook_badge').value = data.lspd.webhooks?.badge || '';
+                document.getElementById('lspd_webhook_cadet').value = data.lspd.webhooks?.cadet || '';
+                document.getElementById('lspd_webhook_test').value = data.lspd.webhooks?.test || '';
+                document.getElementById('lspd_role_application').value = data.lspd.roles?.application || '';
+                document.getElementById('lspd_role_badge').value = data.lspd.roles?.badge || '';
+                document.getElementById('lspd_role_cadet').value = data.lspd.roles?.cadet || '';
+                document.getElementById('lspd_role_test').value = data.lspd.roles?.test || '';
+                document.getElementById('lspd_test_json').value = JSON.stringify(data.lspd.testQuestions || [], null, 2);
+            }
+
+            if(data.gov) {
+                document.getElementById('gov_webhook_test').value = data.gov.webhooks?.test || '';
+                document.getElementById('gov_role_test').value = data.gov.roles?.test || '';
+                document.getElementById('gov_test_json').value = JSON.stringify(data.gov.testSettings?.questions || [], null, 2);
+            }
+
+            if(data.ems) {
+                document.getElementById('ems_webhook_main').value = data.ems.webhooks?.main || '';
+                document.getElementById('ems_role_main').value = data.ems.roles?.main || '';
+            }
+
+            if(data.deadly) {
+                document.getElementById('deadly_webhook_application').value = data.deadly.webhooks?.application || '';
+                document.getElementById('deadly_role_ping').value = data.deadly.roles?.ping || '';
             }
         }
 
-        async function saveSettings() {
-            const data = await apiCall('/api/settings');
-            
-            if (!data) return;
-            
-            ['lssd', 'lspd', 'gov', 'cid', 'fib'].forEach(dep => {
-                data[`webhook_${dep}`] = document.getElementById(`webhook_${dep}`).value;
-            });
-            
-            data.role_ids = document.getElementById('role_ids').value;
-            
-            const res = await apiCall('/api/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            
-            if (res && res.success) {
-                alert('Настройки сохранены!');
+        async function saveFactionSettings(faction) {
+            if (!globalConfig[faction]) globalConfig[faction] = { webhooks: {}, roles: {} };
+
+            try {
+                if (faction === 'fib') {
+                    globalConfig.fib.webhooks.main = document.getElementById('fib_webhook_main').value;
+                    globalConfig.fib.webhooks.cid_evidence = document.getElementById('fib_webhook_cid').value;
+                    globalConfig.fib.roles.ping = document.getElementById('fib_role_ping').value;
+                    globalConfig.fib.roles.cid_evidence = document.getElementById('fib_role_cid').value;
+                    if(!globalConfig.fib.testSettings) globalConfig.fib.testSettings = {};
+                    globalConfig.fib.testSettings.questions = JSON.parse(document.getElementById('fib_test_json').value);
+                }
+                if (faction === 'lssd') {
+                    globalConfig.lssd.webhooks.report = document.getElementById('lssd_webhook_report').value;
+                    globalConfig.lssd.webhooks.promotion = document.getElementById('lssd_webhook_promotion').value;
+                    globalConfig.lssd.webhooks.badge = document.getElementById('lssd_webhook_badge').value;
+                    globalConfig.lssd.webhooks.cadet = document.getElementById('lssd_webhook_cadet').value;
+                    globalConfig.lssd.webhooks.test = document.getElementById('lssd_webhook_test').value;
+                    globalConfig.lssd.roles.iid = document.getElementById('lssd_role_iid').value;
+                    globalConfig.lssd.roles.sa = document.getElementById('lssd_role_sa').value;
+                    globalConfig.lssd.testQuestions = JSON.parse(document.getElementById('lssd_test_json').value);
+                }
+                if (faction === 'lspd') {
+                    globalConfig.lspd.webhooks.application = document.getElementById('lspd_webhook_application').value;
+                    globalConfig.lspd.webhooks.badge = document.getElementById('lspd_webhook_badge').value;
+                    globalConfig.lspd.webhooks.cadet = document.getElementById('lspd_webhook_cadet').value;
+                    globalConfig.lspd.webhooks.test = document.getElementById('lspd_webhook_test').value;
+                    globalConfig.lspd.roles.application = document.getElementById('lspd_role_application').value;
+                    globalConfig.lspd.roles.badge = document.getElementById('lspd_role_badge').value;
+                    globalConfig.lspd.roles.cadet = document.getElementById('lspd_role_cadet').value;
+                    globalConfig.lspd.roles.test = document.getElementById('lspd_role_test').value;
+                    globalConfig.lspd.testQuestions = JSON.parse(document.getElementById('lspd_test_json').value);
+                }
+                if (faction === 'gov') {
+                    globalConfig.gov.webhooks.test = document.getElementById('gov_webhook_test').value;
+                    globalConfig.gov.roles.test = document.getElementById('gov_role_test').value;
+                    if(!globalConfig.gov.testSettings) globalConfig.gov.testSettings = {};
+                    globalConfig.gov.testSettings.questions = JSON.parse(document.getElementById('gov_test_json').value);
+                }
+                if (faction === 'ems') {
+                    globalConfig.ems.webhooks.main = document.getElementById('ems_webhook_main').value;
+                    globalConfig.ems.roles.main = document.getElementById('ems_role_main').value;
+                }
+                if (faction === 'deadly') {
+                    globalConfig.deadly.webhooks.application = document.getElementById('deadly_webhook_application').value;
+                    globalConfig.deadly.roles.ping = document.getElementById('deadly_role_ping').value;
+                }
+
+                const res = await apiCall('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(globalConfig)
+                });
+
+                if (res && res.success) alert(`Настройки ${faction.toUpperCase()} сохранены!`);
+            } catch (e) {
+                alert('Ошибка JSON: Убедитесь что JSON формат правильный. ' + e.message);
             }
         }
 
         function uploadIllustration() {
             const fileInput = document.getElementById('illustrationFile');
-            
-            if (fileInput.files.length === 0) {
-                return alert('Выберите файл!');
-            }
+            if (fileInput.files.length === 0) return alert('Выберите файл!');
             
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -686,38 +768,28 @@
                 });
                 
                 if (upRes && upRes.success) {
-                    const setRes = await apiCall('/api/settings');
-                    setRes.illustrationUrl = upRes.url;
-                    
+                    globalConfig.illustrationUrl = upRes.url;
                     await apiCall('/api/settings', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(setRes)
+                        body: JSON.stringify(globalConfig)
                     });
-                    
                     document.getElementById('currentIllustration').src = upRes.url;
                     document.getElementById('currentIllustration').style.display = 'block';
                     alert('Арт обновлен!');
                 }
             };
-            
             reader.readAsDataURL(fileInput.files[0]);
         }
 
         let refreshInterval = null;
-        
         async function fetchLogs() {
             const type = document.getElementById('logTypeSelect').value;
             const data = await apiCall(`/api/logs?type=${type}`);
-            
-            if (data) {
-                document.getElementById('serverLogs').innerText = data.logs || 'Пусто...';
-            }
+            if (data) document.getElementById('serverLogs').innerText = data.logs || 'Пусто...';
         }
-        
         function toggleAutoRefresh() {
             const btn = document.getElementById('autoRefreshBtn');
-            
             if (refreshInterval) {
                 clearInterval(refreshInterval);
                 refreshInterval = null;
@@ -733,53 +805,31 @@
 
         async function loadFileList() {
             const files = await apiCall('/api/list-files');
-            
             if (!files) return;
-            
             const select = document.getElementById('fileSelect');
             select.innerHTML = '<option value="">-- Выберите файл --</option>';
-            
-            files.forEach(f => {
-                select.innerHTML += `<option value="${f}">${f}</option>`;
-            });
+            files.forEach(f => { select.innerHTML += `<option value="${f}">${f}</option>`; });
         }
-
         async function loadFileCode() {
             const file = document.getElementById('fileSelect').value;
-            
-            if (!file) { 
-                document.getElementById('codeEditor').value = ''; 
-                return; 
-            }
-            
+            if (!file) { document.getElementById('codeEditor').value = ''; return; }
             const data = await apiCall('/api/file?path=' + encodeURIComponent(file));
-            
-            if (data) {
-                document.getElementById('codeEditor').value = data.content || '';
-            }
+            if (data) document.getElementById('codeEditor').value = data.content || '';
         }
-
         async function saveFileCode() {
             const file = document.getElementById('fileSelect').value;
             const content = document.getElementById('codeEditor').value;
-            
-            if (!file) {
-                return alert('Файл не выбран!');
-            }
-            
+            if (!file) return alert('Файл не выбран!');
             const data = await apiCall('/api/file', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ filePath: file, content: content })
             });
-            
-            if (data && data.success) {
-                alert('Код сохранен!');
-            }
+            if (data && data.success) alert('Код сохранен!');
         }
 
         loadProjects();
-        loadSettings();
+        loadConfig();
         loadFileList();
         fetchLogs();
     </script>
