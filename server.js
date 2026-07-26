@@ -37,8 +37,12 @@ const ensureDirectoriesExist = () => {
 };
 
 const ensureFilesExist = () => {
-    if (!fs.existsSync(FILE_PROJECTS)) fs.writeFileSync(FILE_PROJECTS, '[]', 'utf8');
-    if (!fs.existsSync(FILE_SETTINGS)) fs.writeFileSync(FILE_SETTINGS, '{}', 'utf8');
+    if (!fs.existsSync(FILE_PROJECTS)) {
+        fs.writeFileSync(FILE_PROJECTS, '[]', 'utf8');
+    }
+    if (!fs.existsSync(FILE_SETTINGS)) {
+        fs.writeFileSync(FILE_SETTINGS, '{}', 'utf8');
+    }
 };
 
 ensureDirectoriesExist();
@@ -52,12 +56,16 @@ const logger = {
     visit: (req) => {
         const logMsg = `[VISIT] ${new Date().toLocaleString('ru-RU')} | IP: ${req.ip} | URL: ${req.originalUrl} | Method: ${req.method}`;
         console.log(logMsg);
-        try { fs.appendFileSync(FILE_VISITS, logMsg + '\n'); } catch (e) {}
+        try { 
+            fs.appendFileSync(FILE_VISITS, logMsg + '\n'); 
+        } catch (e) {}
     },
     error: (msg, err) => {
         const logMsg = `[ERROR] ${new Date().toLocaleString('ru-RU')} | ${msg} | ${err ? err.stack || err.message : ''}`;
         console.error(logMsg);
-        try { fs.appendFileSync(FILE_ERRORS, logMsg + '\n'); } catch (e) {}
+        try { 
+            fs.appendFileSync(FILE_ERRORS, logMsg + '\n'); 
+        } catch (e) {}
     }
 };
 
@@ -89,6 +97,7 @@ app.use(cookieParser());
 
 const sanitizeInput = (req, res, next) => {
     const sqlRegex = /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND)\b)|(['"])/i;
+    
     const checkObj = (obj) => {
         for (let key in obj) {
             if (typeof obj[key] === 'string' && key !== 'content' && key !== 'image' && key !== 'imageUrl' && key !== 'path') {
@@ -101,8 +110,14 @@ const sanitizeInput = (req, res, next) => {
             }
         }
     };
-    if (req.body) checkObj(req.body);
-    if (req.query) checkObj(req.query);
+
+    if (req.body) {
+        checkObj(req.body);
+    }
+    if (req.query) {
+        checkObj(req.query);
+    }
+    
     next();
 };
 
@@ -214,9 +229,11 @@ app.post('/api/upload', requireAdmin, upload.single('image'), (req, res) => {
                 return res.json({ success: true, url: `/uploads/${filename}` });
             }
         }
+        
         if (!req.file) {
             return res.status(400).json({ error: 'File error' });
         }
+        
         res.json({ success: true, url: `/uploads/${req.file.filename}` });
     } catch (err) {
         res.status(500).json({ error: 'Upload error' });
@@ -227,11 +244,15 @@ app.get('/api/logs', requireAdmin, (req, res) => {
     try {
         const type = req.query.type || 'visits';
         const file = type === 'errors' ? FILE_ERRORS : FILE_VISITS;
-        if (!fs.existsSync(file)) return res.json({ logs: 'Empty' });
+        
+        if (!fs.existsSync(file)) {
+            return res.json({ logs: 'Empty' });
+        }
         
         const data = fs.readFileSync(file, 'utf8');
         const lines = data.split('\n').filter(Boolean);
         const lastLines = lines.slice(-200).reverse().join('\n');
+        
         res.json({ logs: lastLines });
     } catch (err) {
         res.status(500).json({ error: 'Log error' });
@@ -243,18 +264,22 @@ app.get('/api/list-files', requireAdmin, (req, res) => {
         const getFilesRecursive = (dir, base = '') => {
             let results = [];
             const list = fs.readdirSync(dir);
+            
             list.forEach(file => {
                 const filePath = path.join(dir, file);
                 const relativePath = path.join(base, file);
                 const stat = fs.statSync(filePath);
+                
                 if (stat && stat.isDirectory()) {
                     results = results.concat(getFilesRecursive(filePath, relativePath));
                 } else {
                     results.push(relativePath.replace(/\\/g, '/'));
                 }
             });
+            
             return results;
         };
+        
         const allFiles = getFilesRecursive(DIR_PUBLIC);
         res.json(allFiles);
     } catch (err) {
@@ -265,12 +290,17 @@ app.get('/api/list-files', requireAdmin, (req, res) => {
 app.get('/api/file', requireAdmin, (req, res) => {
     try {
         const filePathParam = req.query.path;
-        if (!filePathParam) return res.status(400).json({ error: 'Path error' });
+        
+        if (!filePathParam) {
+            return res.status(400).json({ error: 'Path error' });
+        }
         
         const safePath = path.normalize(filePathParam).replace(/^(\.\.[\/\\])+/, '');
         const fullPath = path.join(DIR_PUBLIC, safePath);
         
-        if (!fs.existsSync(fullPath)) return res.status(404).json({ error: '404' });
+        if (!fs.existsSync(fullPath)) {
+            return res.status(404).json({ error: '404' });
+        }
         
         const content = fs.readFileSync(fullPath, 'utf8');
         res.json({ content });
@@ -282,7 +312,10 @@ app.get('/api/file', requireAdmin, (req, res) => {
 app.post('/api/file', requireAdmin, (req, res) => {
     try {
         const { filePath, content } = req.body;
-        if (!filePath) return res.status(400).json({ error: 'Path error' });
+        
+        if (!filePath) {
+            return res.status(400).json({ error: 'Path error' });
+        }
         
         const safePath = path.normalize(filePath).replace(/^(\.\.[\/\\])+/, '');
         const fullPath = path.join(DIR_PUBLIC, safePath);
