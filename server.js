@@ -1,4 +1,3 @@
-// server.js
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
@@ -268,6 +267,21 @@ app.get('/admin', authMiddleware, (req, res) => {
 });
 
 app.use('/api', authMiddleware);
+
+app.get('/api/me', (req, res) => {
+    if (req.isSuperAdmin) {
+        return res.json({ isSuperAdmin: true, systems: ['all'], permissions: ['all'] });
+    }
+    if (req.tokenData) {
+        return res.json({
+            isSuperAdmin: false,
+            name: req.tokenData.name,
+            systems: req.tokenData.systems || [],
+            permissions: req.tokenData.permissions || []
+        });
+    }
+    res.status(401).json({ error: 'Not authenticated' });
+});
 
 app.get('/api/tokens', (req, res) => {
     if (!req.isSuperAdmin) {
