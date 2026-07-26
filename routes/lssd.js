@@ -2,137 +2,129 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+const url = require('url');
 
-const CONFIG_FILE = path.join(__dirname, '../data', 'config.json');
+const FILE_SETTINGS = path.join(__dirname, '../data/config.json');
 
-function getConfig() {
+const getConfig = () => {
     try {
-        return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+        if (!fs.existsSync(FILE_SETTINGS)) return {};
+        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
+        const json = JSON.parse(data);
+        return json.lssd || { webhooks: {}, roles: {}, testQuestions: [] };
     } catch (e) {
-        return { webhooks: {}, roles: "" };
+        return { webhooks: {}, roles: {}, testQuestions: [] };
     }
-}
+};
 
-async function sendToDiscord(webhook, payload) {
-    if (!webhook) return;
-    try {
-        await fetch(webhook, {
+const sendDiscordWebhook = (webhookUrl, payload) => {
+    return new Promise((resolve) => {
+        if (!webhookUrl || !webhookUrl.startsWith('http')) {
+            return resolve(false);
+        }
+        const parsedUrl = url.parse(webhookUrl);
+        const postData = JSON.stringify(payload);
+        const options = {
+            hostname: parsedUrl.hostname,
+            port: parsedUrl.port || 443,
+            path: parsedUrl.path,
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        };
+        const req = https.request(options, (res) => {
+            res.on('data', () => {});
+            res.on('end', () => resolve(res.statusCode >= 200 && res.statusCode < 300));
         });
-    } catch (err) {
-        console.error('Discord Webhook Error:', err);
-    }
-}
+        req.on('error', () => resolve(false));
+        req.write(postData);
+        req.end();
+    });
+};
 
-router.post('/report', async (req, res) => {
-    try {
-        const data = req.body;
-        const config = getConfig();
-        const webhook = config.webhooks.lssd; 
+router.get('/questions', (req, res) => {
+    const config = getConfig();
+    const rawQuestions = config.testQuestions || [];
+    const durationMinutes = config.testDurationMinutes || 15;
 
-        const embeds = [{
-            title: '📊 Еженедельный отчёт LSSD',
-            color: 0xC29B6E,
-            fields: [
-                { name: '👤 Сотрудник', value: data.employee || '—', inline: true },
-                { name: '🏅 Ранг', value: data.rankName || '—', inline: true },
-                { name: '📅 Период', value: `${data.startDate} — ${data.endDate} (${data.periodDays} дн.)`, inline: false },
-                { name: '🏆 Итого баллов', value: `\`\`\`${data.actions ? data.actions.reduce((sum, a) => sum + a.points, 0) : 0} баллов\`\`\``, inline: true },
-                { name: '📊 Количество действий', value: `\`\`\`${data.actions ? data.actions.length : 0}\`\`\``, inline: true }
-            ],
-            timestamp: new Date().toISOString()
-        }];
+    const filteredQuestions = rawQuestions.map((q, index) => ({
+        id: q.id || (index + 1),
+        text: q.question || q.text || '',
+        type: q.type || 'single',
+        options: (q.options || []).map(opt => (typeof opt === 'string' ? opt : opt.text || ''))
+    }));
 
-        const payload = {
-            username: 'LSSD Отчёты',
-            avatar_url: 'https://i.imgur.com/7kZ5q2b.png',
-            content: config.roles ? `<@&${config.roles}>` : '',
-            embeds: embeds
-        };
-
-        await sendToDiscord(webhook, payload);
-        res.json({ success: true, message: 'Отчет сохранен и отправлен.' });
-    } catch (e) {
-        res.status(500).json({ success: false, message: e.message });
-    }
+    res.json({
+        success: true,
+        durationMinutes: durationMinutes,
+        questions: filteredQuestions
+    });
 });
 
-router.post('/promotion', async (req, res) => {
-    try {
-        const data = req.body;
-        const config = getConfig();
-        const webhook = config.webhooks.lssd;
+router.post('/submit', async (req, res) => {
+    const config = getConfig();
+    const rawQuestions = config.testQuestions || [];
+    const passingScore = config.testPassingScore || 8;
+    const { nickname, discordTag, questions, questionTimes, leaveCount } = req.body;
 
-        const embeds = [{
-            title: '📈 Заявка на повышение LSSD',
-            color: 0xFFA500,
-            fields: [
-                { name: '👤 Сотрудник', value: data.employee || '—', inline: true },
-                { name: '💬 Discord', value: data.discord || '—', inline: true }
-            ],
-            timestamp: new Date().toISOString()
-        }];
+    let totalScore = 0;
+    let maxPossibleScore = rawQuestions.length;
 
+    rawQuestions.forEach((storedQ, idx) => {
+        const userQ = (questions || []).find(q => q.id === storedQ.id || q.id === (idx + 1));
+        const selectedIndices = userQ && Array.isArray(userQ.selectedAnswers) ? userQ.selectedAnswers : [];
+        
+        let correctIndices = [];
+        if (Array.isArray(storedQ.correctIndices) && storedQ.correctIndices.length > 0) {
+            correctIndices = storedQ.correctIndices;
+        } else if (storedQ.correctIndex !== undefined) {
+            correctIndices = [storedQ.correctIndex];
+        }
+
+        const isCorrect = correctIndices.length === selectedIndices.length && 
+            correctIndices.every(val => selectedIndices.includes(val));
+
+        if (isCorrect) totalScore++;
+    });
+
+    const passed = totalScore >= passingScore;
+    const webhookUrl = config.webhooks?.test;
+    const pingRole = config.roles?.sa ? `<@&${config.roles.sa}>` : '';
+
+    if (webhookUrl) {
+        const embedColor = passed ? 0x22c55e : 0xef4444;
+        const statusText = passed ? '✅ УСПЕШНО СДАНО' : '❌ НЕ СДАНО';
+        
         const payload = {
-            username: 'LSSD Повышения',
-            avatar_url: 'https://i.imgur.com/7kZ5q2b.png',
-            content: config.roles ? `<@&${config.roles}>` : '',
-            embeds: embeds
+            content: pingRole ? `Результат теста LSSD: ${pingRole}` : null,
+            embeds: [
+                {
+                    title: '🤠 Результат тестирования LSSD',
+                    color: embedColor,
+                    fields: [
+                        { name: '👤 Сотрудник', value: `${nickname || 'Не указан'} (${discordTag || 'Нет Discord'})`, inline: true },
+                        { name: '📊 Статус', value: `${statusText} (${totalScore} из ${maxPossibleScore})`, inline: true },
+                        { name: '🎯 Проходной балл', value: `${passingScore}`, inline: true },
+                        { name: '⚠️ Покиданий вкладки', value: `${leaveCount || 0}`, inline: true }
+                    ],
+                    footer: { text: `Frizworld LSSD Portal | ${new Date().toLocaleString('ru-RU')}` }
+                }
+            ]
         };
 
-        await sendToDiscord(webhook, payload);
-        res.json({ success: true, message: 'Заявка отправлена.' });
-    } catch (e) {
-        res.status(500).json({ success: false, message: e.message });
+        await sendDiscordWebhook(webhookUrl, payload);
     }
-});
 
-router.post('/badge', async (req, res) => {
-    try {
-        const data = req.body;
-        const config = getConfig();
-        const payload = {
-            embeds: [{
-                title: '🆕 Заявка на жетон',
-                color: 0xC29B6E,
-                fields: [
-                    { name: '👤 Имя', value: data.name || '—', inline: true },
-                    { name: '🎮 Скриншот из игры', value: data.screenshotGame ? `[Ссылка](${data.screenshotGame})` : '—', inline: false },
-                    { name: '🤖 Скриншот бота', value: data.screenshotBot ? `[Ссылка](${data.screenshotBot})` : '—', inline: false }
-                ],
-                timestamp: new Date().toISOString()
-            }]
-        };
-        await sendToDiscord(config.webhooks.lssd, payload);
-        res.json({ success: true, message: 'Заявка принята' });
-    } catch (e) {
-        res.status(500).json({ success: false, message: e.message });
-    }
-});
-
-router.post('/cadet', async (req, res) => {
-    try {
-        const data = req.body;
-        const config = getConfig();
-        const payload = {
-            content: config.roles ? `<@&${config.roles}>` : '',
-            embeds: [{
-                title: '📈 Отчет кадета',
-                color: 0xC29B6E,
-                fields: [
-                    { name: '👤 Ник', value: data.nick || '—', inline: true },
-                    { name: '💬 Discord', value: data.discord || '—', inline: true }
-                ],
-                timestamp: new Date().toISOString()
-            }]
-        };
-        await sendToDiscord(config.webhooks.lssd, payload);
-        res.json({ success: true, message: 'Отчет принят' });
-    } catch (e) {
-        res.status(500).json({ success: false, message: e.message });
-    }
+    res.json({
+        success: true,
+        passed: passed,
+        score: totalScore,
+        total: maxPossibleScore,
+        passingScore: passingScore
+    });
 });
 
 module.exports = router;
