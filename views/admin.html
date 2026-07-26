@@ -37,14 +37,14 @@
         .logout-btn:hover { background: var(--danger-color); color: #fff; }
 
         .content-area { flex-grow: 1; padding: 20px 40px; overflow-y: auto; }
-        .tab-content { display: none; max-width: 1000px; margin: 0 auto; animation: fadeIn 0.3s ease; }
+        .tab-content { display: none; max-width: 1100px; margin: 0 auto; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .admin-section { background-color: var(--panel-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); margin-bottom: 20px; }
         h3 { margin-bottom: 20px; font-size: 22px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; color: var(--text-main); }
-        h4 { margin: 25px 0 15px; color: var(--accent-color); }
+        h4 { margin: 25px 0 15px; color: var(--accent-color); font-size: 18px; }
 
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .full-width { grid-column: 1 / -1; }
@@ -66,14 +66,25 @@
         pre.logs-view { background-color: #050507; color: #22c55e; padding: 15px; border-radius: 8px; height: 500px; overflow-y: auto; font-family: monospace; font-size: 13px; border: 1px solid var(--border-color); white-space: pre-wrap; word-wrap: break-word; }
         .preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px; object-fit: cover; }
 
+        .subsystem-tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        .subsystem-btn { background: #27272a; color: var(--text-muted); border: 1px solid #3f3f46; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .subsystem-btn:hover { color: #fff; border-color: var(--accent-color); }
+        .subsystem-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+        .subsystem-content { display: none; }
+        .subsystem-content.active { display: block; }
+
         .q-card { background: #27272a; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #3f3f46; position: relative; }
-        .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; color: var(--text-main); font-size: 16px; }
-        .q-settings { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; background: #18181b; padding: 10px; border-radius: 6px; }
+        .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; color: var(--text-main); font-size: 16px; border-bottom: 1px dashed #3f3f46; padding-bottom: 10px; }
+        .q-settings { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; background: #18181b; padding: 12px; border-radius: 6px; flex-wrap: wrap; }
         .q-settings select, .q-settings input { margin-bottom: 0; padding: 8px; }
         .q-opt { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: #18181b; padding: 10px; border-radius: 6px; }
         .q-opt input[type="text"] { margin-bottom: 0; flex-grow: 1; }
         .q-opt input[type="radio"], .q-opt input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent-color); }
         .opt-label { font-size: 12px; color: var(--text-muted); cursor: pointer; }
+
+        .rank-badge-group { display: flex; gap: 10px; align-items: center; }
+        .rank-badge { padding: 6px 12px; border-radius: 6px; background: #09090b; border: 1px solid #3f3f46; color: var(--text-muted); cursor: pointer; font-size: 13px; font-weight: bold; }
+        .rank-badge.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
     </style>
 </head>
 <body>
@@ -199,16 +210,51 @@
                     <option value="deadly">💀 DEADLY (Семья)</option>
                 </select>
 
-                <div id="faction-webhooks"></div>
-                <div id="faction-roles"></div>
+                <div id="subsystem-nav" class="subsystem-tabs" style="display: none;"></div>
 
-                <div id="faction-tests" style="display: none; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                    <h4>Настройка тестирования</h4>
-                    <div style="max-width: 300px;">
-                        <label>Проходной балл (минимум для сдачи):</label>
-                        <input type="number" id="test-passing-score" value="0">
-                    </div>
+                <div id="subsystem-general" class="subsystem-content active">
+                    <div id="faction-webhooks"></div>
+                    <div id="faction-roles"></div>
+                </div>
+
+                <div id="subsystem-testing" class="subsystem-content">
+                    <h4>Настройка параметров тестирования</h4>
                     
+                    <div id="fib-specific-settings" style="display: none; background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
+                        <h5 style="color: var(--accent-color); margin-bottom: 15px; font-size: 16px;">Настройки переаттестации FIB по рангам</h5>
+                        <div class="form-grid">
+                            <div>
+                                <label>Время на тест для 3 ранга (минут):</label>
+                                <input type="number" id="fib-timer-rank3" value="15" min="1" max="180">
+                            </div>
+                            <div>
+                                <label>Кол-во правильных ответов для сдачи (3 ранг):</label>
+                                <input type="number" id="fib-score-rank3" value="8" min="1">
+                            </div>
+                            <div>
+                                <label>Время на тест для 7 ранга (минут):</label>
+                                <input type="number" id="fib-timer-rank7" value="20" min="1" max="180">
+                            </div>
+                            <div>
+                                <label>Кол-во правильных ответов для сдачи (7 ранг):</label>
+                                <input type="number" id="fib-score-rank7" value="10" min="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="standard-test-settings" style="display: none; background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
+                        <div class="form-grid">
+                            <div>
+                                <label>Время на тест (минут):</label>
+                                <input type="number" id="test-duration-minutes" value="15" min="1" max="180">
+                            </div>
+                            <div>
+                                <label>Проходной балл (минимум для сдачи):</label>
+                                <input type="number" id="test-passing-score" value="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="questions-list" style="margin-top: 20px;"></div>
                     
                     <button type="button" class="btn-success" onclick="addQuestion()" style="margin-top: 10px;">➕ Добавить вопрос</button>
@@ -331,13 +377,66 @@
         let unifiedQuestions = [];
 
         const factionSchemas = {
-            fib: { webhooks: { main: "Переаттестация FIB", cid_evidence: "Улики CID" }, roles: { ping: "Пинг FIB", cid_evidence: "Пинг CID" }, hasTest: true },
-            lssd: { webhooks: { report: "Отчеты", promotion: "Повышения", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, roles: { iid: "Роли IID", sa: "Роли SA" }, hasTest: true },
-            lspd: { webhooks: { application: "Заявления", badge: "Жетоны", cadet: "Отчеты кадетов", test: "Тесты" }, roles: { application: "Заявления", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, hasTest: true },
-            gov: { webhooks: { test: "Тест адвокатов" }, roles: { test: "Пинги" }, hasTest: true },
-            ems: { webhooks: { main: "Основной" }, roles: { main: "Пинги" }, hasTest: false },
-            deadly: { webhooks: { application: "Заявки в семью" }, roles: { ping: "Пинги" }, hasTest: false }
+            fib: { 
+                subsystems: [
+                    { id: 'subsystem-general', name: '🕵️ Улики CID (Вебхуки и роли)' },
+                    { id: 'subsystem-testing', name: '📝 Переаттестация FIB (Тесты)' }
+                ],
+                webhooks: { main: "Переаттестация FIB", cid_evidence: "Улики CID" }, 
+                roles: { ping: "Пинг FIB", cid_evidence: "Пинг CID" }, 
+                hasTest: true 
+            },
+            lssd: { 
+                subsystems: [
+                    { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' },
+                    { id: 'subsystem-testing', name: '📝 Тестирование кадетов/SA' }
+                ],
+                webhooks: { report: "Отчеты", promotion: "Повышения", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, 
+                roles: { iid: "Роли IID", sa: "Роли SA" }, 
+                hasTest: true 
+            },
+            lspd: { 
+                subsystems: [
+                    { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' },
+                    { id: 'subsystem-testing', name: '📝 Тестирование и аттестация' }
+                ],
+                webhooks: { application: "Заявления", badge: "Жетоны", cadet: "Отчеты кадетов", test: "Тесты" }, 
+                roles: { application: "Заявления", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, 
+                hasTest: true 
+            },
+            gov: { 
+                subsystems: [
+                    { id: 'subsystem-general', name: '⚖️ Основные настройки' },
+                    { id: 'subsystem-testing', name: '📝 Тестирование адвокатов' }
+                ],
+                webhooks: { test: "Тест адвокатов" }, 
+                roles: { test: "Пинги" }, 
+                hasTest: true 
+            },
+            ems: { 
+                subsystems: [
+                    { id: 'subsystem-general', name: '🚑 Отчетность EMS' }
+                ],
+                webhooks: { main: "Основной вебхук отчетов", medical: "Регистрация медикаментов" }, 
+                roles: { main: "Пинг руководства EMS" }, 
+                hasTest: false 
+            },
+            deadly: { 
+                subsystems: [
+                    { id: 'subsystem-general', name: '💀 Настройки семьи' }
+                ],
+                webhooks: { application: "Заявки в семью" }, 
+                roles: { ping: "Пинги" }, 
+                hasTest: false 
+            }
         };
+
+        function switchSubsystem(targetId, btnEl) {
+            document.querySelectorAll('.subsystem-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.subsystem-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(targetId).classList.add('active');
+            btnEl.classList.add('active');
+        }
 
         async function initAdmin() {
             const data = await apiCall('/api/settings');
@@ -359,55 +458,95 @@
             const schema = factionSchemas[currentFaction];
             const config = globalConfig[currentFaction] || { webhooks: {}, roles: {} };
 
+            const nav = document.getElementById('subsystem-nav');
+            if (schema.subsystems && schema.subsystems.length > 1) {
+                nav.style.display = 'flex';
+                nav.innerHTML = schema.subsystems.map((sub, idx) => `
+                    <button type="button" class="subsystem-btn ${idx === 0 ? 'active' : ''}" onclick="switchSubsystem('${sub.id}', this)">${sub.name}</button>
+                `).join('');
+                document.querySelectorAll('.subsystem-content').forEach((el, idx) => {
+                    if (idx === 0) el.classList.add('active');
+                    else el.classList.remove('active');
+                });
+            } else {
+                nav.style.display = 'none';
+                document.getElementById('subsystem-general').classList.add('active');
+                document.getElementById('subsystem-testing').classList.remove('active');
+            }
+
             let whHtml = '<h4>Вебхуки (Discord)</h4><div class="form-grid">';
-            for (let [key, label] of Object.entries(schema.webhooks)) {
+            for (let [key, label] of Object.entries(schema.webhooks || {})) {
                 whHtml += `<div><label>${label}</label><input type="text" id="wh_${key}" value="${config.webhooks?.[key] || ''}" placeholder="https://discord.com/api/webhooks/..."></div>`;
             }
             whHtml += '</div>';
             document.getElementById('faction-webhooks').innerHTML = whHtml;
 
             let rlHtml = '<h4>Роли (Упоминания ID)</h4><div class="form-grid">';
-            for (let [key, label] of Object.entries(schema.roles)) {
+            for (let [key, label] of Object.entries(schema.roles || {})) {
                 rlHtml += `<div><label>${label}</label><input type="text" id="rl_${key}" value="${config.roles?.[key] || ''}" placeholder="123456789012345678"></div>`;
             }
             rlHtml += '</div>';
             document.getElementById('faction-roles').innerHTML = rlHtml;
 
+            const fibSettingsBox = document.getElementById('fib-specific-settings');
+            const stdSettingsBox = document.getElementById('standard-test-settings');
+
             if (schema.hasTest) {
-                document.getElementById('faction-tests').style.display = 'block';
-                
-                let passingScore = 0;
                 let rawQuestions = [];
                 
                 if (currentFaction === 'fib') {
-                    passingScore = config.testSettings?.passingScore || 0;
+                    fibSettingsBox.style.display = 'block';
+                    stdSettingsBox.style.display = 'none';
+                    
+                    document.getElementById('fib-timer-rank3').value = config.testSettings?.durationMinutesRank3 || 15;
+                    document.getElementById('fib-timer-rank7').value = config.testSettings?.durationMinutesRank7 || 20;
+                    document.getElementById('fib-score-rank3').value = config.testSettings?.passingScoreRank3 || 8;
+                    document.getElementById('fib-score-rank7').value = config.testSettings?.passingScoreRank7 || 10;
+                    
                     rawQuestions = config.testSettings?.questions || [];
-                } else if (currentFaction === 'lssd') {
-                    passingScore = config.testPassingScore || 0;
-                    rawQuestions = config.testQuestions || [];
-                } else if (currentFaction === 'lspd') {
-                    passingScore = config.testPassingScore || 0;
-                    rawQuestions = config.testQuestions || [];
-                } else if (currentFaction === 'gov') {
-                    passingScore = config.testSettings?.passingScore || 0;
-                    rawQuestions = config.testSettings?.questions || [];
+                } else {
+                    fibSettingsBox.style.display = 'none';
+                    stdSettingsBox.style.display = 'block';
+                    
+                    let passingScore = 0;
+                    let durationMinutes = 15;
+                    
+                    if (currentFaction === 'lssd') {
+                        passingScore = config.testPassingScore || 0;
+                        durationMinutes = config.testDurationMinutes || 15;
+                        rawQuestions = config.testQuestions || [];
+                    } else if (currentFaction === 'lspd') {
+                        passingScore = config.testPassingScore || 0;
+                        durationMinutes = config.testDurationMinutes || 15;
+                        rawQuestions = config.testQuestions || [];
+                    } else if (currentFaction === 'gov') {
+                        passingScore = config.testSettings?.passingScore || 0;
+                        durationMinutes = config.testSettings?.durationMinutes || 15;
+                        rawQuestions = config.testSettings?.questions || [];
+                    }
+                    
+                    document.getElementById('test-passing-score').value = passingScore;
+                    document.getElementById('test-duration-minutes').value = durationMinutes;
                 }
-                
-                document.getElementById('test-passing-score').value = passingScore;
 
                 unifiedQuestions = rawQuestions.map(q => {
-                    let uq = { text: '', options: [], type: 'single', points: 1, isBonus: false };
+                    let uq = { text: '', options: [], type: 'single', points: 1, isBonus: false, ranks: [3, 7] };
                     if (currentFaction === 'fib') {
                         uq.text = q.text || q.question || '';
-                        uq.options = (q.options || []).map(o => ({ text: o, isCorrect: o === q.correctAnswer }));
+                        uq.type = q.type || 'single';
+                        uq.ranks = q.ranks || [3, 7];
+                        const corrects = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correctAnswer ? [q.correctAnswer] : []);
+                        uq.options = (q.options || []).map(o => ({ text: o, isCorrect: corrects.includes(o) }));
                     } else if (currentFaction === 'lssd') {
                         uq.text = q.question || '';
-                        uq.options = (q.options || []).map((o, i) => ({ text: o, isCorrect: i === q.correctIndex }));
+                        uq.type = q.type || 'single';
+                        const correctIndices = Array.isArray(q.correctIndices) ? q.correctIndices : (q.correctIndex !== undefined ? [q.correctIndex] : []);
+                        uq.options = (q.options || []).map((o, i) => ({ text: o, isCorrect: correctIndices.includes(i) }));
                     } else if (currentFaction === 'lspd') {
                         uq.text = q.question || '';
-                        const corrects = q.correct || [];
+                        const corrects = Array.isArray(q.correct) ? q.correct : [];
                         uq.options = (q.options || []).map(o => ({ text: o, isCorrect: corrects.includes(o) }));
-                        uq.type = corrects.length > 1 ? 'multiple' : 'single';
+                        uq.type = q.type || (corrects.length > 1 ? 'multiple' : 'single');
                     } else if (currentFaction === 'gov') {
                         uq.text = q.question || '';
                         uq.type = q.type || 'single';
@@ -420,8 +559,24 @@
                 
                 renderQuestions();
             } else {
-                document.getElementById('faction-tests').style.display = 'none';
+                fibSettingsBox.style.display = 'none';
+                stdSettingsBox.style.display = 'none';
+                document.getElementById('questions-list').innerHTML = '';
             }
+        }
+
+        function toggleRankSelection(qIdx, rankVal) {
+            syncDOMToState();
+            const uq = unifiedQuestions[qIdx];
+            if (!uq.ranks) uq.ranks = [3, 7];
+            const i = uq.ranks.indexOf(rankVal);
+            if (i > -1) {
+                if (uq.ranks.length > 1) uq.ranks.splice(i, 1);
+            } else {
+                uq.ranks.push(rankVal);
+            }
+            uq.ranks.sort();
+            renderQuestions();
         }
 
         function renderQuestions() {
@@ -430,40 +585,42 @@
             unifiedQuestions.forEach((q, qIndex) => {
                 let html = `<div class="q-card">
                     <div class="q-header">
-                        <span>Вопрос ${qIndex + 1}</span>
+                        <span>Вопрос #${qIndex + 1}</span>
                         <button class="btn-danger btn-sm" onclick="removeQuestion(${qIndex})">🗑 Удалить вопрос</button>
                     </div>
                     <input type="text" class="q-text" value="${q.text.replace(/"/g, '&quot;')}" placeholder="Текст вопроса...">
-                `;
+                    <div class="q-settings">
+                        <div><label>Тип вопроса:</label>
+                        <select class="q-type" onchange="syncDOMToState(); renderQuestions();">
+                            <option value="single" ${q.type==='single'?'selected':''}>Один правильный вариант</option>
+                            <option value="multiple" ${q.type==='multiple'?'selected':''}>Мультивопрос (несколько вариантов)</option>
+                            ${currentFaction === 'gov' ? `<option value="text" ${q.type==='text'?'selected':''}>Развернутый ответ</option>` : ''}
+                        </select></div>`;
+
+                if (currentFaction === 'fib') {
+                    const r3 = q.ranks && q.ranks.includes(3);
+                    const r7 = q.ranks && q.ranks.includes(7);
+                    html += `
+                        <div><label>Для каких рангов вопрос:</label>
+                        <div class="rank-badge-group">
+                            <div class="rank-badge ${r3 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 3)">3 РАНГ</div>
+                            <div class="rank-badge ${r7 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 7)">7 РАНГ</div>
+                        </div></div>`;
+                }
 
                 if (currentFaction === 'gov') {
                     html += `
-                    <div class="q-settings">
-                        <div><label>Тип вопроса:</label>
-                        <select class="q-type">
-                            <option value="single" ${q.type==='single'?'selected':''}>Один вариант</option>
-                            <option value="multiple" ${q.type==='multiple'?'selected':''}>Несколько вариантов</option>
-                            <option value="text" ${q.type==='text'?'selected':''}>Развернутый ответ</option>
-                        </select></div>
                         <div><label>Баллы:</label><input type="number" class="q-points" value="${q.points}" min="1" style="width:80px"></div>
-                        <div><label style="margin-top:10px;"><input type="checkbox" class="q-bonus" ${q.isBonus?'checked':''}> Бонусный вопрос</label></div>
-                    </div>`;
-                } else if (currentFaction === 'lspd') {
-                    html += `
-                    <div class="q-settings">
-                        <div><label>Тип вопроса:</label>
-                        <select class="q-type">
-                            <option value="single" ${q.type==='single'?'selected':''}>Один вариант</option>
-                            <option value="multiple" ${q.type==='multiple'?'selected':''}>Несколько вариантов</option>
-                        </select></div>
-                    </div>`;
+                        <div><label style="margin-top:10px;"><input type="checkbox" class="q-bonus" ${q.isBonus?'checked':''}> Бонусный вопрос</label></div>`;
                 }
+
+                html += `</div>`;
 
                 if (q.type !== 'text') {
                     html += `<div class="q-options-container" style="margin-top:10px;">
-                                <label style="margin-bottom: 5px;">Варианты ответа (отметьте правильные):</label>`;
+                                <label style="margin-bottom: 5px;">Варианты ответа (отметьте все правильные):</label>`;
                     q.options.forEach((opt, oIndex) => {
-                        const inputType = (q.type === 'multiple' || (currentFaction === 'lspd' && q.type === 'multiple')) ? 'checkbox' : 'radio';
+                        const inputType = q.type === 'multiple' ? 'checkbox' : 'radio';
                         html += `<div class="q-opt">
                             <input type="${inputType}" name="correct_${qIndex}" class="opt-correct" ${opt.isCorrect ? 'checked' : ''} title="Правильный ответ">
                             <input type="text" class="opt-text" value="${opt.text.replace(/"/g, '&quot;')}" placeholder="Вариант ответа">
@@ -482,17 +639,14 @@
         function syncDOMToState() {
             const qCards = document.querySelectorAll('.q-card');
             unifiedQuestions = Array.from(qCards).map((card, qIndex) => {
-                const q = { options: [] };
+                const oldQ = unifiedQuestions[qIndex] || {};
+                const q = { options: [], ranks: oldQ.ranks || [3, 7] };
                 q.text = card.querySelector('.q-text').value;
+                q.type = card.querySelector('.q-type').value;
                 
                 if (currentFaction === 'gov') {
-                    q.type = card.querySelector('.q-type').value;
-                    q.points = parseInt(card.querySelector('.q-points').value) || 1;
-                    q.isBonus = card.querySelector('.q-bonus').checked;
-                } else if (currentFaction === 'lspd') {
-                    q.type = card.querySelector('.q-type')?.value || 'single';
-                } else {
-                    q.type = 'single';
+                    q.points = parseInt(card.querySelector('.q-points')?.value) || 1;
+                    q.isBonus = card.querySelector('.q-bonus')?.checked || false;
                 }
 
                 if (q.type !== 'text') {
@@ -510,7 +664,7 @@
 
         function addQuestion() {
             syncDOMToState();
-            unifiedQuestions.push({ text: '', type: 'single', points: 1, isBonus: false, options: [{text: '', isCorrect: false}, {text: '', isCorrect: false}] });
+            unifiedQuestions.push({ text: '', type: 'single', points: 1, isBonus: false, ranks: [3, 7], options: [{text: '', isCorrect: false}, {text: '', isCorrect: false}] });
             renderQuestions();
         }
 
@@ -538,38 +692,50 @@
             if (!globalConfig[currentFaction]) globalConfig[currentFaction] = { webhooks: {}, roles: {} };
             const config = globalConfig[currentFaction];
 
-            for (let key of Object.keys(schema.webhooks)) {
-                config.webhooks[key] = document.getElementById(`wh_${key}`).value.trim();
+            if (!config.webhooks) config.webhooks = {};
+            if (!config.roles) config.roles = {};
+
+            for (let key of Object.keys(schema.webhooks || {})) {
+                const el = document.getElementById(`wh_${key}`);
+                if (el) config.webhooks[key] = el.value.trim();
             }
-            for (let key of Object.keys(schema.roles)) {
-                config.roles[key] = document.getElementById(`rl_${key}`).value.trim();
+            for (let key of Object.keys(schema.roles || {})) {
+                const el = document.getElementById(`rl_${key}`);
+                if (el) config.roles[key] = el.value.trim();
             }
 
             if (schema.hasTest) {
                 syncDOMToState();
-                const passingScore = parseInt(document.getElementById('test-passing-score').value) || 0;
                 
                 const processedQuestions = unifiedQuestions.map((uq, idx) => {
+                    const correctOpts = uq.options.filter(o => o.isCorrect).map(o => o.text);
                     if (currentFaction === 'fib') {
-                        const correctOpt = uq.options.find(o => o.isCorrect);
                         return {
+                            id: idx + 1,
                             text: uq.text,
+                            type: uq.type,
+                            ranks: uq.ranks || [3, 7],
                             options: uq.options.map(o => o.text),
-                            correctAnswer: correctOpt ? correctOpt.text : (uq.options[0]?.text || '')
+                            correctAnswers: correctOpts,
+                            correctAnswer: correctOpts[0] || ''
                         };
                     } else if (currentFaction === 'lssd') {
+                        const correctIndices = uq.options.map((o, i) => o.isCorrect ? i : -1).filter(i => i !== -1);
                         return {
                             id: idx + 1,
                             question: uq.text,
+                            type: uq.type,
                             options: uq.options.map(o => o.text),
-                            correctIndex: Math.max(0, uq.options.findIndex(o => o.isCorrect))
+                            correctIndices: correctIndices,
+                            correctIndex: correctIndices[0] || 0
                         };
                     } else if (currentFaction === 'lspd') {
                         return {
                             id: idx + 1,
                             question: uq.text,
+                            type: uq.type,
                             options: uq.options.map(o => o.text),
-                            correct: uq.options.filter(o => o.isCorrect).map(o => o.text)
+                            correct: correctOpts
                         };
                     } else if (currentFaction === 'gov') {
                         return {
@@ -585,14 +751,19 @@
 
                 if (currentFaction === 'fib') {
                     if (!config.testSettings) config.testSettings = {};
-                    config.testSettings.passingScore = passingScore;
+                    config.testSettings.durationMinutesRank3 = parseInt(document.getElementById('fib-timer-rank3').value) || 15;
+                    config.testSettings.durationMinutesRank7 = parseInt(document.getElementById('fib-timer-rank7').value) || 20;
+                    config.testSettings.passingScoreRank3 = parseInt(document.getElementById('fib-score-rank3').value) || 8;
+                    config.testSettings.passingScoreRank7 = parseInt(document.getElementById('fib-score-rank7').value) || 10;
                     config.testSettings.questions = processedQuestions;
                 } else if (currentFaction === 'lssd' || currentFaction === 'lspd') {
-                    config.testPassingScore = passingScore;
+                    config.testPassingScore = parseInt(document.getElementById('test-passing-score').value) || 0;
+                    config.testDurationMinutes = parseInt(document.getElementById('test-duration-minutes').value) || 15;
                     config.testQuestions = processedQuestions;
                 } else if (currentFaction === 'gov') {
                     if (!config.testSettings) config.testSettings = {};
-                    config.testSettings.passingScore = passingScore;
+                    config.testSettings.passingScore = parseInt(document.getElementById('test-passing-score').value) || 0;
+                    config.testSettings.durationMinutes = parseInt(document.getElementById('test-duration-minutes').value) || 15;
                     config.testSettings.questions = processedQuestions;
                 }
             }
