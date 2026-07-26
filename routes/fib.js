@@ -59,3 +59,4 @@ router.post('/submit', async (req, res) => {
 });
 
 module.exports = router;
+После того как положишь его в `routes/fib.js`, твой `server.js` сможет успешно его подключить и запуститься!
