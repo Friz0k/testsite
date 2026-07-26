@@ -102,8 +102,8 @@
     <div class="sidebar" id="sidebar">
         <h2>Frizworld Admin</h2>
         
-        <div class="nav-category">Сайт</div>
-        <ul class="nav-links">
+        <div class="nav-category" id="siteNavCat">Сайт</div>
+        <ul class="nav-links" id="siteNavLinks">
             <li class="active" onclick="switchTab('projects', this)">📦 Проекты</li>
             <li onclick="switchTab('illustration', this)">🎨 Арт на главной</li>
             <li onclick="switchTab('logs', this)">📊 Логи сервера</li>
@@ -111,7 +111,7 @@
         </ul>
 
         <div class="nav-category">Системы</div>
-        <ul class="nav-links">
+        <ul class="nav-links" id="systemsNavLinks">
             <li onclick="switchTab('faction_manager', this)">💼 Управление фракциями</li>
             <li onclick="switchTab('tokens_manager', this)">🔑 Токены доступа</li>
         </ul>
@@ -324,7 +324,7 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            element.classList.add('active');
+            if (element) element.classList.add('active');
             if (tabId === 'logs') fetchLogs();
             if (tabId === 'faction_manager' && !currentFaction) loadFactionUI();
             if (tabId === 'tokens_manager') loadTokensUI();
@@ -430,6 +430,7 @@
         let globalConfig = {};
         let currentFaction = '';
         let unifiedQuestions = [];
+        let userAuth = null;
 
         const factionSchemas = {
             fib: { 
@@ -494,23 +495,79 @@
         }
 
         async function initAdmin() {
+            userAuth = await apiCall('/api/me');
+            if (!userAuth) return;
+
+            if (!userAuth.isSuperAdmin) {
+                document.querySelectorAll('#siteNavLinks li').forEach(li => {
+                    const attr = li.getAttribute('onclick');
+                    if (attr && (attr.includes('projects') || attr.includes('illustration') || attr.includes('logs'))) {
+                        li.style.display = 'none';
+                    }
+                    if (attr && attr.includes('code') && !userAuth.permissions.includes('files') && !userAuth.permissions.includes('all')) {
+                        li.style.display = 'none';
+                    }
+                });
+
+                document.querySelectorAll('#systemsNavLinks li').forEach(li => {
+                    const attr = li.getAttribute('onclick');
+                    if (attr && attr.includes('tokens_manager')) {
+                        li.style.display = 'none';
+                    }
+                });
+
+                const selector = document.getElementById('factionSelector');
+                Array.from(selector.options).forEach(opt => {
+                    if (!userAuth.systems.includes(opt.value) && !userAuth.systems.includes('all')) {
+                        opt.remove();
+                    }
+                });
+
+                const anySiteVisible = Array.from(document.querySelectorAll('#siteNavLinks li')).some(li => li.style.display !== 'none');
+                if (!anySiteVisible) {
+                    document.getElementById('siteNavCat').style.display = 'none';
+                }
+
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+
+                const factionBtn = Array.from(document.querySelectorAll('#systemsNavLinks li')).find(li => li.getAttribute('onclick')?.includes('faction_manager'));
+                if (factionBtn) {
+                    switchTab('faction_manager', factionBtn);
+                } else {
+                    const codeBtn = Array.from(document.querySelectorAll('#siteNavLinks li')).find(li => li.style.display !== 'none');
+                    if (codeBtn) switchTab('code', codeBtn);
+                }
+            }
+
             const data = await apiCall('/api/settings');
             if (data) {
                 globalConfig = data;
                 if (data.illustrationUrl) {
-                    document.getElementById('currentIllustration').src = data.illustrationUrl;
-                    document.getElementById('currentIllustration').style.display = 'block';
+                    const ill = document.getElementById('currentIllustration');
+                    if (ill) {
+                        ill.src = data.illustrationUrl;
+                        ill.style.display = 'block';
+                    }
                 }
                 loadFactionUI();
             }
-            loadProjects();
-            loadFileList();
-            fetchLogs();
+
+            if (userAuth.isSuperAdmin) {
+                loadProjects();
+                loadFileList();
+                fetchLogs();
+            } else if (userAuth.permissions.includes('files') || userAuth.permissions.includes('all')) {
+                loadFileList();
+            }
         }
 
         function loadFactionUI() {
-            currentFaction = document.getElementById('factionSelector').value;
+            const selector = document.getElementById('factionSelector');
+            if (!selector || !selector.value) return;
+            currentFaction = selector.value;
             const schema = factionSchemas[currentFaction];
+            if (!schema) return;
             const config = globalConfig[currentFaction] || { webhooks: {}, roles: {} };
 
             const nav = document.getElementById('subsystem-nav');
