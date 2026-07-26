@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMS | Информационная панель</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+        .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #2e0c15 0%, #000 100%); z-index: -1; }
+        .container { z-index: 1; text-align: center; width: 100%; max-width: 800px; padding: 20px; }
+        h1 { font-size: 3rem; margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase; color: #ef4444; }
+        p { color: #9ca3af; margin-bottom: 40px; font-size: 1.1rem; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 30px; max-width: 400px; margin: 0 auto; }
+        .card { background: rgba(25, 25, 30, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 40px 20px; cursor: pointer; transition: all 0.3s ease; text-decoration: none; color: white; display: flex; flex-direction: column; align-items: center; backdrop-filter: blur(10px); }
+        .card:hover { transform: translateY(-10px); border-color: #ef4444; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.2); }
+        .icon { font-size: 3.5rem; color: #ef4444; margin-bottom: 20px; }
+        .card h2 { font-size: 1.5rem; margin-bottom: 10px; }
+        .card span { color: #9ca3af; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="bg-layer"></div>
+    <div class="container">
+        <h1>Emergency Medical Services</h1>
+        <p>Медицинская панель управления</p>
+        <div class="grid">
+            <a href="ems.reports.html" class="card">
+                <i class="fas fa-heartbeat icon"></i>
+                <h2>Отчетность EMS</h2>
+                <span>Подача медицинских отчетов и регистрация</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
