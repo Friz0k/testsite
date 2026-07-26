@@ -1,4 +1,3 @@
-// middleware/auth.js
 const fs = require('fs');
 const path = require('path');
 
@@ -22,6 +21,7 @@ module.exports = (req, res, next) => {
     }
 
     const authHeader = req.headers['authorization'] || req.headers['x-api-token'];
+    const cookieToken = req.cookies?.api_token || req.signedCookies?.api_token;
     let token = null;
 
     if (authHeader) {
@@ -30,6 +30,8 @@ module.exports = (req, res, next) => {
         } else {
             token = authHeader.trim();
         }
+    } else if (cookieToken) {
+        token = cookieToken.trim();
     }
 
     if (token) {
@@ -58,7 +60,7 @@ module.exports = (req, res, next) => {
         }
     }
 
-    if (req.xhr || (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) || req.path.startsWith('/api/') || req.path.startsWith('/')) {
+    if (req.xhr || (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) || req.path.startsWith('/api/')) {
         return res.status(401).json({ success: false, error: 'Auth required' });
     }
 
