@@ -2,26 +2,72 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Вход в систему</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в систему управления</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background: #050505; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .login-box { background: #0a0a0a; padding: 40px; border-radius: 12px; border: 1px solid #2a114d; width: 400px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.5); }
-        .login-box h2 { color: #fff; margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase; }
-        .login-box input { width: 100%; padding: 15px; margin-bottom: 20px; background: #11051f; border: 1px solid #4a1587; color: #fff; border-radius: 8px; outline: none; transition: 0.3s; }
-        .login-box input:focus { border-color: #b026ff; box-shadow: 0 0 15px rgba(138, 43, 226, 0.3); }
-        .login-box button { width: 100%; padding: 15px; background: #8a2be2; border: none; color: #fff; font-weight: bold; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
-        .login-box button:hover { background: #b026ff; box-shadow: 0 0 20px rgba(176, 38, 255, 0.4); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #050505; height: 100vh; display: flex; justify-content: center; align-items: center; color: #fff; }
+        .login-box { background: #0a0a0a; padding: 40px; border-radius: 16px; border: 1px solid #27272a; width: 420px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
+        .login-box h2 { color: #fff; margin-bottom: 25px; font-size: 22px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 25px; background: #121214; padding: 6px; border-radius: 10px; border: 1px solid #27272a; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #a1a1aa; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 6px; transition: 0.2s; }
+        .tab-btn.active { background: #7c3aed; color: #fff; }
+
+        .form-section { display: none; }
+        .form-section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .login-box input { width: 100%; padding: 14px 16px; margin-bottom: 15px; background: #09090b; border: 1px solid #27272a; color: #fff; border-radius: 8px; outline: none; transition: 0.3s; font-size: 14px; }
+        .login-box input:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2); }
+        
+        .login-box button { width: 100%; padding: 14px; background: #7c3aed; border: none; color: #fff; font-weight: 600; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 15px; margin-top: 10px; }
+        .login-box button:hover { background: #6d28d9; }
+        
+        .error-msg { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: none; }
+        .info-text { font-size: 12px; color: #a1a1aa; margin-top: 20px; line-height: 1.4; }
     </style>
 </head>
 <body>
+
     <div class="login-box">
-        <h2>Авторизация</h2>
-        <form action="/login" method="POST">
-            <input type="text" name="username" placeholder="Логин" required autocomplete="off">
-            <input type="password" name="password" placeholder="Пароль" required>
-            <button type="submit">Войти</button>
-        </form>
+        <h2>АВТОРИЗАЦИЯ</h2>
+        
+        <div id="errorBox" class="error-msg">Неверный логин, пароль или токен доступа</div>
+
+        <div class="tabs">
+            <button type="button" class="tab-btn active" onclick="switchTab('adminTab', this)">Супер-Админ</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tokenTab', this)">Токен доступа</button>
+        </div>
+
+        <div id="adminTab" class="form-section active">
+            <form action="/login" method="POST">
+                <input type="text" name="username" placeholder="Логин" required autocomplete="off">
+                <input type="password" name="password" placeholder="Пароль" required>
+                <button type="submit">Войти в панель</button>
+            </form>
+        </div>
+
+        <div id="tokenTab" class="form-section">
+            <form action="/login" method="POST">
+                <input type="password" name="token" placeholder="Введите ключ (friz_...)" required autocomplete="off">
+                <button type="submit">Войти по токену</button>
+            </form>
+            <div class="info-text">Вход по токену предоставляет ограниченный доступ только к разрешенным фракциям и настройкам.</div>
+        </div>
     </div>
+
+    <script>
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            el.classList.add('active');
+        }
+
+        if (window.location.search.includes('error=1')) {
+            document.getElementById('errorBox').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
