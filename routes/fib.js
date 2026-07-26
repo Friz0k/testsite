@@ -2,166 +2,199 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+const url = require('url');
 
-const CONFIG_FILE = path.join(__dirname, '../data', 'config.json');
-const FIB_DB_FILE = path.join(__dirname, '../data', 'fib_results.json');
-const CID_DB_FILE = path.join(__dirname, '../data', 'cid_evidence.json');
+const FILE_SETTINGS = path.join(__dirname, '../data/config.json');
 
-if (!fs.existsSync(FIB_DB_FILE)) {
-    fs.writeFileSync(FIB_DB_FILE, '[]', 'utf8');
-}
-
-if (!fs.existsSync(CID_DB_FILE)) {
-    fs.writeFileSync(CID_DB_FILE, '[]', 'utf8');
-}
-
-function getConfig() {
+const getConfig = () => {
     try {
-        return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+        if (!fs.existsSync(FILE_SETTINGS)) return {};
+        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
+        const json = JSON.parse(data);
+        return json.fib || { webhooks: {}, roles: {}, testSettings: {} };
     } catch (e) {
-        return { fib: { webhooks: {}, roles: {}, testSettings: { questions: [] } } };
+        return { webhooks: {}, roles: {}, testSettings: {} };
     }
-}
+};
 
-async function sendToDiscord(webhook, payload) {
-    if (!webhook) return;
-    try {
-        await fetch(webhook, {
+const sendDiscordWebhook = (webhookUrl, payload) => {
+    return new Promise((resolve) => {
+        if (!webhookUrl || !webhookUrl.startsWith('http')) {
+            return resolve(false);
+        }
+        const parsedUrl = url.parse(webhookUrl);
+        const postData = JSON.stringify(payload);
+        const options = {
+            hostname: parsedUrl.hostname,
+            port: parsedUrl.port || 443,
+            path: parsedUrl.path,
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        };
+        const req = https.request(options, (res) => {
+            res.on('data', () => {});
+            res.on('end', () => resolve(res.statusCode >= 200 && res.statusCode < 300));
         });
-    } catch (err) {}
-}
+        req.on('error', () => resolve(false));
+        req.write(postData);
+        req.end();
+    });
+};
 
 router.get('/questions', (req, res) => {
     const config = getConfig();
-    const questions = config.fib.testSettings.questions || [];
-    
-    const safeQuestions = questions.map((q, index) => ({
-        id: index,
-        text: q.text || q.question,
-        options: q.options
-    }));
-    
-    res.json({ success: true, questions: safeQuestions });
+    const rank = parseInt(req.query.rank) || 3;
+    const testSettings = config.testSettings || {};
+    const rawQuestions = testSettings.questions || [];
+
+    const filteredQuestions = rawQuestions
+        .filter(q => !q.ranks || q.ranks.includes(rank))
+        .map((q, index) => ({
+            id: q.id || (index + 1),
+            text: q.text || q.question || '',
+            type: q.type || 'single',
+            options: (q.options || []).map(opt => (typeof opt === 'string' ? opt : opt.text || ''))
+        }));
+
+    const durationMinutes = rank === 7 
+        ? (testSettings.durationMinutesRank7 || 20)
+        : (testSettings.durationMinutesRank3 || 15);
+
+    res.json({
+        success: true,
+        durationMinutes: durationMinutes,
+        questions: filteredQuestions
+    });
 });
 
 router.post('/submit', async (req, res) => {
-    try {
-        const data = req.body;
-        const config = getConfig();
-        const questions = config.fib.testSettings.questions || [];
+    const config = getConfig();
+    const testSettings = config.testSettings || {};
+    const rawQuestions = testSettings.questions || [];
+    const { rank, nickname, discordTag, questions, questionTimes, leaveCount } = req.body;
 
-        let score = 0;
-        const answers = data.answers || {}; 
+    const numericRank = parseInt(rank) || 3;
+    const passingScore = numericRank === 7 
+        ? (testSettings.passingScoreRank7 || 10) 
+        : (testSettings.passingScoreRank3 || 8);
+
+    let totalScore = 0;
+    let maxPossibleScore = 0;
+    const detailedResults = [];
+
+    rawQuestions.forEach((storedQ, idx) => {
+        if (storedQ.ranks && !storedQ.ranks.includes(numericRank)) return;
+        maxPossibleScore++;
+
+        const userQ = (questions || []).find(q => q.id === storedQ.id || q.id === (idx + 1));
+        const selectedIndices = userQ && Array.isArray(userQ.selectedAnswers) ? userQ.selectedAnswers : [];
         
-        questions.forEach((q, index) => {
-            if (answers[index] === q.correctAnswer) {
-                score++;
-            }
+        let correctIndices = [];
+        if (Array.isArray(storedQ.correctAnswers) && storedQ.correctAnswers.length > 0) {
+            correctIndices = storedQ.correctAnswers.map(ans => storedQ.options.indexOf(ans)).filter(i => i !== -1);
+        } else if (storedQ.correctAnswer) {
+            const idxCorrect = storedQ.options.indexOf(storedQ.correctAnswer);
+            if (idxCorrect !== -1) correctIndices = [idxCorrect];
+        }
+
+        const isCorrect = correctIndices.length === selectedIndices.length && 
+            correctIndices.every(val => selectedIndices.includes(val));
+
+        if (isCorrect) totalScore++;
+
+        detailedResults.push({
+            question: storedQ.text || storedQ.question,
+            isCorrect: isCorrect,
+            selected: selectedIndices.map(i => storedQ.options[i]).join(', ') || 'Нет ответа',
+            correct: correctIndices.map(i => storedQ.options[i]).join(', '),
+            timeSpent: questionTimes ? (questionTimes[idx] || 0) : 0
         });
+    });
 
-        const total = questions.length;
-        const passingScore = config.fib.testSettings.passingScore || Math.ceil(total * 0.7);
-        const passed = total > 0 && score >= passingScore;
+    const passed = totalScore >= passingScore;
+    const webhookUrl = config.webhooks?.main;
+    const pingRole = config.roles?.ping ? `<@&${config.roles.ping}>` : '';
 
-        const dbData = JSON.parse(fs.readFileSync(FIB_DB_FILE, 'utf8'));
-        const resultEntry = {
-            id: Date.now(),
-            nickname: data.nickname,
-            discord: data.discordTag,
-            rank: data.rank,
-            score: score,
-            total: total,
-            leaveCount: data.leaveCount,
-            passed: passed,
-            date: new Date().toISOString()
-        };
-        dbData.push(resultEntry);
-        fs.writeFileSync(FIB_DB_FILE, JSON.stringify(dbData, null, 2));
-
-        const webhook = config.fib.webhooks.main;
-        const roleStr = config.fib.roles.ping;
-
+    if (webhookUrl) {
+        const embedColor = passed ? 0x00ffaa : 0xff3366;
+        const statusText = passed ? '✅ УСПЕШНО СДАНО' : '❌ НЕ СДАНО';
+        
         const payload = {
-            content: roleStr ? `<@&${roleStr}>` : '',
-            username: "FIB Test System",
-            embeds: [{
-                title: "📋 Результат переаттестации FIB",
-                color: passed ? 0x22c55e : 0xef4444,
-                fields: [
-                    { name: "👤 Агент:", value: `${data.nickname || '—'}`, inline: true },
-                    { name: "💬 Discord:", value: `${data.discordTag || '—'}`, inline: true },
-                    { name: "🏅 Ранг:", value: `${data.rank || '—'}`, inline: true },
-                    { name: "📊 Результат:", value: `${score} из ${total}\n**${passed ? 'СДАЛ ✅' : 'НЕ СДАЛ ❌'}**`, inline: true },
-                    { name: "⚠️ Выходов с вкладки:", value: `${data.leaveCount || 0}`, inline: true }
-                ],
-                timestamp: new Date().toISOString()
-            }]
+            content: pingRole ? `Уведомление переаттестации: ${pingRole}` : null,
+            embeds: [
+                {
+                    title: `📋 Результат переаттестации FIB | Ранг: ${numericRank}`,
+                    color: embedColor,
+                    fields: [
+                        { name: '👤 Сотрудник', value: `${nickname || 'Не указан'} (${discordTag || 'Нет Discord'})`, inline: true },
+                        { name: '📊 Статус', value: `${statusText} (${totalScore} из ${maxPossibleScore})`, inline: true },
+                        { name: '🎯 Проходной балл', value: `${passingScore}`, inline: true },
+                        { name: '⚠️ Покиданий вкладки', value: `${leaveCount || 0}`, inline: true }
+                    ],
+                    footer: { text: `Frizworld Web Systems | ${new Date().toLocaleString('ru-RU')}` }
+                }
+            ]
         };
 
-        await sendToDiscord(webhook, payload);
-        res.json({ success: true, score: score, total: total, passed: passed });
-    } catch (e) {
-        res.status(500).json({ success: false, message: e.message });
+        await sendDiscordWebhook(webhookUrl, payload);
     }
+
+    res.json({
+        success: true,
+        passed: passed,
+        score: totalScore,
+        total: maxPossibleScore,
+        passingScore: passingScore
+    });
 });
 
 router.post('/evidence', async (req, res) => {
-    try {
-        const data = req.body;
-        const config = getConfig();
-        const webhook = config.fib.webhooks.cid_evidence;
-        const rolesStr = config.fib.roles.cid_evidence;
+    const config = getConfig();
+    const { nickname, badgeNumber, evidences } = req.body;
 
-        const evidences = data.evidences || [];
-        const orgs = [...new Set(evidences.map(ev => ev.organization).filter(Boolean))];
-        
-        const evidenceList = evidences.map((ev, i) => {
-            let line = `${i+1}. **${ev.name}**`;
-            if (ev.description) line += ` — ${ev.description}`;
-            if (ev.link) line += `\n🔗 [Ссылка](${ev.link})`;
-            return line;
-        }).join('\n');
+    if (!nickname || !badgeNumber || !Array.isArray(evidences) || evidences.length === 0) {
+        return res.status(400).json({ success: false, message: 'Некорректные данные улики' });
+    }
 
-        const dbData = JSON.parse(fs.readFileSync(CID_DB_FILE, 'utf8'));
-        evidences.forEach(ev => {
-            dbData.push({
-                id: Date.now() + Math.random(),
-                date: new Date().toISOString(),
-                nickname: data.nickname,
-                badgeNumber: data.badgeNumber,
-                name: ev.name,
-                organization: ev.organization || '',
-                description: ev.description || '',
-                link: ev.link || ''
-            });
-        });
-        fs.writeFileSync(CID_DB_FILE, JSON.stringify(dbData, null, 2));
+    const webhookUrl = config.webhooks?.cid_evidence;
+    const pingRole = config.roles?.cid_evidence ? `<@&${config.roles.cid_evidence}>` : '';
 
-        const roleMentions = rolesStr ? rolesStr.split(' ').map(id => `<@&${id}>`).join(' ') : '';
+    if (!webhookUrl) {
+        return res.json({ success: true, message: 'Улики приняты (вебхук Discord не настроен в админке)' });
+    }
 
-        const payload = {
-            username: 'Улики CID',
-            content: roleMentions,
-            embeds: [{
-                title: '🔍 Новые улики CID',
-                color: 0xFFFFFF,
+    const fields = evidences.slice(0, 20).map((ev, index) => ({
+        name: `🕵️ Улика #${index + 1}: ${ev.name || 'Без названия'} [${ev.organization || 'Нет орг.'}]`,
+        value: `**Ссылка:** ${ev.link || 'Нет ссылки'}\n**Описание:** ${ev.description || 'Отсутствует'}`,
+        inline: false
+    }));
+
+    const payload = {
+        content: pingRole ? `Новое дело CID: ${pingRole}` : null,
+        embeds: [
+            {
+                title: '📁 Регистрация улик CID',
+                color: 0x7c3aed,
                 fields: [
-                    { name: '👤 Никнейм', value: data.nickname || '—', inline: true },
-                    { name: '🪪 Номер жетона', value: data.badgeNumber || '—', inline: true },
-                    { name: '🎯 Организация', value: orgs.length ? orgs.join(', ') : 'Не указана', inline: true },
-                    { name: '📋 Улики', value: evidenceList || '—', inline: false }
+                    { name: '👮 Агент', value: `${nickname}`, inline: true },
+                    { name: '🏷️ Жетон', value: `${badgeNumber}`, inline: true },
+                    { name: '📦 Всего улик', value: `${evidences.length}`, inline: true },
+                    ...fields
                 ],
-                timestamp: new Date().toISOString()
-            }]
-        };
+                footer: { text: `Frizworld CID Archive | ${new Date().toLocaleString('ru-RU')}` }
+            }
+        ]
+    };
 
-        await sendToDiscord(webhook, payload);
-        res.json({ success: true, message: 'Улики сохранены и отправлены!' });
-    } catch (e) {
-        res.status(500).json({ success: false, message: e.message });
+    const sent = await sendDiscordWebhook(webhookUrl, payload);
+    if (sent) {
+        res.json({ success: true, message: '✓ Улики успешно отправлены в базу и Discord' });
+    } else {
+        res.status(500).json({ success: false, message: 'Ошибка при отправке в Discord' });
     }
 });
 
