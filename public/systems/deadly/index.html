@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <title>Заявка в семью Deadly</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: black; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; position: relative; overflow-x: hidden; }
+    .form-container { background-color: rgba(45, 45, 45, 0.85); padding: 32px; border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 4px 20px rgba(255,255,255,0.1), 0 0 30px rgba(255,255,255,0.2); position: relative; z-index: 10; animation: formGlow 3s infinite alternate; }
+    @keyframes formGlow { 0% { box-shadow: 0 4px 20px rgba(255,255,255,0.1), 0 0 20px rgba(255,255,255,0.1); } 100% { box-shadow: 0 4px 30px rgba(255,255,255,0.3), 0 0 40px rgba(255,200,200,0.3); } }
+    h1 { text-align: center; margin-bottom: 24px; font-size: 28px; border-bottom: 1px solid #555; padding-bottom: 12px; }
+    label { display: block; margin-bottom: 8px; font-weight: bold; color: #f0f0f0; letter-spacing: 0.5px; }
+    input, select { width: 100%; padding: 12px; margin-bottom: 20px; background-color: #3a3a3a; border: 1px solid #555; border-radius: 6px; color: white; font-size: 16px; box-sizing: border-box; transition: border-color 0.3s; }
+    input:focus, select:focus { outline: none; border-color: #aaa; }
+    button { width: 100%; background-color: #555; color: white; border: none; padding: 14px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background-color 0.3s; }
+    button:hover { background-color: #777; }
+    #message { margin-top: 16px; text-align: center; font-weight: bold; min-height: 24px; }
+    .success { color: #a3d8a3; }
+    .error { color: #ff8a8a; }
+    .bg-texts { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
+    .Deadly-text { position: absolute; font-weight: bold; color: rgba(255, 255, 255, 0.2); text-transform: uppercase; user-select: none; white-space: nowrap; animation: floatFade 3s infinite ease-in-out; }
+    @keyframes floatFade { 0% { opacity: 0; transform: translate(0, 0) scale(0.8); } 20% { opacity: 1; transform: translate(10px, -10px) scale(1); } 40% { transform: translate(-10px, 10px) scale(1.1); } 60% { transform: translate(15px, 5px) scale(0.9); } 80% { opacity: 0.8; transform: translate(-5px, -15px) scale(1); } 100% { opacity: 0; transform: translate(0, 20px) scale(0.7); } }
+    .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+    .particle { position: absolute; width: 4px; height: 4px; background-color: rgba(255, 255, 255, 0.5); border-radius: 50%; filter: blur(2px); animation: particleMove 10s infinite linear; }
+    @keyframes particleMove { 0% { transform: translateY(0) translateX(0) scale(1); opacity: 0.2; } 25% { transform: translateY(-20px) translateX(10px) scale(1.5); opacity: 0.8; } 50% { transform: translateY(-40px) translateX(-10px) scale(1); opacity: 0.4; } 75% { transform: translateY(-20px) translateX(15px) scale(1.2); opacity: 0.6; } 100% { transform: translateY(0) translateX(0) scale(1); opacity: 0.2; } }
+    .music-player { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background-color: rgba(30, 30, 30, 0.8); border-radius: 30px; padding: 10px 20px; box-shadow: 0 -2px 15px rgba(0,0,0,0.7), 0 0 20px rgba(255,255,255,0.2); display: flex; align-items: center; gap: 15px; z-index: 20; border: 1px solid #444; color: #ddd; font-size: 14px; }
+    .player-btn { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background-color: #3a3a3a; transition: 0.2s; }
+    .player-btn i { font-size: 20px; }
+    .player-btn:hover { background-color: #555; }
+    .player-time { font-family: monospace; min-width: 45px; text-align: center; }
+    .player-progress { flex: 1; height: 6px; background-color: #3a3a3a; border-radius: 3px; cursor: pointer; position: relative; }
+    .player-progress-filled { height: 100%; width: 0%; background-color: #a0a0a0; border-radius: 3px; pointer-events: none; }
+    audio { display: none; }
+  </style>
+</head>
+<body>
+  <div class="bg-texts" id="bgTexts"></div>
+  <div class="particles" id="particles"></div>
+
+  <div class="form-container">
+    <h1>Заявка в семью Deadly</h1>
+    <div class="field"><label>Ник-нейм *</label><input type="text" id="nick" required></div>
+    <div class="field"><label>Настоящее имя *</label><input type="text" id="realName" required></div>
+    <div class="field"><label>Сколько лет *</label><input type="number" id="age" min="1" max="100" required></div>
+    <div class="field"><label>Уровень *</label><input type="number" id="level" min="0" required></div>
+    <div class="field"><label>Сколько в день играете (часы) *</label><input type="number" id="hoursPerDay" step="0.5" required></div>
+    <div class="field"><label>Был ли опыт в других семьях? *</label><input type="text" id="pastFamilies"></div>
+    <div class="field">
+      <label>Готовы ли сменить фамилию? *</label>
+      <select id="changeSurname" required>
+        <option value="">—</option><option value="Да">Да</option><option value="Нет">Нет</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Готовы ли к еженедельному взносу? *</label>
+      <select id="weeklyFee" required>
+        <option value="">—</option><option value="Да">Да</option><option value="Нет">Нет</option>
+      </select>
+    </div>
+    <div class="field"><label>Discord (тег) *</label><input type="text" id="discord" required></div>
+    <button type="submit" id="submitBtn" onclick="sendForm();">Отправить заявку</button>
+    <div id="message"></div>
+  </div>
+
+  <div class="music-player">
+    <button class="player-btn" id="playPauseBtn"><i class="fas fa-play"></i></button>
+    <span class="player-time" id="currentTime">0:00</span>
+    <div class="player-progress" id="progressBar">
+      <div class="player-progress-filled" id="progressFilled"></div>
+    </div>
+    <span class="player-time" id="duration">0:00</span>
+  </div>
+
+  <audio id="bgMusic" preload="auto" loop>
+    <source src="https://www.dropbox.com/scl/fi/b5g293x06ilg72trkfimy/RXCOOL-GS-x-GME-Dark-Triad-audset.ru.mp3?rlkey=ld124rgzb3ptzka8fjp6ky4mz&dl=1" type="audio/mpeg">
+  </audio>
+
+  <script>
+    (function() {
+      const container = document.getElementById('bgTexts');
+      for (let i = 0; i < 60; i++) {
+        const span = document.createElement('span');
+        span.className = 'Deadly-text'; span.textContent = 'Deadly';
+        span.style.left = Math.random() * 100 + '%'; span.style.top = Math.random() * 100 + '%';
+        span.style.fontSize = (14 + Math.random() * 40) + 'px'; span.style.opacity = 0.2 + Math.random() * 0.5;
+        span.style.animationDuration = (2 + Math.random() * 3) + 's'; span.style.animationDelay = Math.random() * 2 + 's';
+        container.appendChild(span);
+      }
+    })();
+
+    (function() {
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 70; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%'; p.style.top = Math.random() * 100 + '%';
+        p.style.animationDelay = Math.random() * 5 + 's'; p.style.animationDuration = (5 + Math.random() * 10) + 's';
+        const size = 2 + Math.random() * 6;
+        p.style.width = size + 'px'; p.style.height = size + 'px';
+        container.appendChild(p);
+      }
+    })();
+
+    const audio = document.getElementById('bgMusic'); audio.volume = 0.1;
+    const playBtn = document.getElementById('playPauseBtn');
+    const currentTimeSpan = document.getElementById('currentTime');
+    const durationSpan = document.getElementById('duration');
+    const progressBar = document.getElementById('progressBar');
+    const progressFilled = document.getElementById('progressFilled');
+
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return '0:00';
+      const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60);
+      return mins + ':' + (secs < 10 ? '0' : '') + secs;
+    }
+
+    audio.addEventListener('loadedmetadata', () => { durationSpan.textContent = formatTime(audio.duration); });
+    audio.addEventListener('timeupdate', () => {
+      currentTimeSpan.textContent = formatTime(audio.currentTime);
+      const percent = (audio.currentTime / audio.duration) * 100 || 0;
+      progressFilled.style.width = percent + '%';
+    });
+    progressBar.addEventListener('click', (e) => {
+      const rect = progressBar.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      audio.currentTime = (clickX / rect.width) * audio.duration;
+    });
+    playBtn.addEventListener('click', () => {
+      if (audio.paused) { audio.play().then(() => { playBtn.innerHTML = '<i class="fas fa-pause"></i>'; }).catch(() => {}); } 
+      else { audio.pause(); playBtn.innerHTML = '<i class="fas fa-play"></i>'; }
+    });
+    audio.addEventListener('ended', () => { playBtn.innerHTML = '<i class="fas fa-play"></i>'; });
+    window.addEventListener('click', () => { if (audio.paused) audio.play().then(() => { playBtn.innerHTML = '<i class="fas fa-pause"></i>'; }).catch(() => {}); }, {once:true});
+
+    async function sendForm() {
+      const data = {
+        nick: document.getElementById('nick').value.trim(),
+        realName: document.getElementById('realName').value.trim(),
+        age: document.getElementById('age').value.trim(),
+        level: document.getElementById('level').value.trim(),
+        hoursPerDay: document.getElementById('hoursPerDay').value.trim(),
+        pastFamilies: document.getElementById('pastFamilies').value.trim(),
+        changeSurname: document.getElementById('changeSurname').value,
+        weeklyFee: document.getElementById('weeklyFee').value,
+        discord: document.getElementById('discord').value.trim()
+      };
+      
+      const msgDiv = document.getElementById('message');
+      
+      for (let key in data) {
+        if (!data[key] && key !== 'pastFamilies') {
+          msgDiv.innerHTML = '❌ Заполните все поля!'; msgDiv.className = 'error'; return;
+        }
+      }
+      if (data.pastFamilies === '') data.pastFamilies = 'Нет';
+      
+      msgDiv.innerHTML = 'Отправка...'; msgDiv.className = '';
+      const btn = document.getElementById('submitBtn'); btn.disabled = true;
+
+      try {
+        const res = await fetch('/deadly/application', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        
+        btn.disabled = false;
+        if (result.success) {
+            msgDiv.innerHTML = result.message; msgDiv.className = 'success';
+            document.querySelectorAll('input, select').forEach(el => el.value = '');
+        } else {
+            msgDiv.innerHTML = 'Ошибка: ' + result.message; msgDiv.className = 'error';
+        }
+      } catch (err) {
+        btn.disabled = false;
+        msgDiv.innerHTML = 'Ошибка соединения'; msgDiv.className = 'error';
+      }
+    }
+  </script>
+</body>
+</html>
