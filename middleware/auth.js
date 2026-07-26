@@ -1,6 +1,5 @@
 module.exports = (req, res, next) => {
-    const cookies = req.headers.cookie || '';
-    if (cookies.includes('admin_auth=true')) {
+    if (req.signedCookies && req.signedCookies.admin_auth === 'true') {
         return next();
     }
     
