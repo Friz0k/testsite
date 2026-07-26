@@ -28,9 +28,8 @@ const ensureDirectoriesExist = () => {
         if (!fs.existsSync(dir)) {
             try {
                 fs.mkdirSync(dir, { recursive: true });
-                console.log(`[INIT] Создана директория: ${dir}`);
+                console.log(`[INIT] ${dir}`);
             } catch (err) {
-                console.error(`[FATAL] Ошибка создания директории ${dir}:`, err.message);
                 process.exit(1);
             }
         }
@@ -79,7 +78,7 @@ const upload = multer({
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
-            cb(new Error('Разрешены только изображения'), false);
+            cb(new Error('Format error'), false);
         }
     }
 });
@@ -87,6 +86,27 @@ const upload = multer({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
+
+const sanitizeInput = (req, res, next) => {
+    const sqlRegex = /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND)\b)|(['"])/i;
+    const checkObj = (obj) => {
+        for (let key in obj) {
+            if (typeof obj[key] === 'string' && key !== 'content' && key !== 'image' && key !== 'imageUrl' && key !== 'path') {
+                if (sqlRegex.test(obj[key])) {
+                    obj[key] = obj[key].replace(/['"]/g, '');
+                }
+                obj[key] = obj[key].replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                checkObj(obj[key]);
+            }
+        }
+    };
+    if (req.body) checkObj(req.body);
+    if (req.query) checkObj(req.query);
+    next();
+};
+
+app.use(sanitizeInput);
 
 app.use((req, res, next) => {
     if (!req.originalUrl.includes('/api/logs')) {
@@ -101,7 +121,7 @@ const requireAdmin = (req, res, next) => {
     const isAdmin = req.cookies && req.cookies.admin_auth === 'true';
     if (!isAdmin) {
         if (req.xhr || req.path.startsWith('/api/')) {
-            return res.status(403).json({ error: 'Доступ запрещен. Требуется авторизация.' });
+            return res.status(403).json({ error: 'Auth required' });
         }
         return res.redirect('/login');
     }
@@ -111,25 +131,17 @@ const requireAdmin = (req, res, next) => {
 app.get('/login', (req, res) => {
     const loginPath = path.join(DIR_VIEWS, 'login.html');
     if (!fs.existsSync(loginPath)) {
-        logger.error('Файл login.html не найден в папке views');
-        return res.status(500).send('Системная ошибка: файл авторизации не найден');
+        return res.status(500).send('Error 500');
     }
     res.sendFile(loginPath);
 });
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    
     const envUser = process.env.ADMIN_USER;
     const envPass = process.env.ADMIN_PASS;
 
-    if (!envUser || !envPass) {
-        logger.error('Отсутствуют ADMIN_USER или ADMIN_PASS в файле .env');
-        return res.status(500).send('Ошибка конфигурации сервера');
-    }
-
     if (username === envUser && password === envPass) {
-        logger.info(`Успешный вход администратора с IP: ${req.ip}`);
         res.cookie('admin_auth', 'true', { 
             httpOnly: true, 
             path: '/', 
@@ -137,7 +149,6 @@ app.post('/login', (req, res) => {
         });
         res.redirect('/admin');
     } else {
-        logger.info(`Неудачная попытка входа: логин=${username}, IP=${req.ip}`);
         res.redirect('/login?error=1');
     }
 });
@@ -150,8 +161,7 @@ app.get('/logout', (req, res) => {
 app.get('/admin', requireAdmin, (req, res) => {
     const adminPath = path.join(DIR_VIEWS, 'admin.html');
     if (!fs.existsSync(adminPath)) {
-        logger.error('Файл admin.html не найден в папке views');
-        return res.status(500).send('Системная ошибка: панель управления не найдена');
+        return res.status(500).send('Error 500');
     }
     res.sendFile(adminPath);
 });
@@ -161,8 +171,7 @@ app.get('/api/projects', (req, res) => {
         const data = fs.readFileSync(FILE_PROJECTS, 'utf8');
         res.json(JSON.parse(data));
     } catch (err) {
-        logger.error('Ошибка чтения projects.json', err);
-        res.status(500).json({ error: 'Ошибка чтения проектов' });
+        res.status(500).json({ error: 'Read error' });
     }
 });
 
@@ -171,8 +180,7 @@ app.post('/api/projects', requireAdmin, (req, res) => {
         fs.writeFileSync(FILE_PROJECTS, JSON.stringify(req.body, null, 2), 'utf8');
         res.json({ success: true });
     } catch (err) {
-        logger.error('Ошибка сохранения projects.json', err);
-        res.status(500).json({ error: 'Ошибка сохранения проектов' });
+        res.status(500).json({ error: 'Write error' });
     }
 });
 
@@ -181,8 +189,7 @@ app.get('/api/settings', (req, res) => {
         const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
         res.json(JSON.parse(data));
     } catch (err) {
-        logger.error('Ошибка чтения config.json', err);
-        res.status(500).json({ error: 'Ошибка чтения настроек' });
+        res.status(500).json({ error: 'Read error' });
     }
 });
 
@@ -191,8 +198,7 @@ app.post('/api/settings', requireAdmin, (req, res) => {
         fs.writeFileSync(FILE_SETTINGS, JSON.stringify(req.body, null, 2), 'utf8');
         res.json({ success: true });
     } catch (err) {
-        logger.error('Ошибка сохранения config.json', err);
-        res.status(500).json({ error: 'Ошибка сохранения настроек' });
+        res.status(500).json({ error: 'Write error' });
     }
 });
 
@@ -208,28 +214,27 @@ app.post('/api/upload', requireAdmin, upload.single('image'), (req, res) => {
                 return res.json({ success: true, url: `/uploads/${filename}` });
             }
         }
-        
         if (!req.file) {
-            return res.status(400).json({ error: 'Файл не загружен' });
+            return res.status(400).json({ error: 'File error' });
         }
-        
         res.json({ success: true, url: `/uploads/${req.file.filename}` });
     } catch (err) {
-        logger.error('Ошибка при загрузке изображения', err);
-        res.status(500).json({ error: 'Внутренняя ошибка при сохранении файла' });
+        res.status(500).json({ error: 'Upload error' });
     }
 });
 
 app.get('/api/logs', requireAdmin, (req, res) => {
     try {
-        if (!fs.existsSync(FILE_VISITS)) return res.json({ logs: 'Логов пока нет' });
-        const data = fs.readFileSync(FILE_VISITS, 'utf8');
+        const type = req.query.type || 'visits';
+        const file = type === 'errors' ? FILE_ERRORS : FILE_VISITS;
+        if (!fs.existsSync(file)) return res.json({ logs: 'Empty' });
+        
+        const data = fs.readFileSync(file, 'utf8');
         const lines = data.split('\n').filter(Boolean);
         const lastLines = lines.slice(-200).reverse().join('\n');
         res.json({ logs: lastLines });
     } catch (err) {
-        logger.error('Ошибка чтения логов', err);
-        res.status(500).json({ error: 'Ошибка чтения логов' });
+        res.status(500).json({ error: 'Log error' });
     }
 });
 
@@ -253,43 +258,39 @@ app.get('/api/list-files', requireAdmin, (req, res) => {
         const allFiles = getFilesRecursive(DIR_PUBLIC);
         res.json(allFiles);
     } catch (err) {
-        logger.error('Ошибка получения списка файлов', err);
-        res.status(500).json({ error: 'Ошибка получения списка файлов' });
+        res.status(500).json({ error: 'Files error' });
     }
 });
 
 app.get('/api/file', requireAdmin, (req, res) => {
     try {
         const filePathParam = req.query.path;
-        if (!filePathParam) return res.status(400).json({ error: 'Путь не указан' });
+        if (!filePathParam) return res.status(400).json({ error: 'Path error' });
         
         const safePath = path.normalize(filePathParam).replace(/^(\.\.[\/\\])+/, '');
         const fullPath = path.join(DIR_PUBLIC, safePath);
         
-        if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'Файл не найден' });
+        if (!fs.existsSync(fullPath)) return res.status(404).json({ error: '404' });
         
         const content = fs.readFileSync(fullPath, 'utf8');
         res.json({ content });
     } catch (err) {
-        logger.error(`Ошибка чтения файла ${req.query.path}`, err);
-        res.status(500).json({ error: 'Ошибка чтения файла' });
+        res.status(500).json({ error: 'File error' });
     }
 });
 
 app.post('/api/file', requireAdmin, (req, res) => {
     try {
         const { filePath, content } = req.body;
-        if (!filePath) return res.status(400).json({ error: 'Путь не указан' });
+        if (!filePath) return res.status(400).json({ error: 'Path error' });
         
         const safePath = path.normalize(filePath).replace(/^(\.\.[\/\\])+/, '');
         const fullPath = path.join(DIR_PUBLIC, safePath);
         
         fs.writeFileSync(fullPath, content, 'utf8');
-        logger.info(`Файл изменен через админку: ${safePath}`);
         res.json({ success: true });
     } catch (err) {
-        logger.error('Ошибка сохранения файла кода', err);
-        res.status(500).json({ error: 'Ошибка сохранения файла' });
+        res.status(500).json({ error: 'File error' });
     }
 });
 
@@ -299,12 +300,7 @@ const loadModularRoute = (routeName, routeFile) => {
         try {
             const routeModule = require(fullPath);
             app.use(routeName, routeModule);
-            logger.info(`Роут ${routeName} успешно загружен из ${routeFile}`);
-        } catch (err) {
-            logger.error(`Ошибка при загрузке роута ${routeFile}`, err);
-        }
-    } else {
-        logger.info(`Роут файл ${routeFile} не найден. Пропуск.`);
+        } catch (err) {}
     }
 };
 
@@ -315,26 +311,18 @@ loadModularRoute('/gov', 'gov.js');
 loadModularRoute('/cid', 'cid.js');
 
 app.use((req, res, next) => {
-    logger.info(`404 - Страница не найдена: ${req.originalUrl}`);
-    res.status(404).send('404 - Страница не найдена');
+    res.status(404).send('404');
 });
 
 app.use((err, req, res, next) => {
-    logger.error(`Глобальная ошибка при обработке запроса ${req.originalUrl}`, err);
-    res.status(500).json({ error: 'Внутренняя ошибка сервера. Обратитесь к администратору.' });
+    res.status(500).json({ error: '500' });
 });
 
-process.on('uncaughtException', (err) => {
-    logger.error('КРИТИЧЕСКАЯ ОШИБКА (uncaughtException): Сервер продолжает работу', err);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    logger.error('НЕОБРАБОТАННОЕ ОТКЛОНЕНИЕ (unhandledRejection):', reason);
-});
+process.on('uncaughtException', (err) => {});
+process.on('unhandledRejection', (reason, promise) => {});
 
 const server = http.createServer(app);
 
 server.listen(PORT, () => {
-    logger.info(`[START] Сервер Frizworld успешно запущен на порту ${PORT}`);
-    logger.info(`[ENV] Пользователь админки загружен: ${process.env.ADMIN_USER ? 'ДА' : 'НЕТ'}`);
+    console.log(`[OK] Port ${PORT}`);
 });
