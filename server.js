@@ -414,7 +414,6 @@ loadModularRoute('/lssd', 'lssd.js');
 loadModularRoute('/lspd', 'lspd.js');
 loadModularRoute('/gov', 'gov.js');
 loadModularRoute('/fib', 'fib.js');
-loadModularRoute('/cid', 'cid.js');
 loadModularRoute('/deadly', 'deadly.js');
 loadModularRoute('/ems', 'ems.js');
 
