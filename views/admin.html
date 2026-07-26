@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Админ-панель Frizworld</title>
     <script>
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        let savedTheme = localStorage.getItem('theme');
+        if (!savedTheme) {
+            savedTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
         document.documentElement.setAttribute('data-theme', savedTheme);
     </script>
     <style>
@@ -37,7 +40,18 @@
             --input-bg: #ffffff;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        *::-webkit-scrollbar {
+            display: none;
+        }
 
         body {
             background-color: var(--bg-color);
@@ -83,8 +97,15 @@
             font-weight: 500;
         }
 
-        .nav-links li:hover { background-color: rgba(109, 40, 217, 0.1); color: var(--text-main); }
-        .nav-links li.active { background-color: var(--accent-color); color: #ffffff; }
+        .nav-links li:hover {
+            background-color: rgba(109, 40, 217, 0.1);
+            color: var(--text-main);
+        }
+
+        .nav-links li.active {
+            background-color: var(--accent-color);
+            color: #ffffff;
+        }
 
         .theme-toggle-btn {
             margin: 10px 20px;
@@ -96,7 +117,10 @@
             cursor: pointer;
             font-size: 14px;
         }
-        .theme-toggle-btn:hover { background: var(--border-color); }
+
+        .theme-toggle-btn:hover {
+            background: var(--border-color);
+        }
 
         .content-area {
             flex-grow: 1;
@@ -105,11 +129,31 @@
             position: relative;
         }
 
-        .header-mobile { display: none; }
+        .header-mobile {
+            display: none;
+        }
 
-        .tab-content { display: none; max-width: 1000px; margin: 0 auto; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content {
+            display: none;
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
         .admin-section {
             background-color: var(--panel-bg);
@@ -120,16 +164,31 @@
             margin-bottom: 20px;
         }
 
-        h3 { margin-bottom: 20px; font-size: 22px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+        h3 {
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
 
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
-        .full-width { grid-column: 1 / -1; }
 
-        label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
 
         input[type="text"], select, textarea {
             width: 100%;
@@ -141,15 +200,48 @@
             border-radius: 8px;
             font-size: 14px;
         }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-color); }
 
-        textarea#codeEditor { height: 500px; font-family: monospace; color: #c084fc; font-size: 14px; background-color: #050507; }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
 
-        button { background-color: var(--accent-color); color: #fff; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        button:hover { background-color: var(--accent-hover); }
-        .btn-success { background-color: var(--success-color); }
-        .btn-danger { background-color: var(--danger-color); }
-        .btn-group { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
+        textarea#codeEditor {
+            height: 500px;
+            font-family: monospace;
+            color: #c084fc;
+            font-size: 14px;
+            background-color: #050507;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: #fff;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
 
         pre {
             background-color: #050507;
@@ -165,10 +257,19 @@
             word-wrap: break-word;
         }
 
-        .preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px; object-fit: cover; }
+        .preview-img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+            object-fit: cover;
+        }
 
         @media (max-width: 768px) {
-            body { flex-direction: column; }
+            body {
+                flex-direction: column;
+            }
             .sidebar {
                 position: absolute;
                 left: -300px;
@@ -177,8 +278,9 @@
                 transition: left 0.3s ease;
                 box-shadow: 5px 0 15px rgba(0,0,0,0.5);
             }
-            .sidebar.open { left: 0; }
-            
+            .sidebar.open {
+                left: 0;
+            }
             .header-mobile {
                 display: flex;
                 justify-content: space-between;
@@ -187,12 +289,24 @@
                 background-color: var(--panel-bg);
                 border-bottom: 1px solid var(--border-color);
             }
-            .menu-btn { background: none; color: var(--text-main); font-size: 24px; padding: 0; }
-            
-            .content-area { padding: 15px; }
-            .form-grid { grid-template-columns: 1fr; }
-            .btn-group { flex-direction: column; }
-            button { width: 100%; }
+            .menu-btn {
+                background: none;
+                color: var(--text-main);
+                font-size: 24px;
+                padding: 0;
+            }
+            .content-area {
+                padding: 15px;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+            button {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -335,266 +449,337 @@
     </div>
 
     <script>
-    function toggleTheme() {
-        const root = document.documentElement;
-        const currentTheme = root.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        root.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-    }
+        function toggleTheme() {
+            const root = document.documentElement;
+            const currentTheme = root.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
 
-    const sidebar = document.getElementById('sidebar');
-    function toggleSidebar() { sidebar.classList.toggle('open'); }
-    function closeSidebarOnClick() { if(window.innerWidth <= 768) sidebar.classList.remove('open'); }
+        const sidebar = document.getElementById('sidebar');
+        
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+        }
+        
+        function closeSidebarOnClick() {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('open');
+            }
+        }
 
-    function switchTab(tabId, element) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        element.classList.add('active');
-        closeSidebarOnClick();
-        if(tabId === 'logs') fetchLogs();
-    }
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
+            
+            closeSidebarOnClick();
+            
+            if (tabId === 'logs') {
+                fetchLogs();
+            }
+        }
 
-    async function apiCall(url, options = {}) {
-        try {
-            const res = await fetch(url, options);
-            if(res.status === 403) {
-                alert('Сессия истекла. Пожалуйста, авторизуйтесь заново.');
-                window.location.href = '/login';
+        async function apiCall(url, options = {}) {
+            try {
+                const res = await fetch(url, options);
+                
+                if (res.status === 403) {
+                    alert('Сессия истекла. Пожалуйста, авторизуйтесь заново.');
+                    window.location.href = '/login';
+                    return null;
+                }
+                
+                if (!res.ok) {
+                    throw new Error(`Ошибка ${res.status}`);
+                }
+                
+                return await res.json();
+            } catch (err) {
+                console.error(err);
+                alert('Сбой запроса: ' + err.message);
                 return null;
             }
-            if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-            return await res.json();
-        } catch(err) {
-            console.error(err);
-            alert('Сбой запроса: ' + err.message);
-            return null;
         }
-    }
 
-    let allProjects = [];
-    let currentProjImageUrl = '';
+        let allProjects = [];
+        let currentProjImageUrl = '';
 
-    async function loadProjects() {
-        const data = await apiCall('/api/projects');
-        if(!data) return;
-        allProjects = data || [];
-        const select = document.getElementById('projectSelect');
-        select.innerHTML = '<option value="">➕ Создать новый проект</option>';
-        allProjects.forEach((p, index) => {
-            select.innerHTML += `<option value="${index}">${p.title || 'Проект ' + (index + 1)}</option>`;
-        });
-        selectProject();
-    }
-
-    function selectProject() {
-        const idx = document.getElementById('projectSelect').value;
-        const img = document.getElementById('projImgPreview');
-        const delBtn = document.getElementById('deleteBtn');
-        
-        if (idx === "") {
-            document.getElementById('projTitle').value = '';
-            document.getElementById('projPath').value = '';
-            document.getElementById('projShortDesc').value = '';
-            document.getElementById('projFullDesc').value = '';
-            currentProjImageUrl = '';
-            img.style.display = 'none';
-            delBtn.style.display = 'none';
-        } else {
-            const p = allProjects[idx];
-            document.getElementById('projTitle').value = p.title || '';
-            document.getElementById('projPath').value = p.path || '';
-            document.getElementById('projShortDesc').value = p.shortDesc || '';
-            document.getElementById('projFullDesc').value = p.fullDesc || '';
-            currentProjImageUrl = p.imageUrl || '';
+        async function loadProjects() {
+            const data = await apiCall('/api/projects');
             
-            if (currentProjImageUrl) {
-                img.src = currentProjImageUrl;
-                img.style.display = 'block';
-            } else {
-                img.style.display = 'none';
-            }
-            delBtn.style.display = 'inline-block';
+            if (!data) return;
+            
+            allProjects = data || [];
+            const select = document.getElementById('projectSelect');
+            select.innerHTML = '<option value="">➕ Создать новый проект</option>';
+            
+            allProjects.forEach((p, index) => {
+                select.innerHTML += `<option value="${index}">${p.title || 'Проект ' + (index + 1)}</option>`;
+            });
+            
+            selectProject();
         }
-    }
 
-    function saveProjectWithImage() {
-        const fileInput = document.getElementById('projImageFile');
-        if (fileInput.files.length > 0) {
+        function selectProject() {
+            const idx = document.getElementById('projectSelect').value;
+            const img = document.getElementById('projImgPreview');
+            const delBtn = document.getElementById('deleteBtn');
+            
+            if (idx === "") {
+                document.getElementById('projTitle').value = '';
+                document.getElementById('projPath').value = '';
+                document.getElementById('projShortDesc').value = '';
+                document.getElementById('projFullDesc').value = '';
+                currentProjImageUrl = '';
+                img.style.display = 'none';
+                delBtn.style.display = 'none';
+            } else {
+                const p = allProjects[idx];
+                document.getElementById('projTitle').value = p.title || '';
+                document.getElementById('projPath').value = p.path || '';
+                document.getElementById('projShortDesc').value = p.shortDesc || '';
+                document.getElementById('projFullDesc').value = p.fullDesc || '';
+                currentProjImageUrl = p.imageUrl || '';
+                
+                if (currentProjImageUrl) {
+                    img.src = currentProjImageUrl;
+                    img.style.display = 'block';
+                } else {
+                    img.style.display = 'none';
+                }
+                
+                delBtn.style.display = 'inline-block';
+            }
+        }
+
+        function saveProjectWithImage() {
+            const fileInput = document.getElementById('projImageFile');
+            
+            if (fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const data = await apiCall('/api/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: e.target.result })
+                    });
+                    
+                    if (data && data.success) {
+                        currentProjImageUrl = data.url;
+                        saveProjectData();
+                    }
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                saveProjectData();
+            }
+        }
+
+        async function saveProjectData() {
+            const idx = document.getElementById('projectSelect').value;
+            const projData = {
+                title: document.getElementById('projTitle').value,
+                path: document.getElementById('projPath').value,
+                shortDesc: document.getElementById('projShortDesc').value,
+                fullDesc: document.getElementById('projFullDesc').value,
+                imageUrl: currentProjImageUrl
+            };
+            
+            if (idx === "") {
+                allProjects.push(projData);
+            } else {
+                allProjects[idx] = projData;
+            }
+
+            const data = await apiCall('/api/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(allProjects)
+            });
+            
+            if (data && data.success) {
+                alert('Проект сохранен!');
+                loadProjects();
+            }
+        }
+
+        async function deleteProject() {
+            const idx = document.getElementById('projectSelect').value;
+            
+            if (idx === "" || !confirm('Точно удалить проект?')) {
+                return;
+            }
+            
+            allProjects.splice(idx, 1);
+            
+            const data = await apiCall('/api/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(allProjects)
+            });
+            
+            if (data && data.success) {
+                document.getElementById('projectSelect').value = "";
+                loadProjects();
+            }
+        }
+
+        async function loadSettings() {
+            const data = await apiCall('/api/settings');
+            
+            if (!data) return;
+            
+            ['lssd', 'lspd', 'gov', 'cid', 'fib'].forEach(dep => {
+                document.getElementById(`webhook_${dep}`).value = data[`webhook_${dep}`] || '';
+            });
+            
+            document.getElementById('role_ids').value = data.role_ids || '';
+            
+            if (data.illustrationUrl) {
+                const img = document.getElementById('currentIllustration');
+                img.src = data.illustrationUrl;
+                img.style.display = 'block';
+            }
+        }
+
+        async function saveSettings() {
+            const data = await apiCall('/api/settings');
+            
+            if (!data) return;
+            
+            ['lssd', 'lspd', 'gov', 'cid', 'fib'].forEach(dep => {
+                data[`webhook_${dep}`] = document.getElementById(`webhook_${dep}`).value;
+            });
+            
+            data.role_ids = document.getElementById('role_ids').value;
+            
+            const res = await apiCall('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (res && res.success) {
+                alert('Настройки сохранены!');
+            }
+        }
+
+        function uploadIllustration() {
+            const fileInput = document.getElementById('illustrationFile');
+            
+            if (fileInput.files.length === 0) {
+                return alert('Выберите файл!');
+            }
+            
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const data = await apiCall('/api/upload', {
+                const upRes = await apiCall('/api/upload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ image: e.target.result })
                 });
-                if (data && data.success) {
-                    currentProjImageUrl = data.url;
-                    saveProjectData();
+                
+                if (upRes && upRes.success) {
+                    const setRes = await apiCall('/api/settings');
+                    setRes.illustrationUrl = upRes.url;
+                    
+                    await apiCall('/api/settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(setRes)
+                    });
+                    
+                    document.getElementById('currentIllustration').src = upRes.url;
+                    document.getElementById('currentIllustration').style.display = 'block';
+                    alert('Арт обновлен!');
                 }
             };
+            
             reader.readAsDataURL(fileInput.files[0]);
-        } else {
-            saveProjectData();
         }
-    }
 
-    async function saveProjectData() {
-        const idx = document.getElementById('projectSelect').value;
-        const projData = {
-            title: document.getElementById('projTitle').value,
-            path: document.getElementById('projPath').value,
-            shortDesc: document.getElementById('projShortDesc').value,
-            fullDesc: document.getElementById('projFullDesc').value,
-            imageUrl: currentProjImageUrl
-        };
+        let refreshInterval = null;
         
-        if (idx === "") allProjects.push(projData);
-        else allProjects[idx] = projData;
-
-        const data = await apiCall('/api/projects', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(allProjects)
-        });
-        
-        if(data && data.success) {
-            alert('Проект сохранен!');
-            loadProjects();
+        async function fetchLogs() {
+            const type = document.getElementById('logTypeSelect').value;
+            const data = await apiCall(`/api/logs?type=${type}`);
+            
+            if (data) {
+                document.getElementById('serverLogs').innerText = data.logs || 'Пусто...';
+            }
         }
-    }
-
-    async function deleteProject() {
-        const idx = document.getElementById('projectSelect').value;
-        if (idx === "" || !confirm('Точно удалить проект?')) return;
         
-        allProjects.splice(idx, 1);
-        const data = await apiCall('/api/projects', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(allProjects)
-        });
-        
-        if(data && data.success) {
-            document.getElementById('projectSelect').value = "";
-            loadProjects();
+        function toggleAutoRefresh() {
+            const btn = document.getElementById('autoRefreshBtn');
+            
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+                btn.innerText = 'Автообновление: ВЫКЛ';
+                btn.style.backgroundColor = 'var(--accent-color)';
+            } else {
+                fetchLogs();
+                refreshInterval = setInterval(fetchLogs, 3000);
+                btn.innerText = 'Автообновление: ВКЛ';
+                btn.style.backgroundColor = 'var(--success-color)';
+            }
         }
-    }
 
-    async function loadSettings() {
-        const data = await apiCall('/api/settings');
-        if(!data) return;
-        ['lssd', 'lspd', 'gov', 'cid', 'fib'].forEach(dep => {
-            document.getElementById(`webhook_${dep}`).value = data[`webhook_${dep}`] || '';
-        });
-        document.getElementById('role_ids').value = data.role_ids || '';
-        if(data.illustrationUrl) {
-            const img = document.getElementById('currentIllustration');
-            img.src = data.illustrationUrl;
-            img.style.display = 'block';
+        async function loadFileList() {
+            const files = await apiCall('/api/list-files');
+            
+            if (!files) return;
+            
+            const select = document.getElementById('fileSelect');
+            select.innerHTML = '<option value="">-- Выберите файл --</option>';
+            
+            files.forEach(f => {
+                select.innerHTML += `<option value="${f}">${f}</option>`;
+            });
         }
-    }
 
-    async function saveSettings() {
-        const data = await apiCall('/api/settings');
-        if(!data) return;
-        ['lssd', 'lspd', 'gov', 'cid', 'fib'].forEach(dep => {
-            data[`webhook_${dep}`] = document.getElementById(`webhook_${dep}`).value;
-        });
-        data.role_ids = document.getElementById('role_ids').value;
-        
-        const res = await apiCall('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        if(res && res.success) alert('Настройки сохранены!');
-    }
+        async function loadFileCode() {
+            const file = document.getElementById('fileSelect').value;
+            
+            if (!file) { 
+                document.getElementById('codeEditor').value = ''; 
+                return; 
+            }
+            
+            const data = await apiCall('/api/file?path=' + encodeURIComponent(file));
+            
+            if (data) {
+                document.getElementById('codeEditor').value = data.content || '';
+            }
+        }
 
-    function uploadIllustration() {
-        const fileInput = document.getElementById('illustrationFile');
-        if (fileInput.files.length === 0) return alert('Выберите файл!');
-        
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const upRes = await apiCall('/api/upload', {
+        async function saveFileCode() {
+            const file = document.getElementById('fileSelect').value;
+            const content = document.getElementById('codeEditor').value;
+            
+            if (!file) {
+                return alert('Файл не выбран!');
+            }
+            
+            const data = await apiCall('/api/file', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: e.target.result })
+                body: JSON.stringify({ filePath: file, content: content })
             });
-            if(upRes && upRes.success) {
-                const setRes = await apiCall('/api/settings');
-                setRes.illustrationUrl = upRes.url;
-                await apiCall('/api/settings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(setRes)
-                });
-                document.getElementById('currentIllustration').src = upRes.url;
-                document.getElementById('currentIllustration').style.display = 'block';
-                alert('Арт обновлен!');
+            
+            if (data && data.success) {
+                alert('Код сохранен!');
             }
-        };
-        reader.readAsDataURL(fileInput.files[0]);
-    }
-
-    let refreshInterval = null;
-    async function fetchLogs() {
-        const type = document.getElementById('logTypeSelect').value;
-        const data = await apiCall(`/api/logs?type=${type}`);
-        if(data) document.getElementById('serverLogs').innerText = data.logs || 'Пусто...';
-    }
-    
-    function toggleAutoRefresh() {
-        const btn = document.getElementById('autoRefreshBtn');
-        if(refreshInterval) {
-            clearInterval(refreshInterval);
-            refreshInterval = null;
-            btn.innerText = 'Автообновление: ВЫКЛ';
-            btn.style.backgroundColor = 'var(--accent-color)';
-        } else {
-            fetchLogs();
-            refreshInterval = setInterval(fetchLogs, 3000);
-            btn.innerText = 'Автообновление: ВКЛ';
-            btn.style.backgroundColor = 'var(--success-color)';
         }
-    }
 
-    async function loadFileList() {
-        const files = await apiCall('/api/list-files');
-        if(!files) return;
-        const select = document.getElementById('fileSelect');
-        select.innerHTML = '<option value="">-- Выберите файл --</option>';
-        files.forEach(f => {
-            select.innerHTML += `<option value="${f}">${f}</option>`;
-        });
-    }
-
-    async function loadFileCode() {
-        const file = document.getElementById('fileSelect').value;
-        if (!file) { document.getElementById('codeEditor').value = ''; return; }
-        const data = await apiCall('/api/file?path=' + encodeURIComponent(file));
-        if(data) document.getElementById('codeEditor').value = data.content || '';
-    }
-
-    async function saveFileCode() {
-        const file = document.getElementById('fileSelect').value;
-        const content = document.getElementById('codeEditor').value;
-        if(!file) return alert('Файл не выбран!');
-        
-        const data = await apiCall('/api/file', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filePath: file, content: content })
-        });
-        if(data && data.success) alert('Код сохранен!');
-    }
-
-    loadProjects();
-    loadSettings();
-    loadFileList();
-    fetchLogs();
+        loadProjects();
+        loadSettings();
+        loadFileList();
+        fetchLogs();
     </script>
 </body>
 </html>
