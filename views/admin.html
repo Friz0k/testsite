@@ -80,11 +80,21 @@
         .q-opt { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: #18181b; padding: 10px; border-radius: 6px; }
         .q-opt input[type="text"] { margin-bottom: 0; flex-grow: 1; }
         .q-opt input[type="radio"], .q-opt input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent-color); }
-        .opt-label { font-size: 12px; color: var(--text-muted); cursor: pointer; }
 
         .rank-badge-group { display: flex; gap: 10px; align-items: center; }
         .rank-badge { padding: 6px 12px; border-radius: 6px; background: #09090b; border: 1px solid #3f3f46; color: var(--text-muted); cursor: pointer; font-size: 13px; font-weight: bold; }
         .rank-badge.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+
+        .token-card { background: #18181b; border: 1px solid var(--border-color); padding: 20px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .token-info h4 { margin: 0 0 5px 0; color: var(--text-main); font-size: 16px; }
+        .token-string { font-family: monospace; background: #09090b; padding: 8px 12px; border-radius: 6px; border: 1px solid #3f3f46; color: #a855f7; font-size: 13px; display: inline-block; margin-top: 5px; user-select: all; word-break: break-all; }
+        .badge-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+        .badge { font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; background: #27272a; color: #a1a1aa; border: 1px solid #3f3f46; }
+        .badge.system { background: rgba(124, 58, 237, 0.2); color: #c084fc; border-color: var(--accent-color); }
+        .badge.perm { background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: var(--success-color); }
+        .checkbox-group { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; background: #09090b; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .checkbox-group label { display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; text-transform: none; font-size: 13px; color: var(--text-main); }
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; margin-bottom: 0; accent-color: var(--accent-color); }
     </style>
 </head>
 <body>
@@ -103,6 +113,7 @@
         <div class="nav-category">Системы</div>
         <ul class="nav-links">
             <li onclick="switchTab('faction_manager', this)">💼 Управление фракциями</li>
+            <li onclick="switchTab('tokens_manager', this)">🔑 Токены доступа</li>
         </ul>
 
         <button class="logout-btn" onclick="window.location.href='/logout'">Выйти</button>
@@ -266,6 +277,46 @@
             </div>
         </div>
 
+        <div id="tokens_manager" class="tab-content">
+            <div class="admin-section">
+                <h3>Управление токенами доступа</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">Создавайте изолированные ключи доступа для заместителей или глав подразделений.</p>
+                
+                <div style="background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
+                    <h4 style="margin-top: 0;">Выдать новый токен</h4>
+                    <div class="form-grid">
+                        <div class="full-width">
+                            <label>Название токена (например: Глава FIB / Наместник LSSD)</label>
+                            <input type="text" id="newTokenName" placeholder="Например: Отдел CID FIB">
+                        </div>
+                        <div class="full-width">
+                            <label>Доступные фракции / системы:</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" class="tok-sys" value="fib"> FIB</label>
+                                <label><input type="checkbox" class="tok-sys" value="lssd"> LSSD</label>
+                                <label><input type="checkbox" class="tok-sys" value="lspd"> LSPD</label>
+                                <label><input type="checkbox" class="tok-sys" value="gov"> GOV</label>
+                                <label><input type="checkbox" class="tok-sys" value="ems"> EMS</label>
+                                <label><input type="checkbox" class="tok-sys" value="deadly"> DEADLY</label>
+                                <label><input type="checkbox" class="tok-sys" value="all"> Все системы</label>
+                            </div>
+                        </div>
+                        <div class="full-width">
+                            <label>Разрешенные действия (права):</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" class="tok-perm" value="settings" checked> Изменение вебхуков, ролей и вопросов</label>
+                                <label><input type="checkbox" class="tok-perm" value="files"> Редактирование файлов структуры (публичные страницы)</label>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-success" onclick="createToken()">🔑 Сгенерировать токен</button>
+                </div>
+
+                <h4>Активные токены</h4>
+                <div id="tokens-list-container">Загрузка...</div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -276,13 +327,17 @@
             element.classList.add('active');
             if (tabId === 'logs') fetchLogs();
             if (tabId === 'faction_manager' && !currentFaction) loadFactionUI();
+            if (tabId === 'tokens_manager') loadTokensUI();
         }
 
         async function apiCall(url, options = {}) {
             try {
                 const res = await fetch(url, options);
                 if (res.status === 403) {
-                    alert('Сессия истекла. Авторизуйтесь заново.');
+                    alert('Сессия истекла или недостаточно прав.');
+                    return null;
+                }
+                if (res.status === 401) {
                     window.location.href = '/login';
                     return null;
                 }
@@ -777,6 +832,72 @@
             if (res && res.success) {
                 alert(`Настройки фракции ${currentFaction.toUpperCase()} успешно сохранены!`);
                 loadFactionUI();
+            }
+        }
+
+        async function loadTokensUI() {
+            const data = await apiCall('/api/tokens');
+            const container = document.getElementById('tokens-list-container');
+            if (!data || !data.tokens) {
+                container.innerHTML = '<p style="color:var(--text-muted);">Не удалось загрузить список токенов или доступ ограничен.</p>';
+                return;
+            }
+
+            if (data.tokens.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted);">Активные токены отсутствуют.</p>';
+                return;
+            }
+
+            let html = '';
+            data.tokens.forEach(t => {
+                const sysBadges = (t.systems || []).map(s => `<span class="badge system">${s.toUpperCase()}</span>`).join('');
+                const permBadges = (t.permissions || []).map(p => `<span class="badge perm">${p === 'settings' ? 'НАСТРОЙКИ' : 'ФАЙЛЫ'}</span>`).join('');
+                
+                html += `
+                <div class="token-card">
+                    <div class="token-info">
+                        <h4>${t.name}</h4>
+                        <div class="token-string">${t.token}</div>
+                        <div class="badge-list">${sysBadges} ${permBadges}</div>
+                    </div>
+                    <button type="button" class="btn-danger btn-sm" onclick="deleteToken('${t.id}')">🗑 Удалить токен</button>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        async function createToken() {
+            const name = document.getElementById('newTokenName').value.trim();
+            const sysInputs = document.querySelectorAll('.tok-sys:checked');
+            const permInputs = document.querySelectorAll('.tok-perm:checked');
+
+            if (!name) return alert('Введите название токена!');
+            if (sysInputs.length === 0) return alert('Выберите хотя бы одну систему!');
+
+            const systems = Array.from(sysInputs).map(el => el.value);
+            const permissions = Array.from(permInputs).map(el => el.value);
+
+            const res = await apiCall('/api/tokens/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, systems, permissions })
+            });
+
+            if (res && res.success) {
+                alert('Токен успешно создан!');
+                document.getElementById('newTokenName').value = '';
+                document.querySelectorAll('.tok-sys, .tok-perm').forEach(el => el.checked = false);
+                document.querySelector('.tok-perm[value="settings"]').checked = true;
+                loadTokensUI();
+            }
+        }
+
+        async function deleteToken(id) {
+            if (!confirm('Удалить данный токен доступ к системе?')) return;
+            const res = await apiCall(`/api/tokens/${id}`, { method: 'DELETE' });
+            if (res && res.success) {
+                loadTokensUI();
             }
         }
 
