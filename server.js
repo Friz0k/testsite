@@ -11,6 +11,14 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', true);
 
+app.use((req, res, next) => {
+    res.setHeader('Surrogate-Control', 'no-store');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
+
 const DIR_DATA = path.join(__dirname, 'data');
 const DIR_LOGS = path.join(__dirname, 'logs');
 const DIR_PUBLIC = path.join(__dirname, 'public');
@@ -414,6 +422,7 @@ loadModularRoute('/lssd', 'lssd.js');
 loadModularRoute('/lspd', 'lspd.js');
 loadModularRoute('/gov', 'gov.js');
 loadModularRoute('/fib', 'fib.js');
+loadModularRoute('/cid', 'cid.js');
 loadModularRoute('/deadly', 'deadly.js');
 loadModularRoute('/ems', 'ems.js');
 
