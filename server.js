@@ -220,25 +220,42 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, token } = req.body;
     const envUser = process.env.ADMIN_USER;
     const envPass = process.env.ADMIN_PASS;
 
-    if (username === envUser && password === envPass) {
+    if (username && password && username === envUser && password === envPass) {
         res.cookie('admin_auth', 'true', {
             httpOnly: true,
             signed: true,
             path: '/',
             maxAge: 24 * 60 * 60 * 1000
         });
-        res.redirect('/admin');
-    } else {
-        res.redirect('/login?error=1');
+        return res.redirect('/admin');
     }
+
+    if (token) {
+        try {
+            const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
+            const config = JSON.parse(data);
+            const validToken = (config.apiTokens || []).find(t => t.token === token.trim() && t.active !== false);
+            if (validToken) {
+                res.cookie('api_token', validToken.token, {
+                    httpOnly: true,
+                    path: '/',
+                    maxAge: 24 * 60 * 60 * 1000
+                });
+                return res.redirect('/admin');
+            }
+        } catch (e) {}
+    }
+
+    res.redirect('/login?error=1');
 });
 
 app.get('/logout', (req, res) => {
     res.clearCookie('admin_auth');
+    res.clearCookie('api_token');
     res.redirect('/login');
 });
 
