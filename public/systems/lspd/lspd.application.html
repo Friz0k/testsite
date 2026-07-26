@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>LSPD заявление</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: #000; color: #fff; height: 100vh; display: flex; justify-content: center; align-items: center; padding: 0; overflow: hidden; }
+        .form-container { width: 100%; max-width: 715px; height: 100vh; background: #000; border: 3px solid #fff; border-radius: 0; padding: 9px 18px; overflow: hidden; display: flex; flex-direction: column; }
+        h1 { font-weight: 300; font-size: 1.43rem; letter-spacing: 1.1px; text-align: center; margin-bottom: 4.4px; text-transform: uppercase; border-bottom: 1px solid #fff; padding-bottom: 4.4px; flex-shrink: 0; }
+        .sub { text-align: center; color: #ccc; font-size: 0.66rem; margin-bottom: 6.6px; text-transform: uppercase; border-bottom: 1px dashed #fff6; padding-bottom: 3.3px; flex-shrink: 0; }
+        form { flex: 1; overflow-y: auto; padding-right: 4.4px; }
+        .form-group { margin-bottom: 6.6px; }
+        label { display: block; margin-bottom: 2.2px; font-size: 0.77rem; color: #fff; text-transform: uppercase; letter-spacing: 0.33px; }
+        .required::after { content: ' *'; color: #ff4d4d; }
+        input, textarea { width: 100%; background: #111; border: 1px solid #fff; border-radius: 6.6px; padding: 5.5px 8.8px; color: white; font-size: 0.825rem; outline: none; resize: none; }
+        textarea { height: 41.8px; }
+        input:focus, textarea:focus { border-color: #fff; background: #1a1a1a; }
+        .submit-btn { background: transparent; border: 2px solid #fff; color: #fff; font-size: 1.1rem; font-weight: 500; padding: 6.6px 13.2px; width: 100%; border-radius: 33px; cursor: pointer; text-transform: uppercase; letter-spacing: 2.2px; transition: 0.2s; margin-top: 6.6px; flex-shrink: 0; }
+        .submit-btn:hover:not(:disabled) { background: #fff; color: #000; }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .message { background: #220000; border-left: 4.4px solid #ff5555; padding: 4.4px 8.8px; border-radius: 8.8px; margin: 8.8px 0 4.4px; font-weight: bold; font-size: 0.77rem; color: #ffaaaa; display: none; flex-shrink: 0; }
+        .message.success { background: #002200; border-left-color: #0f0; color: #aaffaa; }
+        footer { text-align: center; margin-top: 4.4px; color: #fff; font-size: 0.605rem; text-transform: uppercase; border-top: 1px dashed #fff6; padding-top: 4.4px; flex-shrink: 0; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        form::-webkit-scrollbar { width: 3.3px; }
+        form::-webkit-scrollbar-track { background: #222; }
+        form::-webkit-scrollbar-thumb { background: #fff; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>LSPD ЗАЯВЛЕНИЕ</h1>
+        <div class="sub">Электронный портал</div>
+        <form id="lspdForm" onsubmit="event.preventDefault(); sendForm();">
+            <div class="form-group"><label for="fullname" class="required">Имя Фамилия</label><input type="text" id="fullname" required></div>
+            <div class="form-group"><label for="passport" class="required">Паспорт (IC)</label><input type="text" id="passport" required></div>
+            <div class="form-group"><label for="age" class="required">Возраст (IC)</label><input type="number" id="age" min="18" max="120" required></div>
+            <div class="form-group"><label for="years" class="required">Лет в штате (уровень)</label><input type="text" id="years" required></div>
+            <div class="form-group"><label for="docs" class="required">Ксерокопии документов</label><input type="url" id="docs" required></div>
+            <div class="form-group"><label for="body" class="required">Фото тела</label><input type="url" id="body" required></div>
+            <div class="form-group"><label for="about" class="required">О себе</label><textarea id="about" rows="1" required></textarea></div>
+            <div class="form-group"><label for="experience" class="required">Опыт в гос. структурах</label><textarea id="experience" rows="1" required></textarea></div>
+            <div class="form-group"><label for="why" class="required">Почему LSPD?</label><textarea id="why" rows="1" required></textarea></div>
+            <div class="form-group"><label for="division" class="required">Желаемый отдел</label><input type="text" id="division" required></div>
+            <div class="form-group"><label for="discord" class="required">Дискорд</label><input type="text" id="discord" required></div>
+            <div class="form-group"><label for="phone" class="required">Телефон</label><input type="tel" id="phone" required></div>
+            <div id="messageBox" class="message"></div>
+            <button type="submit" id="submitBtn" class="submit-btn">ОТПРАВИТЬ</button>
+        </form>
+        <footer>Made by Cop</footer>
+    </div>
+
+    <script>
+        const msgBox = document.getElementById('messageBox');
+        const submitBtn = document.getElementById('submitBtn');
+
+        async function sendForm() {
+            const formData = {
+                fullname: document.getElementById('fullname').value.trim(),
+                passport: document.getElementById('passport').value.trim(),
+                age: document.getElementById('age').value.trim(),
+                years: document.getElementById('years').value.trim(),
+                docs: document.getElementById('docs').value.trim(),
+                body: document.getElementById('body').value.trim(),
+                about: document.getElementById('about').value.trim(),
+                experience: document.getElementById('experience').value.trim(),
+                why: document.getElementById('why').value.trim(),
+                division: document.getElementById('division').value.trim(),
+                discord: document.getElementById('discord').value.trim(),
+                phone: document.getElementById('phone').value.trim()
+            };
+            
+            for (let key in formData) {
+                if (formData[key] === '') {
+                    showMessage('Заполните все поля', false);
+                    return;
+                }
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'ОТПРАВКА...';
+            
+            try {
+                const res = await fetch('/lspd/application', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const data = await res.json();
+                
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'ОТПРАВИТЬ';
+                
+                if (data.success) {
+                    showMessage('✓ Заявка отправлена', true);
+                    document.getElementById('lspdForm').reset();
+                } else {
+                    showMessage('❌ ' + data.message, false);
+                }
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'ОТПРАВИТЬ';
+                showMessage('Ошибка соединения', false);
+            }
+        }
+
+        function showMessage(text, isSuccess) {
+            msgBox.textContent = text;
+            msgBox.className = 'message' + (isSuccess ? ' success' : '');
+            msgBox.style.display = 'block';
+            setTimeout(() => msgBox.style.display = 'none', 4000);
+        }
+    </script>
+</body>
+</html>
