@@ -1,68 +1,118 @@
 {
   "fib": {
     "webhooks": {
-      "main": "https://discord.com/api/webhooks/1498677954937487370/PAVXARtu3bSeJodua89uIT8nFAAX1c_8FX0EMxZDMIukD2Y9Mnu_1M5gVMHZ4Vv8gvVW",
-      "cid_evidence": "https://discord.com/api/webhooks/1498680408114466858/76641VpuV_QpXI2Vv50brus5oaGmGwd_z10u6WF6y5ugp5sFPiatfJpz83fPi_AcwTxP"
+      "main": "",
+      "cid_evidence": ""
     },
     "roles": {
       "ping": "",
-      "cid_evidence": "713076289916895303 769244242744311869"
+      "cid_evidence": ""
     },
     "testSettings": {
-      "passingScore": 0,
-      "questions": []
+      "durationMinutesRank3": 15,
+      "durationMinutesRank7": 20,
+      "passingScoreRank3": 8,
+      "passingScoreRank7": 10,
+      "questions": [
+        {
+          "id": 1,
+          "text": "В каких случаях разрешено применять огнестрельное оружие без предупреждения?",
+          "type": "multiple",
+          "ranks": [3, 7],
+          "options": [
+            "При прямой угрозе жизни агента или гражданских",
+            "При попытке скрыться на транспортном средстве",
+            "При вооруженном нападении на охраняемый объект",
+            "При словесном оскорблении сотрудника"
+          ],
+          "correctAnswers": [
+            "При прямой угрозе жизни агента или гражданских",
+            "При вооруженном нападении на охраняемый объект"
+          ]
+        },
+        {
+          "id": 2,
+          "text": "Каков максимальный срок задержания до передачи в КПЗ или вызова адвоката?",
+          "type": "single",
+          "ranks": [3],
+          "options": [
+            "30 минут",
+            "45 минут",
+            "60 минут",
+            "2 часа"
+          ],
+          "correctAnswers": [
+            "60 минут"
+          ]
+        },
+        {
+          "id": 3,
+          "text": "Кто имеет право отдавать приказы руководству отдела CID во время спецоперации?",
+          "type": "single",
+          "ranks": [7],
+          "options": [
+            "Только Директор FIB и его заместители",
+            "Любой агент старше по званию",
+            "Губернатор штата напрямую в рацию",
+            "Руководитель отдела HRT"
+          ],
+          "correctAnswers": [
+            "Только Директор FIB и его заместители"
+          ]
+        }
+      ]
     }
   },
   "lssd": {
     "webhooks": {
-      "report": "https://discord.com/api/webhooks/1511692028323303594/_ZjjkoMVJuCammKWwvpnV7FwP_JSc0wBGmNmj_Dc_i1enfQ15a2ueH-maFucDWLmiIEQ",
-      "promotion": "https://discord.com/api/webhooks/1511702689245954150/Su7LaLji7FadwVbxPf_7_n7dRPbwb0fSEjXogS7_8sQ0-sB996gCSavNU5ER54mw80FH",
-      "badge": "https://discord.com/api/webhooks/1508681726564761600/2amXcE565433_J3hKOweCbp9qaf6Rg_Czilf5qxwDqIwQd158AxqRhbpICrxrRvll97c",
-      "cadet": "https://discord.com/api/webhooks/1504901776946630919/OSJ58vA0ovCTIuShtrzjQLCkQ3ly42Dw-0yFQqrzVdLfMXntnpx-mj6VsjSPjR0zrd4B",
-      "test": "https://discord.com/api/webhooks/1508823784944308365/-UgE-ucAZKcXFwJ4CPhmY9vuUEZAHmERiSF0xiDQb5BGuhl_qH3ApYzJg7LL3AYJzOQw"
+      "report": "",
+      "promotion": "",
+      "badge": "",
+      "cadet": "",
+      "test": ""
     },
     "roles": {
-      "iid": "865722124279087114, 865722814145626152, 923572623219261490",
-      "sa": "771701072464445501"
+      "iid": "",
+      "sa": ""
     },
-    "pointsSystem": {},
-    "rankSystem": {},
-    "actions": [],
-    "requiredPoints": 50,
-    "testPassingScore": 18,
+    "testDurationMinutes": 15,
+    "testPassingScore": 8,
     "testQuestions": []
   },
   "lspd": {
     "webhooks": {
-      "application": "https://discord.com/api/webhooks/1477841055415140414/2k4aVXGjJ-u5qTj4wjh5QA37GTSFb1Xhde6m0ffRdsrKOHwW23ZK5osdpCik2z8j3dux",
-      "badge": "https://discord.com/api/webhooks/1507377407177265164/daYa-Td84U8HwpVvFm6f3xmIjA1RjmXMj8MS8sqlQ3ZYd4tZlmvF0PIZn6-JBDqv2fYu",
-      "cadet": "https://discord.com/api/webhooks/1474738752613253170/OblAgJLzTgUGxHLA0pjDTZ8U2CWnkuOgzSfts3B69E40zyPv-VXsB6YVVdWvPhNezwsz",
-      "test": "https://discord.com/api/webhooks/1455747414676869244/0DF_aUlCpBmtqyaISrb6yWZK30rHPgxQoPqFyK79DyUwijPYlEXSmfjbfG1H-WtEE6Ir"
-    },
-    "roles": {
-      "application": "718356044212076595 718364035913089054 718363406775746581",
-      "badge": "718363406775746581",
-      "cadet": "718363406775746581",
+      "application": "",
+      "badge": "",
+      "cadet": "",
       "test": ""
     },
-    "testPassingScore": 20,
+    "roles": {
+      "application": "",
+      "badge": "",
+      "cadet": "",
+      "test": ""
+    },
+    "testDurationMinutes": 15,
+    "testPassingScore": 8,
     "testQuestions": []
   },
   "gov": {
     "webhooks": {
-      "test": "https://discord.com/api/webhooks/1512749397656600686/Y1v2xgZktRYgf8u31G_o4RO2IxB6j3ONapMN9BDy_BJl-2XxtpR3kMPVPI8w6sdm1z0T"
+      "test": ""
     },
     "roles": {
       "test": ""
     },
     "testSettings": {
-      "passingScore": 13,
+      "durationMinutes": 20,
+      "passingScore": 10,
       "questions": []
     }
   },
   "ems": {
     "webhooks": {
-      "main": "https://discord.com/api/webhooks/1498677954937487370/PAVXARtu3bSeJodua89uIT8nFAAX1c_8FX0EMxZDMIukD2Y9Mnu_1M5gVMHZ4Vv8gvVW"
+      "main": "",
+      "medical": ""
     },
     "roles": {
       "main": ""
@@ -70,10 +120,10 @@
   },
   "deadly": {
     "webhooks": {
-      "application": "https://discordapp.com/api/webhooks/1503319808824049754/_J_sMNfxcN7dIIPewcSwWUq0XK99ufg6uZKzIjhv-U817dbo7CUC4x15BfSARKpQC9Tz"
+      "application": ""
     },
     "roles": {
-      "ping": "1514684735060967516"
+      "ping": ""
     }
   }
 }
