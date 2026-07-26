@@ -134,7 +134,7 @@
             <div class="test-header">
                 <div class="test-info-item"><i class="fas fa-id-badge"></i> <span id="currentUser">-</span></div>
                 <div class="test-info-item"><i class="fas fa-question-circle"></i> ВОПРОС <span id="currentQuestion">1</span> / <span id="totalQuestions">10</span></div>
-                <div class="test-info-item timer"><i class="fas fa-hourglass-half"></i> <span id="timerValue">15:00</span></div>
+                <div class="test-info-item timer"><i class="fas fa-hourglass-half"></i> <span id="timerValue">00:00</span></div>
             </div>
             <div class="progress-container">
                 <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
@@ -218,7 +218,10 @@
                     testData.questions = data.questions;
                     testData.answers = {}; testData.questionTimes = {}; testData.leaveCount = 0;
                     testData.currentQuestionIndex = 0; testData.submitted = false;
-                    testData.startTime = new Date(); testData.timeLeft = testData.rank === 7 ? 1200 : 900;
+                    testData.startTime = new Date();
+                    
+                    const durationMins = data.durationMinutes || (testData.rank === 7 ? 20 : 15);
+                    testData.timeLeft = durationMins * 60;
                     
                     document.getElementById('totalQuestions').textContent = testData.questions.length;
                     startTimer();
@@ -227,7 +230,7 @@
                     document.getElementById('currentUser').innerHTML = testData.nickname;
                     showQuestion(0);
                 } else {
-                    showResult('В админке не добавлены вопросы.', false);
+                    showResult('В админке не добавлены вопросы для выбранного ранга.', false);
                 }
             } catch (err) {
                 document.getElementById('loading').style.display = 'none';
@@ -260,7 +263,7 @@
             document.getElementById('nextBtn').style.display = index === testData.questions.length - 1 ? 'none' : 'inline-flex';
             document.getElementById('finishBtn').style.display = index === testData.questions.length - 1 ? 'inline-flex' : 'none';
 
-            let html = `<div class="question-container"><div class="question-number">ВОПРОС ${currentNum}</div><div class="question-text">${q.text}</div><div class="options-container">`;
+            let html = `<div class="question-container"><div class="question-number">ВОПРОС #${currentNum} ${q.type === 'multiple' ? '(Мультивыбор)' : ''}</div><div class="question-text">${q.text}</div><div class="options-container">`;
             const saved = testData.answers[index] || [];
             if (q.options) {
                 q.options.forEach((opt, optIdx) => {
@@ -290,12 +293,17 @@
 
         function startTimer() {
             if (testData.timerInterval) clearInterval(testData.timerInterval);
+            const updateDisplay = () => {
+                const mins = Math.floor(testData.timeLeft / 60);
+                const secs = testData.timeLeft % 60;
+                document.getElementById('timerValue').innerHTML = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+            };
+            updateDisplay();
             testData.timerInterval = setInterval(() => {
                 if (testData.timeLeft <= 0) { clearInterval(testData.timerInterval); finishTest(); } 
                 else {
                     testData.timeLeft--;
-                    const mins = Math.floor(testData.timeLeft / 60); const secs = testData.timeLeft % 60;
-                    document.getElementById('timerValue').innerHTML = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+                    updateDisplay();
                 }
             }, 1000);
         }
@@ -329,7 +337,7 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('testContainer').style.display = 'none';
                 document.getElementById('registrationContainer').style.display = 'block';
-                if (data.success) showResult(`Результаты успешно отправлены. Вы ${data.passed ? 'СДАЛИ' : 'НЕ СДАЛИ'}. Баллы: ${data.score}/${data.total}`, true);
+                if (data.success) showResult(`Результаты успешно отправлены. Вы ${data.passed ? 'СДАЛИ' : 'НЕ СДАЛИ'}. Баллы: ${data.score}/${data.total} (проходной: ${data.passingScore})`, true);
                 else showResult('Ошибка при отправке: ' + data.message, false);
                 resetForm();
             } catch (err) { 
