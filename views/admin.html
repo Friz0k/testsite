@@ -2,9 +2,14 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Админ-панель Frizworld</title>
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
     <style>
-        :root {
+        :root[data-theme="dark"] {
             --bg-color: #09090b;
             --sidebar-bg: #121214;
             --panel-bg: #18181b;
@@ -15,9 +20,24 @@
             --danger-color: #ef4444;
             --text-main: #ffffff;
             --text-muted: #a1a1aa;
+            --input-bg: #09090b;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root[data-theme="light"] {
+            --bg-color: #f4f4f5;
+            --sidebar-bg: #ffffff;
+            --panel-bg: #ffffff;
+            --border-color: #e4e4e7;
+            --accent-color: #6d28d9;
+            --accent-hover: #5b21b6;
+            --success-color: #16a34a;
+            --danger-color: #dc2626;
+            --text-main: #18181b;
+            --text-muted: #71717a;
+            --input-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s; }
 
         body {
             background-color: var(--bg-color);
@@ -35,11 +55,12 @@
             display: flex;
             flex-direction: column;
             padding: 20px 0;
+            z-index: 100;
         }
 
         .sidebar h2 {
             color: var(--accent-color);
-            font-size: 18px;
+            font-size: 20px;
             padding: 0 20px 20px 20px;
             border-bottom: 1px solid var(--border-color);
             text-align: center;
@@ -49,6 +70,7 @@
             list-style: none;
             padding: 15px 10px;
             flex-grow: 1;
+            overflow-y: auto;
         }
 
         .nav-links li {
@@ -59,564 +81,520 @@
             color: var(--text-muted);
             font-size: 14px;
             font-weight: 500;
-            transition: all 0.2s;
         }
 
-        .nav-links li:hover {
-            background-color: rgba(124, 58, 237, 0.1);
-            color: var(--text-main);
-        }
+        .nav-links li:hover { background-color: rgba(109, 40, 217, 0.1); color: var(--text-main); }
+        .nav-links li.active { background-color: var(--accent-color); color: #ffffff; }
 
-        .nav-links li.active {
-            background-color: var(--accent-color);
+        .theme-toggle-btn {
+            margin: 10px 20px;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid var(--border-color);
             color: var(--text-main);
-            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
         }
+        .theme-toggle-btn:hover { background: var(--border-color); }
 
         .content-area {
             flex-grow: 1;
-            padding: 40px;
+            padding: 20px 40px;
             overflow-y: auto;
+            position: relative;
         }
 
-        .tab-content {
-            display: none;
-            max-width: 900px;
-            margin: 0 auto;
-        }
+        .header-mobile { display: none; }
 
+        .tab-content { display: none; max-width: 1000px; margin: 0 auto; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .admin-section {
             background-color: var(--panel-bg);
             padding: 30px;
             border-radius: 12px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             margin-bottom: 20px;
         }
 
-        h3 {
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 20px;
-            color: var(--text-main);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 12px;
-        }
+        h3 { margin-bottom: 20px; font-size: 22px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-muted);
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
+        .full-width { grid-column: 1 / -1; }
+
+        label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; }
 
         input[type="text"], select, textarea {
             width: 100%;
             padding: 12px;
-            margin-bottom: 20px;
-            background-color: var(--bg-color);
+            margin-bottom: 15px;
+            background-color: var(--input-bg);
             color: var(--text-main);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 14px;
         }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-color); }
 
-        input[type="text"]:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
+        textarea#codeEditor { height: 500px; font-family: monospace; color: #c084fc; font-size: 14px; background-color: #050507; }
 
-        textarea { resize: vertical; }
-
-        textarea#codeEditor {
-            height: 450px;
-            font-family: monospace;
-            color: #c084fc;
-            background-color: #050507;
-            font-size: 13px;
-        }
-
-        button {
-            background-color: var(--accent-color);
-            color: var(--text-main);
-            padding: 12px 25px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-
+        button { background-color: var(--accent-color); color: #fff; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
         button:hover { background-color: var(--accent-hover); }
-
         .btn-success { background-color: var(--success-color); }
-        .btn-success:hover { background-color: #16a34a; }
-
         .btn-danger { background-color: var(--danger-color); }
-        .btn-danger:hover { background-color: #dc2626; }
+        .btn-group { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
 
         pre {
             background-color: #050507;
-            color: var(--success-color);
+            color: #22c55e;
             padding: 15px;
             border-radius: 8px;
-            height: 350px;
+            height: 450px;
             overflow-y: auto;
             font-family: monospace;
             font-size: 13px;
             border: 1px solid var(--border-color);
-            margin-bottom: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
 
-        .preview-img {
-            max-width: 200px;
-            max-height: 150px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border: 1px solid var(--border-color);
-            display: block;
-        }
+        .preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px; object-fit: cover; }
 
-        .btn-group {
-            display: flex;
-            gap: 15px;
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar {
+                position: absolute;
+                left: -300px;
+                top: 0;
+                height: 100%;
+                transition: left 0.3s ease;
+                box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+            }
+            .sidebar.open { left: 0; }
+            
+            .header-mobile {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px 20px;
+                background-color: var(--panel-bg);
+                border-bottom: 1px solid var(--border-color);
+            }
+            .menu-btn { background: none; color: var(--text-main); font-size: 24px; padding: 0; }
+            
+            .content-area { padding: 15px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .btn-group { flex-direction: column; }
+            button { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>Frizworld Admin</h2>
-        <ul class="nav-links">
-            <li class="active" onclick="switchTab('projects', this)">1. Добавление проектов</li>
-            <li onclick="switchTab('illustration', this)">2. Управление иллюстрацией</li>
-            <li onclick="switchTab('logs', this)">3. Логи сервера</li>
-            <li onclick="switchTab('code', this)">4. Редактор кода проекта</li>
-            <li onclick="switchTab('contacts', this)">5. Изменение контактов</li>
-        </ul>
+
+    <div class="header-mobile">
+        <h2 style="color: var(--accent-color); font-size: 18px;">Frizworld Admin</h2>
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
     </div>
 
-    <div class="content-area">
+    <div class="sidebar" id="sidebar">
+        <h2 class="desktop-only">Frizworld Admin</h2>
+        <ul class="nav-links">
+            <li class="active" onclick="switchTab('projects', this)">📦 Управление проектами</li>
+            <li onclick="switchTab('illustration', this)">🎨 Арт сайта</li>
+            <li onclick="switchTab('logs', this)">📊 Логи сервера</li>
+            <li onclick="switchTab('code', this)">💻 Редактор кода</li>
+            <li onclick="switchTab('contacts', this)">⚙️ Контакты и Webhook</li>
+        </ul>
+        <button class="theme-toggle-btn" onclick="toggleTheme()">🌓 Сменить тему</button>
+        <button class="theme-toggle-btn" onclick="window.location.href='/logout'" style="color: var(--danger-color); border-color: var(--danger-color);">Выйти</button>
+    </div>
+
+    <div class="content-area" onclick="closeSidebarOnClick()">
+        
         <div id="projects" class="tab-content active">
             <div class="admin-section">
-                <h3>Управление проектами</h3>
-                <label>Выберите проект для редактирования</label>
+                <h3>Карточки проектов</h3>
+                <label>Выберите проект</label>
                 <select id="projectSelect" onchange="selectProject()">
-                    <option value="">-- Создать новый проект --</option>
+                    <option value="">➕ Создать новый проект</option>
                 </select>
                 
-                <label>Название проекта</label>
-                <input type="text" id="projTitle" placeholder="Например: SA LSSD">
-                
-                <label>Путь / Ссылка для тестирования</label>
-                <input type="text" id="projPath" placeholder="Например: /systems/sa_lssd/">
-                
-                <label>Фото / Иконка проекта</label>
-                <img id="projImgPreview" class="preview-img" src="" alt="Нет фото" onerror="this.style.display='none'">
-                <input type="file" id="projImageFile" accept="image/*" style="margin-bottom: 20px; color: #fff;">
-
-                <label>Неполное описание (для карточки на главной)</label>
-                <textarea id="projShortDesc" rows="2" placeholder="Краткое описание..."></textarea>
-
-                <label>Полное описание (для модального окна и тестирования)</label>
-                <textarea id="projFullDesc" rows="5" placeholder="Подробное описание системы..."></textarea>
+                <div class="form-grid">
+                    <div>
+                        <label>Название проекта</label>
+                        <input type="text" id="projTitle" placeholder="Например: SA LSSD">
+                        
+                        <label>Ссылка / Путь</label>
+                        <input type="text" id="projPath" placeholder="/systems/sa_lssd/">
+                    </div>
+                    <div>
+                        <label>Изображение</label>
+                        <img id="projImgPreview" class="preview-img" src="" alt="Превью" style="display:none;">
+                        <input type="file" id="projImageFile" accept="image/*" style="color: var(--text-main);">
+                    </div>
+                    
+                    <div class="full-width">
+                        <label>Краткое описание (на главную)</label>
+                        <textarea id="projShortDesc" rows="2" placeholder="Пара слов о проекте..."></textarea>
+                    </div>
+                    
+                    <div class="full-width">
+                        <label>Полное описание</label>
+                        <textarea id="projFullDesc" rows="4" placeholder="Подробное описание системы..."></textarea>
+                    </div>
+                </div>
                 
                 <div class="btn-group">
-                    <button type="button" onclick="saveProjectWithImage()">Сохранить проект</button>
-                    <button type="button" class="btn-danger" id="deleteBtn" onclick="deleteProject()" style="display: none;">Удалить проект</button>
+                    <button type="button" onclick="saveProjectWithImage()">💾 Сохранить проект</button>
+                    <button type="button" class="btn-danger" id="deleteBtn" onclick="deleteProject()" style="display: none;">🗑 Удалить</button>
                 </div>
             </div>
         </div>
 
         <div id="illustration" class="tab-content">
             <div class="admin-section">
-                <h3>Управление иллюстрацией (Арт сайта)</h3>
-                <label>Текущий арт</label>
-                <img id="currentIllustration" class="preview-img" src="" alt="Нет иллюстрации" onerror="this.style.display='none'">
-                
-                <label>Загрузить новый арт с компьютера</label>
-                <input type="file" id="illustrationFile" accept="image/*" style="margin-bottom: 20px; color: #fff;">
-                
-                <button type="button" onclick="uploadIllustration()">Загрузить и сохранить арт</button>
+                <h3>Арт на главной странице</h3>
+                <div class="form-grid">
+                    <div>
+                        <label>Текущий арт</label>
+                        <img id="currentIllustration" class="preview-img" src="" style="display:none;">
+                    </div>
+                    <div>
+                        <label>Загрузить новый</label>
+                        <input type="file" id="illustrationFile" accept="image/*" style="color: var(--text-main);">
+                        <button type="button" onclick="uploadIllustration()" style="margin-top: 15px;">Загрузить и применить</button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div id="logs" class="tab-content">
             <div class="admin-section">
-                <h3>Логи сервера в реальном времени</h3>
-                <button type="button" onclick="fetchLogs()" style="margin-bottom: 15px;">Обновить логи</button>
+                <h3>Мониторинг сервера</h3>
+                <div class="form-grid full-width" style="margin-bottom: 15px; align-items: end;">
+                    <div>
+                        <label>Тип логов</label>
+                        <select id="logTypeSelect" onchange="fetchLogs()">
+                            <option value="visits">👀 Логи визитов (visits.log)</option>
+                            <option value="errors">❌ Логи ошибок (errors.log)</option>
+                        </select>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" onclick="fetchLogs()">🔄 Обновить</button>
+                        <button type="button" id="autoRefreshBtn" onclick="toggleAutoRefresh()" class="btn-success">Автообновление: ВЫКЛ</button>
+                    </div>
+                </div>
                 <pre id="serverLogs">Загрузка логов...</pre>
             </div>
         </div>
 
         <div id="code" class="tab-content">
             <div class="admin-section">
-                <h3>Редактор кода проекта</h3>
-                <label>Выберите файл</label>
+                <h3>Встроенный редактор кода</h3>
+                <label>Файл для редактирования (из папки public)</label>
                 <select id="fileSelect" onchange="loadFileCode()"></select>
-                <textarea id="codeEditor"></textarea>
-                <button type="button" class="btn-success" onclick="saveFileCode()">Сохранить изменения в коде</button>
+                <textarea id="codeEditor" spellcheck="false"></textarea>
+                <div class="btn-group">
+                    <button type="button" class="btn-success" onclick="saveFileCode()">💾 Сохранить изменения</button>
+                </div>
             </div>
         </div>
 
         <div id="contacts" class="tab-content">
             <div class="admin-section">
-                <h3>Изменение контактов и вебхуков</h3>
-                <label>Вебхук LSSD</label>
-                <input type="text" id="webhook_lssd">
-                
-                <label>Вебхук LSPD</label>
-                <input type="text" id="webhook_lspd">
-                
-                <label>Вебхук GOV</label>
-                <input type="text" id="webhook_gov">
-                
-                <label>Вебхук CID</label>
-                <input type="text" id="webhook_cid">
-                
-                <label>Вебхук FIB</label>
-                <input type="text" id="webhook_fib">
-                
-                <label>ID ролей для упоминания (через запятую)</label>
-                <input type="text" id="role_ids">
-                
-                <button type="button" onclick="saveSettings()">Сохранить контакты</button>
+                <h3>Webhooks и Настройки</h3>
+                <div class="form-grid">
+                    <div>
+                        <label>LSSD Webhook</label>
+                        <input type="text" id="webhook_lssd">
+                        <label>LSPD Webhook</label>
+                        <input type="text" id="webhook_lspd">
+                        <label>GOV Webhook</label>
+                        <input type="text" id="webhook_gov">
+                    </div>
+                    <div>
+                        <label>CID Webhook</label>
+                        <input type="text" id="webhook_cid">
+                        <label>FIB Webhook</label>
+                        <input type="text" id="webhook_fib">
+                        <label>ID ролей для пинга (через запятую)</label>
+                        <input type="text" id="role_ids">
+                    </div>
+                </div>
+                <button type="button" onclick="saveSettings()">Сохранить настройки</button>
             </div>
         </div>
+
     </div>
 
     <script>
+    function toggleTheme() {
+        const root = document.documentElement;
+        const currentTheme = root.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+    }
+
+    const sidebar = document.getElementById('sidebar');
+    function toggleSidebar() { sidebar.classList.toggle('open'); }
+    function closeSidebarOnClick() { if(window.innerWidth <= 768) sidebar.classList.remove('open'); }
+
     function switchTab(tabId, element) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
         element.classList.add('active');
+        closeSidebarOnClick();
+        if(tabId === 'logs') fetchLogs();
+    }
+
+    async function apiCall(url, options = {}) {
+        try {
+            const res = await fetch(url, options);
+            if(res.status === 403) {
+                alert('Сессия истекла. Пожалуйста, авторизуйтесь заново.');
+                window.location.href = '/login';
+                return null;
+            }
+            if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+            return await res.json();
+        } catch(err) {
+            console.error(err);
+            alert('Сбой запроса: ' + err.message);
+            return null;
+        }
     }
 
     let allProjects = [];
     let currentProjImageUrl = '';
 
-    function checkResponse(res) {
-        if (!res.ok) {
-            throw new Error('Ошибка сервера (код: ' + res.status + ')');
-        }
-        return res.json();
+    async function loadProjects() {
+        const data = await apiCall('/api/projects');
+        if(!data) return;
+        allProjects = data || [];
+        const select = document.getElementById('projectSelect');
+        select.innerHTML = '<option value="">➕ Создать новый проект</option>';
+        allProjects.forEach((p, index) => {
+            select.innerHTML += `<option value="${index}">${p.title || 'Проект ' + (index + 1)}</option>`;
+        });
+        selectProject();
     }
-
-    function loadProjects() {
-        fetch('/api/projects')
-            .then(checkResponse)
-            .then(data => {
-                allProjects = data || [];
-                let select = document.getElementById('projectSelect');
-                select.innerHTML = '<option value="">-- Создать новый проект --</option>';
-                allProjects.forEach((p, index) => {
-                    let opt = document.createElement('option');
-                    opt.value = index;
-                    opt.textContent = p.title || ('Проект ' + (index + 1));
-                    select.appendChild(opt);
-                });
-                selectProject();
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Не удалось загрузить список проектов: ' + err.message);
-            });
-    }
-    loadProjects();
 
     function selectProject() {
-        let idx = document.getElementById('projectSelect').value;
-        let imgPreview = document.getElementById('projImgPreview');
-        let deleteBtn = document.getElementById('deleteBtn');
+        const idx = document.getElementById('projectSelect').value;
+        const img = document.getElementById('projImgPreview');
+        const delBtn = document.getElementById('deleteBtn');
+        
         if (idx === "") {
             document.getElementById('projTitle').value = '';
             document.getElementById('projPath').value = '';
             document.getElementById('projShortDesc').value = '';
             document.getElementById('projFullDesc').value = '';
             currentProjImageUrl = '';
-            imgPreview.src = '';
-            imgPreview.style.display = 'none';
-            deleteBtn.style.display = 'none';
+            img.style.display = 'none';
+            delBtn.style.display = 'none';
         } else {
-            let p = allProjects[idx];
+            const p = allProjects[idx];
             document.getElementById('projTitle').value = p.title || '';
             document.getElementById('projPath').value = p.path || '';
-            document.getElementById('projShortDesc').value = p.shortDesc || p.desc || '';
-            document.getElementById('projFullDesc').value = p.fullDesc || p.desc || '';
-            currentProjImageUrl = p.imageUrl || p.image || '';
+            document.getElementById('projShortDesc').value = p.shortDesc || '';
+            document.getElementById('projFullDesc').value = p.fullDesc || '';
+            currentProjImageUrl = p.imageUrl || '';
+            
             if (currentProjImageUrl) {
-                imgPreview.src = currentProjImageUrl;
-                imgPreview.style.display = 'block';
+                img.src = currentProjImageUrl;
+                img.style.display = 'block';
             } else {
-                imgPreview.src = '';
-                imgPreview.style.display = 'none';
+                img.style.display = 'none';
             }
-            deleteBtn.style.display = 'inline-block';
+            delBtn.style.display = 'inline-block';
         }
     }
 
     function saveProjectWithImage() {
-        let fileInput = document.getElementById('projImageFile');
+        const fileInput = document.getElementById('projImageFile');
         if (fileInput.files.length > 0) {
-            let file = fileInput.files[0];
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                fetch('/api/upload', {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const data = await apiCall('/api/upload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: e.target.result, filename: file.name })
-                })
-                .then(checkResponse)
-                .then(data => {
-                    if (data.success) {
-                        currentProjImageUrl = data.url;
-                        saveProjectData();
-                    } else {
-                        alert('Ошибка загрузки фото: ' + (data.error || 'Неизвестная ошибка'));
-                    }
-                })
-                .catch(err => {
-                    alert('Сбой при загрузке изображения: ' + err.message);
+                    body: JSON.stringify({ image: e.target.result })
                 });
+                if (data && data.success) {
+                    currentProjImageUrl = data.url;
+                    saveProjectData();
+                }
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(fileInput.files[0]);
         } else {
             saveProjectData();
         }
     }
 
-    function saveProjectData() {
-        let idx = document.getElementById('projectSelect').value;
-        let projData = {
+    async function saveProjectData() {
+        const idx = document.getElementById('projectSelect').value;
+        const projData = {
             title: document.getElementById('projTitle').value,
             path: document.getElementById('projPath').value,
             shortDesc: document.getElementById('projShortDesc').value,
             fullDesc: document.getElementById('projFullDesc').value,
             imageUrl: currentProjImageUrl
         };
-        if (idx === "") {
-            allProjects.push(projData);
-        } else {
-            allProjects[idx] = projData;
+        
+        if (idx === "") allProjects.push(projData);
+        else allProjects[idx] = projData;
+
+        const data = await apiCall('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(allProjects)
+        });
+        
+        if(data && data.success) {
+            alert('Проект сохранен!');
+            loadProjects();
         }
-        fetch('/api/projects', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(allProjects)
-        })
-        .then(checkResponse)
-        .then(data => {
-            if(data.success) {
-                alert('Проект успешно сохранен!');
-                loadProjects();
-            } else {
-                alert('Ошибка сохранения: ' + (data.error || 'Неизвестная ошибка'));
-            }
-        })
-        .catch(err => {
-            alert('Сбой при сохранении проекта: ' + err.message);
-        });
     }
 
-    function deleteProject() {
-        let idx = document.getElementById('projectSelect').value;
-        if (idx === "") return;
-        if (!confirm('Вы уверены, что хотите удалить этот проект?')) return;
-
+    async function deleteProject() {
+        const idx = document.getElementById('projectSelect').value;
+        if (idx === "" || !confirm('Точно удалить проект?')) return;
+        
         allProjects.splice(idx, 1);
-        fetch('/api/projects', {
+        const data = await apiCall('/api/projects', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(allProjects)
-        })
-        .then(checkResponse)
-        .then(data => {
-            if(data.success) {
-                alert('Проект успешно удален!');
-                document.getElementById('projectSelect').value = "";
-                loadProjects();
-            } else {
-                alert('Ошибка при удалении: ' + (data.error || 'Неизвестная ошибка'));
-            }
-        })
-        .catch(err => {
-            alert('Сбой при удалении проекта: ' + err.message);
         });
+        
+        if(data && data.success) {
+            document.getElementById('projectSelect').value = "";
+            loadProjects();
+        }
     }
 
-    function loadSettings() {
-        fetch('/api/settings')
-            .then(checkResponse)
-            .then(data => {
-                document.getElementById('webhook_lssd').value = data.webhook_lssd || '';
-                document.getElementById('webhook_lspd').value = data.webhook_lspd || '';
-                document.getElementById('webhook_gov').value = data.webhook_gov || '';
-                document.getElementById('webhook_cid').value = data.webhook_cid || '';
-                document.getElementById('webhook_fib').value = data.webhook_fib || '';
-                document.getElementById('role_ids').value = data.role_ids || '';
-                if(data.illustrationUrl) {
-                    let img = document.getElementById('currentIllustration');
-                    img.src = data.illustrationUrl;
-                    img.style.display = 'block';
-                }
-            })
-            .catch(err => {
-                console.error('Ошибка загрузки настроек:', err.message);
-            });
+    async function loadSettings() {
+        const data = await apiCall('/api/settings');
+        if(!data) return;
+        ['lssd', 'lspd', 'gov', 'cid', 'fib'].forEach(dep => {
+            document.getElementById(`webhook_${dep}`).value = data[`webhook_${dep}`] || '';
+        });
+        document.getElementById('role_ids').value = data.role_ids || '';
+        if(data.illustrationUrl) {
+            const img = document.getElementById('currentIllustration');
+            img.src = data.illustrationUrl;
+            img.style.display = 'block';
+        }
     }
-    loadSettings();
 
-    function saveSettings() {
-        fetch('/api/settings')
-            .then(checkResponse)
-            .then(currentData => {
-                currentData.webhook_lssd = document.getElementById('webhook_lssd').value;
-                currentData.webhook_lspd = document.getElementById('webhook_lspd').value;
-                currentData.webhook_gov = document.getElementById('webhook_gov').value;
-                currentData.webhook_cid = document.getElementById('webhook_cid').value;
-                currentData.webhook_fib = document.getElementById('webhook_fib').value;
-                currentData.role_ids = document.getElementById('role_ids').value;
-
-                return fetch('/api/settings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(currentData)
-                });
-            })
-            .then(checkResponse)
-            .then(data => {
-                if(data.success) {
-                    alert('Контакты успешно сохранены!');
-                } else {
-                    alert('Ошибка сохранения');
-                }
-            })
-            .catch(err => {
-                alert('Сбой при сохранении контактов: ' + err.message);
-            });
+    async function saveSettings() {
+        const data = await apiCall('/api/settings');
+        if(!data) return;
+        ['lssd', 'lspd', 'gov', 'cid', 'fib'].forEach(dep => {
+            data[`webhook_${dep}`] = document.getElementById(`webhook_${dep}`).value;
+        });
+        data.role_ids = document.getElementById('role_ids').value;
+        
+        const res = await apiCall('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if(res && res.success) alert('Настройки сохранены!');
     }
 
     function uploadIllustration() {
-        let fileInput = document.getElementById('illustrationFile');
-        if (fileInput.files.length === 0) {
-            alert('Выберите файл иллюстрации!');
-            return;
-        }
-        let file = fileInput.files[0];
-        let reader = new FileReader();
-        reader.onload = function(e) {
-            fetch('/api/upload', {
+        const fileInput = document.getElementById('illustrationFile');
+        if (fileInput.files.length === 0) return alert('Выберите файл!');
+        
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const upRes = await apiCall('/api/upload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: e.target.result, filename: file.name })
-            })
-            .then(checkResponse)
-            .then(data => {
-                if (!data.success) {
-                    throw new Error(data.error || 'Ошибка загрузки изображения');
-                }
-                let newUrl = data.url;
-                return fetch('/api/settings')
-                    .then(checkResponse)
-                    .then(settings => {
-                        settings.illustrationUrl = newUrl;
-                        return fetch('/api/settings', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(settings)
-                        });
-                    })
-                    .then(checkResponse)
-                    .then(stData => {
-                        if (stData.success) {
-                            alert('Иллюстрация успешно сохранена!');
-                            let img = document.getElementById('currentIllustration');
-                            img.src = newUrl;
-                            img.style.display = 'block';
-                        } else {
-                            throw new Error('Не удалось сохранить настройки иллюстрации');
-                        }
-                    });
-            })
-            .catch(err => {
-                alert('Сбой при сохранении иллюстрации: ' + err.message);
+                body: JSON.stringify({ image: e.target.result })
             });
+            if(upRes && upRes.success) {
+                const setRes = await apiCall('/api/settings');
+                setRes.illustrationUrl = upRes.url;
+                await apiCall('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(setRes)
+                });
+                document.getElementById('currentIllustration').src = upRes.url;
+                document.getElementById('currentIllustration').style.display = 'block';
+                alert('Арт обновлен!');
+            }
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(fileInput.files[0]);
     }
 
-    function fetchLogs() {
-        fetch('/api/logs')
-            .then(checkResponse)
-            .then(data => {
-                document.getElementById('serverLogs').innerText = data.logs || 'Логов пока нет';
-            })
-            .catch(err => {
-                document.getElementById('serverLogs').innerText = 'Ошибка получения логов: ' + err.message;
-            });
+    let refreshInterval = null;
+    async function fetchLogs() {
+        const type = document.getElementById('logTypeSelect').value;
+        const data = await apiCall(`/api/logs?type=${type}`);
+        if(data) document.getElementById('serverLogs').innerText = data.logs || 'Пусто...';
     }
-    fetchLogs();
-
-    function loadFileList() {
-        fetch('/api/list-files')
-            .then(checkResponse)
-            .then(files => {
-                let select = document.getElementById('fileSelect');
-                select.innerHTML = '';
-                if (files && files.length > 0) {
-                    files.forEach(f => {
-                        let opt = document.createElement('option');
-                        opt.value = f;
-                        opt.textContent = f;
-                        select.appendChild(opt);
-                    });
-                    loadFileCode();
-                }
-            })
-            .catch(err => {
-                console.error('Ошибка загрузки списка файлов:', err.message);
-            });
-    }
-    loadFileList();
-
-    function loadFileCode() {
-        let file = document.getElementById('fileSelect').value;
-        if (!file) return;
-        fetch('/api/file?path=' + encodeURIComponent(file))
-            .then(checkResponse)
-            .then(data => {
-                document.getElementById('codeEditor').value = data.content || '';
-            })
-            .catch(err => {
-                alert('Ошибка загрузки файла: ' + err.message);
-            });
+    
+    function toggleAutoRefresh() {
+        const btn = document.getElementById('autoRefreshBtn');
+        if(refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+            btn.innerText = 'Автообновление: ВЫКЛ';
+            btn.style.backgroundColor = 'var(--accent-color)';
+        } else {
+            fetchLogs();
+            refreshInterval = setInterval(fetchLogs, 3000);
+            btn.innerText = 'Автообновление: ВКЛ';
+            btn.style.backgroundColor = 'var(--success-color)';
+        }
     }
 
-    function saveFileCode() {
-        let file = document.getElementById('fileSelect').value;
-        let content = document.getElementById('codeEditor').value;
-        fetch('/api/file', {
+    async function loadFileList() {
+        const files = await apiCall('/api/list-files');
+        if(!files) return;
+        const select = document.getElementById('fileSelect');
+        select.innerHTML = '<option value="">-- Выберите файл --</option>';
+        files.forEach(f => {
+            select.innerHTML += `<option value="${f}">${f}</option>`;
+        });
+    }
+
+    async function loadFileCode() {
+        const file = document.getElementById('fileSelect').value;
+        if (!file) { document.getElementById('codeEditor').value = ''; return; }
+        const data = await apiCall('/api/file?path=' + encodeURIComponent(file));
+        if(data) document.getElementById('codeEditor').value = data.content || '';
+    }
+
+    async function saveFileCode() {
+        const file = document.getElementById('fileSelect').value;
+        const content = document.getElementById('codeEditor').value;
+        if(!file) return alert('Файл не выбран!');
+        
+        const data = await apiCall('/api/file', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filePath: file, content: content })
-        })
-        .then(checkResponse)
-        .then(data => {
-            if(data.success) {
-                alert('Код успешно сохранен и применен!');
-            } else {
-                alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
-            }
-        })
-        .catch(err => {
-            alert('Сбой при сохранении кода: ' + err.message);
         });
+        if(data && data.success) alert('Код сохранен!');
     }
+
+    loadProjects();
+    loadSettings();
+    loadFileList();
+    fetchLogs();
     </script>
 </body>
 </html>
