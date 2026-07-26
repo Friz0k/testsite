@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOV | Аттестация юридического отдела</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --bg-dark: #050505; --card-bg: rgba(8, 8, 12, 0.65); --card-border: rgba(255, 255, 255, 0.15); --neon-white: #ffffff; --text-main: #ffffff; --text-dim: #c0c0c0; --accent-red: #ff3366; --accent-green: #00ffaa; }
+        body { background: var(--bg-dark); color: var(--text-main); min-height: 100vh; font-family: 'Inter', sans-serif; overflow-x: hidden; position: relative; }
+        #particleCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; position: relative; z-index: 2; }
+        .neon-line { height: 1px; background: linear-gradient(90deg, transparent, var(--neon-white), transparent); margin: 20px 0 30px; opacity: 0.6; }
+        .header { text-align: center; margin-bottom: 30px; position: relative; }
+        .header h1 { font-family: 'Inter', sans-serif; font-size: 36px; font-weight: 700; letter-spacing: 2px; color: #ffffff; margin-bottom: 10px; }
+        .card { background: var(--card-bg); backdrop-filter: blur(10px); border-radius: 24px; padding: 28px; margin-bottom: 24px; border: 1px solid var(--card-border); transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .card:hover { border-color: rgba(255,255,255,0.4); box-shadow: 0 8px 30px rgba(255,255,255,0.05); transform: translateY(-2px); }
+        .form-group { margin-bottom: 24px; }
+        .form-group label { display: block; font-size: 12px; letter-spacing: 1.5px; font-weight: 600; text-transform: uppercase; color: var(--neon-white); margin-bottom: 8px; }
+        .form-control { width: 100%; padding: 14px 18px; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; color: white; font-size: 16px; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+        .form-control:focus { outline: none; border-color: var(--neon-white); box-shadow: 0 0 12px rgba(255,255,255,0.2); background: rgba(0,0,0,0.7); }
+        .btn { padding: 14px 24px; border-radius: 40px; font-weight: 700; font-size: 14px; letter-spacing: 1px; border: none; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: rgba(255,255,255,0.08); color: white; border: 1px solid rgba(255,255,255,0.25); }
+        .btn-primary { background: rgba(255,255,255,0.95); color: #000; border: none; font-weight: 800; }
+        .btn-primary:hover { background: white; box-shadow: 0 0 18px rgba(255,255,255,0.5); transform: scale(1.02); }
+        .btn-outline { border: 1px solid rgba(255,255,255,0.5); background: transparent; }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; }
+        .btn-block { width: 100%; }
+        .test-header { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .test-info-item { background: rgba(0,0,0,0.4); padding: 8px 18px; border-radius: 40px; font-size: 13px; font-weight: 500; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 8px; }
+        .timer { font-family: 'Inter', monospace; font-weight: 700; color: var(--accent-red); letter-spacing: 1px; }
+        .progress-container { margin: 20px 0 25px; }
+        .progress-bar { height: 6px; background: rgba(255,255,255,0.15); border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #ffffff, #aaaaaa); width: 0%; border-radius: 6px; transition: width 0.3s ease; box-shadow: 0 0 5px rgba(255,255,255,0.6); }
+        .progress-text { display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; margin-top: 8px; color: var(--text-dim); }
+        .question-container { background: rgba(0,0,0,0.35); border-radius: 20px; padding: 20px; margin: 15px 0; border-left: 4px solid white; }
+        .question-number { display: inline-block; background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 15px; letter-spacing: 1px; }
+        .question-text { font-size: 18px; font-weight: 500; line-height: 1.4; margin-bottom: 25px; }
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; cursor: pointer; transition: all 0.2s; }
+        .option-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.4); }
+        .option-item.selected { background: rgba(255,255,255,0.12); border-color: white; box-shadow: 0 0 8px rgba(255,255,255,0.2); }
+        .option-checkbox { width: 22px; height: 22px; border: 2px solid rgba(255,255,255,0.5); border-radius: 6px; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; transition: 0.1s; }
+        .option-checkbox.radio { border-radius: 50%; }
+        .option-checkbox.selected { background: white; border-color: white; }
+        .option-checkbox.selected::after { content: "✓"; color: black; font-size: 13px; font-weight: bold; }
+        .option-checkbox.radio.selected::after { content: ""; width: 10px; height: 10px; background: black; border-radius: 50%; }
+        .option-text { flex: 1; font-size: 15px; }
+        .test-navigation { display: flex; justify-content: space-between; gap: 15px; margin-top: 30px; }
+        .btn-test { min-width: 130px; padding: 12px 10px; }
+        .loading { text-align: center; padding: 50px; }
+        .neon-spinner { width: 60px; height: 60px; margin: 0 auto 20px; position: relative; }
+        .neon-spinner:before, .neon-spinner:after { content: ""; position: absolute; border-radius: 50%; border: 2px solid transparent; animation: spin 1.8s linear infinite; }
+        .neon-spinner:before { width: 100%; height: 100%; border-top: 2px solid white; border-right: 2px solid white; }
+        .neon-spinner:after { width: 70%; height: 70%; top: 15%; left: 15%; border-bottom: 2px solid white; border-left: 2px solid white; animation-direction: reverse; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .result-message { padding: 18px; border-radius: 20px; text-align: center; margin-top: 20px; display: none; backdrop-filter: blur(12px); font-weight: 600; }
+        .result-message.success { border: 1px solid var(--accent-green); background: rgba(0,255,170,0.1); color: var(--accent-green); }
+        .result-message.error { border: 1px solid var(--accent-red); background: rgba(255,51,102,0.1); color: var(--accent-red); }
+        .footer { text-align: center; margin-top: 50px; padding: 20px; font-size: 11px; color: #666; border-top: 1px solid rgba(255,255,255,0.05); }
+        .text-answer-area { width: 100%; min-height: 120px; padding: 12px; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; color: white; font-family: 'Inter', sans-serif; font-size: 14px; resize: vertical; }
+        .text-answer-area:focus { outline: none; border-color: white; box-shadow: 0 0 12px rgba(255,255,255,0.2); }
+        .bonus-badge { display: inline-block; background: rgba(255,193,7,0.3); border: 1px solid #ffc107; border-radius: 20px; padding: 2px 10px; font-size: 10px; margin-left: 10px; vertical-align: middle; color: #ffc107; }
+        @media (max-width: 700px) { .container { padding: 15px; } .header h1 { font-size: 28px; } .test-navigation { flex-wrap: wrap; } .btn-test { flex: 1; } }
+    </style>
+</head>
+<body>
+<canvas id="particleCanvas"></canvas>
+<div class="container">
+    <div class="neon-line"></div>
+    <div class="header">
+        <h1>ЮРИДИЧЕСКАЯ АТТЕСТАЦИЯ</h1>
+    </div>
+
+    <div id="registrationContainer">
+        <div class="card">
+            <div class="form-group">
+                <label>ИГРОВОЙ НИКНЕЙМ</label>
+                <input type="text" id="nickname" class="form-control" placeholder="Пример: Alexandr Cop" required>
+            </div>
+            <div class="form-group">
+                <label>DISCORD ТЕГ</label>
+                <input type="text" id="discordTag" class="form-control" placeholder="Пример: @frizword" required>
+            </div>
+            <div class="form-group">
+                <button type="button" class="btn btn-primary btn-block" onclick="startTest()">НАЧАТЬ АТТЕСТАЦИЮ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="testContainer" style="display: none;">
+        <div class="card">
+            <div class="test-header">
+                <div class="test-info-item"><span id="currentUser">-</span></div>
+                <div class="test-info-item">ВОПРОС <span id="currentQuestion">1</span> / <span id="totalQuestions">0</span></div>
+                <div class="test-info-item timer"><span id="timerValue">60:00</span></div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+                <div class="progress-text"><span>ПРОГРЕСС</span><span id="progressPercent">0%</span></div>
+            </div>
+            <div id="questionDisplay"></div>
+            <div class="test-navigation">
+                <button class="btn btn-outline btn-test" id="prevBtn" onclick="previousQuestion()">НАЗАД</button>
+                <button class="btn btn-primary btn-test" id="nextBtn" onclick="nextQuestion()">ДАЛЕЕ</button>
+                <button class="btn btn-primary btn-test" id="finishBtn" onclick="finishTest()" style="display: none;">ЗАВЕРШИТЬ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading" style="display: none;">
+        <div class="neon-spinner"></div>
+        <p>ОБРАБОТКА РЕЗУЛЬТАТОВ</p>
+        <p>Пожалуйста, не закрывайте страницу</p>
+    </div>
+
+    <div class="result-message" id="resultMessage"><span></span></div>
+    <div class="footer"><span>Made by Cop</span></div>
+</div>
+
+<script>
+    (function() {
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+        function resizeCanvas() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; }
+        function initParticles() {
+            const count = Math.min(70, Math.floor(width * height / 9000));
+            particles = [];
+            for (let i = 0; i < count; i++) {
+                particles.push({ x: Math.random() * width, y: Math.random() * height, radius: Math.random() * 2.5 + 0.8, alpha: Math.random() * 0.3 + 0.1, speedX: (Math.random() - 0.5) * 0.2, speedY: (Math.random() - 0.5) * 0.1 + 0.05 });
+            }
+        }
+        function drawParticles() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, width, height);
+            for (let p of particles) {
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`; ctx.fill();
+                p.x += p.speedX; p.y += p.speedY;
+                if (p.x < 0) p.x = width; if (p.x > width) p.x = 0; if (p.y < 0) p.y = height; if (p.y > height) p.y = 0;
+            }
+            requestAnimationFrame(drawParticles);
+        }
+        window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+        resizeCanvas(); initParticles(); drawParticles();
+
+        const TEST_TIME_LIMIT = 60;
+        let testData = { nickname: '', discordTag: '', questions: [], answers: {}, textAnswers: {}, currentQuestionIndex: 0, startTime: null, endTime: null, timerInterval: null, timeLeft: TEST_TIME_LIMIT * 60, submitted: false };
+
+        window.startTest = async function() {
+            const nickname = document.getElementById('nickname').value.trim();
+            const discordTag = document.getElementById('discordTag').value.trim();
+            if (!nickname || !discordTag) { showResult('Заполните все поля перед началом', false); return; }
+            
+            testData.nickname = nickname; testData.discordTag = discordTag;
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                const res = await fetch('/gov/questions');
+                const data = await res.json();
+                document.getElementById('loading').style.display = 'none';
+                
+                if (data.success && data.questions && data.questions.length > 0) {
+                    testData.questions = data.questions;
+                    testData.answers = {}; testData.textAnswers = {}; testData.currentQuestionIndex = 0; testData.submitted = false;
+                    testData.startTime = new Date(); testData.timeLeft = TEST_TIME_LIMIT * 60;
+                    
+                    document.getElementById('totalQuestions').textContent = testData.questions.length;
+                    startTimer();
+                    document.getElementById('registrationContainer').style.display = 'none';
+                    document.getElementById('testContainer').style.display = 'block';
+                    document.getElementById('currentUser').innerHTML = testData.nickname;
+                    showQuestion(0);
+                } else {
+                    showResult('Вопросы не добавлены в админке', false);
+                }
+            } catch (err) {
+                document.getElementById('loading').style.display = 'none';
+                showResult('Ошибка соединения с сервером', false);
+            }
+        };
+
+        function showQuestion(index) {
+            if (index < 0 || index >= testData.questions.length) return;
+            testData.currentQuestionIndex = index;
+            const q = testData.questions[index];
+            const currentNum = index + 1;
+            const percent = Math.round((currentNum / testData.questions.length) * 100);
+            
+            document.getElementById('currentQuestion').innerHTML = currentNum;
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressPercent').innerHTML = percent + '%';
+            document.getElementById('prevBtn').style.display = index === 0 ? 'none' : 'inline-flex';
+            document.getElementById('nextBtn').style.display = index === testData.questions.length - 1 ? 'none' : 'inline-flex';
+            document.getElementById('finishBtn').style.display = index === testData.questions.length - 1 ? 'inline-flex' : 'none';
+
+            let html = `<div class="question-container"><div class="question-number">ВОПРОС ${currentNum}`;
+            if (q.isBonus) html += ` <span class="bonus-badge">БОНУС *</span>`;
+            html += `</div><div class="question-text">${escapeHtml(q.question)}</div>`;
+
+            if (q.type === 'text') {
+                const savedText = testData.textAnswers[index] || '';
+                html += `<textarea class="text-answer-area" id="textAnswer_${index}" placeholder="Введите ваш ответ...">${escapeHtml(savedText)}</textarea>`;
+                html += `<div style="font-size: 12px; color: #aaa; margin-top: 8px;">`;
+                if (q.isBonus) html += `Бонусный вопрос: ответ приветствуется, но не обязателен.`;
+                else html += `Обязательный вопрос. Оценивается в ${q.points} балла(ов).`;
+                html += `</div></div>`;
+                document.getElementById('questionDisplay').innerHTML = html;
+                const textarea = document.getElementById(`textAnswer_${index}`);
+                if (textarea) textarea.addEventListener('input', function() { testData.textAnswers[index] = this.value; });
+            } else {
+                html += `<div class="options-container">`;
+                const saved = testData.answers[index] || [];
+                if (q.options) {
+                    q.options.forEach((opt, optIdx) => {
+                        const isSelected = saved.includes(optIdx);
+                        const chClass = q.type === 'multiple' ? 'option-checkbox' : 'option-checkbox radio';
+                        const optText = opt.text || opt;
+                        html += `<div class="option-item ${isSelected ? 'selected' : ''}" onclick="selectOption(${optIdx})">
+                                    <div class="${chClass} ${isSelected ? 'selected' : ''}"></div>
+                                    <div class="option-text">${escapeHtml(optText)}</div>
+                                 </div>`;
+                    });
+                }
+                html += `</div></div>`;
+                document.getElementById('questionDisplay').innerHTML = html;
+            }
+        }
+
+        window.selectOption = function(optIdx) {
+            const q = testData.questions[testData.currentQuestionIndex];
+            let current = testData.answers[testData.currentQuestionIndex] || [];
+            if (q.type === 'multiple') {
+                const idx = current.indexOf(optIdx);
+                if (idx > -1) current.splice(idx, 1); else current.push(optIdx);
+            } else { current = [optIdx]; }
+            testData.answers[testData.currentQuestionIndex] = current;
+            showQuestion(testData.currentQuestionIndex);
+        };
+
+        window.nextQuestion = () => { if (testData.currentQuestionIndex < testData.questions.length - 1) showQuestion(testData.currentQuestionIndex + 1); };
+        window.previousQuestion = () => { if (testData.currentQuestionIndex > 0) showQuestion(testData.currentQuestionIndex - 1); };
+
+        function startTimer() {
+            if (testData.timerInterval) clearInterval(testData.timerInterval);
+            testData.timerInterval = setInterval(() => {
+                if (testData.timeLeft <= 0) { clearInterval(testData.timerInterval); finishTest(); } 
+                else {
+                    testData.timeLeft--;
+                    const mins = Math.floor(testData.timeLeft / 60); const secs = testData.timeLeft % 60;
+                    document.getElementById('timerValue').innerHTML = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+                }
+            }, 1000);
+        }
+
+        window.finishTest = async function() {
+            if (testData.submitted) return;
+            if (testData.timerInterval) clearInterval(testData.timerInterval);
+            
+            const unanswered = [];
+            for (let i = 0; i < testData.questions.length; i++) {
+                const q = testData.questions[i];
+                if (q.type === 'text') {
+                    if (!q.isBonus && (!testData.textAnswers[i] || testData.textAnswers[i].trim() === '')) unanswered.push(i+1);
+                } else {
+                    if (!testData.answers[i] || testData.answers[i].length === 0) unanswered.push(i+1);
+                }
+            }
+            if (unanswered.length > 0) {
+                if (!confirm(`Вы не ответили на вопросы: ${unanswered.join(', ')}. Завершить тест?`)) {
+                    if (testData.timeLeft > 0) startTimer();
+                    showQuestion(unanswered[0] - 1); return;
+                }
+            }
+            
+            testData.submitted = true;
+            document.getElementById('loading').style.display = 'block';
+            
+            const payload = {
+                nickname: testData.nickname, discordTag: testData.discordTag,
+                startTime: testData.startTime.toISOString(), endTime: new Date().toISOString(),
+                timeSpent: (TEST_TIME_LIMIT * 60) - testData.timeLeft,
+                questions: testData.questions.map((q, idx) => {
+                    if (q.type === 'text') return { id: q.id, type: q.type, textAnswer: testData.textAnswers[idx] || '' };
+                    else return { id: q.id, type: q.type, selectedAnswers: testData.answers[idx] || [] };
+                })
+            };
+            
+            try {
+                const res = await fetch('/gov/submitTest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = await res.json();
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('testContainer').style.display = 'none';
+                document.getElementById('registrationContainer').style.display = 'block';
+                if (data.success) showResult('Результаты успешно отправлены', true);
+                else showResult('Ошибка при отправке: ' + (data.message || ''), false);
+                resetForm();
+            } catch (e) {
+                document.getElementById('loading').style.display = 'none';
+                showResult('Ошибка соединения. Попробуйте снова.', false);
+            }
+        };
+
+        function showResult(msg, isSuccess) {
+            const resDiv = document.getElementById('resultMessage');
+            resDiv.querySelector('span').innerHTML = msg;
+            resDiv.className = 'result-message ' + (isSuccess ? 'success' : 'error');
+            resDiv.style.display = 'block';
+            setTimeout(() => { resDiv.style.display = 'none'; }, 5000);
+        }
+
+        function resetForm() {
+            document.getElementById('nickname').value = ''; document.getElementById('discordTag').value = '';
+            testData = { nickname: '', discordTag: '', questions: [], answers: {}, textAnswers: {}, currentQuestionIndex: 0, startTime: null, endTime: null, timerInterval: null, timeLeft: TEST_TIME_LIMIT * 60, submitted: false };
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m;
+            });
+        }
+    })();
+</script>
+</body>
+</html>
