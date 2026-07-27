@@ -96,7 +96,7 @@
             <div class="form-group">
                 <label><i class="fas fa-layer-group"></i> ВЫБЕРИТЕ ВАШ РАНГ</label>
                 <div class="radio-group">
-                    <div class="radio-btn active" onclick="setRank(3)" id="rank3Btn">3 РАНГ</div>
+                    <div class="radio-btn active" onclick="setRank(5)" id="rank5Btn">5 РАНГ</div>
                     <div class="radio-btn" onclick="setRank(7)" id="rank7Btn">7 РАНГ</div>
                 </div>
             </div>
@@ -119,7 +119,7 @@
                 </div>
                 <div class="rule-item">
                     <i class="fas fa-clock"></i> 
-                    <span>Время ответа на вопросы анализируется на предмет аномалий (подглядывание).</span>
+                    <span>Время ответа на вопросы анализируется на предмет аномалий.</span>
                 </div>
                 <div class="rule-item">
                     <i class="fas fa-user-check"></i> 
@@ -184,7 +184,7 @@
         window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
         resizeCanvas(); initParticles(); drawParticles();
 
-        let testData = { rank: 3, nickname: '', discordTag: '', questions: [], answers: {}, currentQuestionIndex: 0, startTime: null, endTime: null, timerInterval: null, timeLeft: 900, submitted: false, questionTimes: {}, currentQStart: null, leaveCount: 0 };
+        let testData = { rank: 5, nickname: '', discordTag: '', questions: [], answers: {}, currentQuestionIndex: 0, startTime: null, endTime: null, timerInterval: null, timeLeft: 900, submitted: false, questionTimes: {}, currentQStart: null, leaveCount: 0 };
 
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('copy', e => e.preventDefault());
@@ -200,7 +200,7 @@
 
         window.setRank = function(rank) {
             testData.rank = rank;
-            document.getElementById('rank3Btn').className = rank === 3 ? 'radio-btn active' : 'radio-btn';
+            document.getElementById('rank5Btn').className = rank === 5 ? 'radio-btn active' : 'radio-btn';
             document.getElementById('rank7Btn').className = rank === 7 ? 'radio-btn active' : 'radio-btn';
         };
 
@@ -210,6 +210,7 @@
             if (!testData.nickname || !testData.discordTag) { showResult('Заполните все поля', false); return; }
             
             document.getElementById('loading').style.display = 'block';
+            
             try {
                 const res = await fetch(`/fib/questions?rank=${testData.rank}`);
                 const data = await res.json();
