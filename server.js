@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const sharp = require('sharp');
 const cookieParser = require('cookie-parser');
 const http = require('http');
 const crypto = require('crypto');
@@ -266,6 +267,19 @@ app.get('/admin', authMiddleware, (req, res) => {
     res.sendFile(adminPath);
 });
 
+async function processGif(inputPath) {
+    const tempPath = path.join(path.dirname(inputPath), 'temp_' + path.basename(inputPath));
+    await sharp(inputPath, { animated: true })
+        .resize({
+            width: 600,
+            withoutEnlargement: true,
+            kernel: sharp.kernel.lanczos3
+        })
+        .toFile(tempPath);
+    fs.unlinkSync(inputPath);
+    fs.renameSync(tempPath, inputPath);
+}
+
 app.use('/api', authMiddleware);
 
 app.get('/api/me', (req, res) => {
@@ -402,7 +416,7 @@ app.post('/api/settings', (req, res) => {
     }
 });
 
-app.post('/api/upload', upload.single('image'), (req, res) => {
+app.post('/api/upload', upload.single('image'), async (req, res) => {
     try {
         if (req.body.image && req.body.image.startsWith('data:image')) {
             const matches = req.body.image.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
@@ -417,6 +431,10 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
 
         if (!req.file) {
             return res.status(400).json({ error: 'File error' });
+        }
+
+        if (req.file.mimetype === 'image/gif') {
+            await processGif(req.file.path);
         }
 
         res.json({ success: true, url: `/uploads/${req.file.filename}` });
