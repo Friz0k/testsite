@@ -3,76 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frizworld — Web Systems & Development</title>
+    <title>Friz World | Portfolio</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥶</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-main: #050507;
-            --bg-card: #101014;
-            --bg-card-hover: #16161c;
-            --border: #22222a;
-            --border-hover: #7c3aed;
-            --accent: #7c3aed;
-            --text-main: #ffffff;
-            --text-muted: #9ca3af;
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        html, body {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        
+        :root {
+            --primary: #8a2be2;
+            --primary-light: #b026ff;
+            --bg: #050505;
+            --card-bg: rgba(15, 15, 40, 0.4);
+            --border: rgba(138, 43, 226, 0.3);
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
         }
 
         body {
-            background-color: var(--bg-main);
+            background-color: var(--bg);
             color: var(--text-main);
             min-height: 100vh;
+            padding: 30px 20px 60px;
             overflow-x: hidden;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.12) 0%, transparent 60%),
-                radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.05) 0%, transparent 40%);
+            background-image: radial-gradient(circle at 50% 0%, rgba(138, 43, 226, 0.15) 0%, transparent 60%);
         }
 
-        .navbar {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 25px 40px;
+        .top-nav {
+            max-width: 1500px;
+            margin: 0 auto 20px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            justify-content: flex-end;
         }
 
-        .logo {
-            font-family: 'Orbitron', monospace;
-            font-size: 24px;
-            font-weight: 900;
-            color: #fff;
-            text-decoration: none;
-            letter-spacing: 2px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo span {
-            color: var(--accent);
-        }
-
-        .nav-actions {
-            display: flex;
-            gap: 15px;
-        }
-
-        .btn-login {
+        .admin-link {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
             color: var(--text-main);
             padding: 10px 20px;
-            border-radius: 8px;
+            border-radius: 10px;
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
@@ -82,51 +64,46 @@
             gap: 8px;
         }
 
-        .btn-login:hover {
-            background: var(--accent);
-            border-color: var(--accent);
+        .admin-link:hover {
+            background: var(--primary);
+            border-color: var(--primary);
         }
 
-        .hero {
-            max-width: 1400px;
-            margin: 40px auto;
-            padding: 0 40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        .header {
             text-align: center;
+            margin: 20px auto 40px;
+            max-width: 800px;
         }
 
-        .hero h1 {
-            font-size: 48px;
+        .header h1 {
+            font-size: 46px;
             font-weight: 800;
-            margin-bottom: 15px;
-            letter-spacing: -1px;
-            background: linear-gradient(to right, #fff, #9ca3af);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
         }
 
-        .hero p {
-            font-size: 18px;
+        .header h1 span {
+            color: var(--primary-light);
+        }
+
+        .header p {
             color: var(--text-muted);
-            max-width: 600px;
-            margin-bottom: 40px;
-            line-height: 1.6;
-        }
-
-        .hero-art-container {
-            width: 100%;
-            max-width: 1000px;
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-            display: none;
+            font-size: 18px;
             margin-bottom: 30px;
         }
 
-        .hero-art {
+        .illustration-box {
+            max-width: 1000px;
+            margin: 0 auto 40px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            display: none;
+        }
+
+        .illustration-img {
             width: 100%;
             max-height: 450px;
             object-fit: cover;
@@ -137,64 +114,46 @@
             filter: blur(0.3px);
         }
 
-        .projects-section {
-            max-width: 1400px;
-            margin: 20px auto 80px;
-            padding: 0 40px;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 30px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 15px;
-        }
-
-        .section-header h2 {
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-        .projects-grid {
+        .grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 24px;
+            gap: 25px;
+            width: 100%;
+            max-width: 1500px;
+            margin: 0 auto;
         }
 
-        .project-card {
-            background-color: var(--bg-card);
+        .card {
+            background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 16px;
             overflow: hidden;
+            cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             display: flex;
             flex-direction: column;
-            text-decoration: none;
-            color: inherit;
+            backdrop-filter: blur(10px);
         }
 
-        .project-card:hover {
-            transform: translateY(-6px);
-            border-color: var(--border-hover);
-            background-color: var(--bg-card-hover);
-            box-shadow: 0 12px 30px rgba(124, 58, 237, 0.15);
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary-light);
+            box-shadow: 0 12px 35px rgba(138, 43, 226, 0.25);
         }
 
-        .card-image-wrap {
+        .card-img-wrap {
             width: 100%;
-            height: 220px;
-            background-color: #181820;
-            position: relative;
+            height: 240px;
+            background: #0a0a14;
             overflow: hidden;
+            position: relative;
         }
 
-        .card-image {
+        .card-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.5s ease;
+            transition: transform 0.4s ease;
             image-rendering: auto;
             image-rendering: smooth;
             transform: translateZ(0);
@@ -202,44 +161,39 @@
             filter: blur(0.3px);
         }
 
-        .project-card:hover .card-image {
+        .card:hover .card-img {
             transform: scale(1.05) translateZ(0);
         }
 
-        .card-image-placeholder {
+        .card-no-img {
             width: 100%;
             height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
-            color: #333340;
+            font-size: 45px;
+            color: rgba(138, 43, 226, 0.4);
         }
 
-        .card-content {
-            padding: 24px;
+        .card-info {
+            padding: 22px;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
         }
 
-        .card-title {
+        .card-info h3 {
             font-size: 20px;
             font-weight: 700;
-            margin-bottom: 10px;
             color: #fff;
-            transition: color 0.2s;
+            margin-bottom: 10px;
         }
 
-        .project-card:hover .card-title {
-            color: #c084fc;
-        }
-
-        .card-desc {
-            font-size: 14px;
+        .card-info p {
             color: var(--text-muted);
+            font-size: 14px;
             line-height: 1.5;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             flex-grow: 1;
             display: -webkit-box;
             -webkit-line-clamp: 3;
@@ -255,171 +209,263 @@
         }
 
         .tag {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #a1a1aa;
+            background: rgba(138, 43, 226, 0.15);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            color: #d8b4fe;
             font-size: 11px;
             font-weight: 600;
             padding: 4px 10px;
             border-radius: 6px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        .loading-state, .empty-state {
+        .empty-msg {
             grid-column: 1 / -1;
             text-align: center;
             padding: 60px 20px;
             color: var(--text-muted);
-            background: var(--bg-card);
+            background: rgba(15, 15, 40, 0.2);
             border: 1px dashed var(--border);
             border-radius: 16px;
+            font-size: 16px;
         }
 
-        .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top: 3px solid var(--accent);
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 15px;
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .modal-content {
+            background: #0f0f1c;
+            border: 1px solid var(--primary);
+            border-radius: 20px;
+            max-width: 750px;
+            width: 100%;
+            padding: 35px;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        footer {
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 30px 40px;
-            text-align: center;
-            font-size: 13px;
-            color: #52525b;
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 30px;
+            color: #a1a1aa;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        .modal-img {
+            width: 100%;
+            max-height: 380px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            image-rendering: auto;
+            image-rendering: smooth;
+            transform: translateZ(0);
+            filter: blur(0.3px);
+        }
+
+        .modal-title {
+            font-size: 26px;
+            color: #fff;
+            margin-bottom: 15px;
+        }
+
+        .modal-desc {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            white-space: pre-wrap;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .card-btn {
+            background: var(--primary);
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            transition: 0.2s;
+        }
+
+        .card-btn:hover {
+            background: var(--primary-light);
+            box-shadow: 0 0 15px rgba(176, 38, 255, 0.4);
         }
 
         @media (max-width: 1200px) {
-            .projects-grid {
+            .grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
 
-        @media (max-width: 640px) {
-            .projects-grid {
+        @media (max-width: 650px) {
+            .grid {
                 grid-template-columns: 1fr;
             }
-            .hero h1 {
-                font-size: 32px;
-            }
-            .navbar, .hero, .projects-section {
-                padding-left: 20px;
-                padding-right: 20px;
+            .header h1 {
+                font-size: 34px;
             }
         }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="/" class="logo">FRIZ<span>WORLD</span></a>
-        <div class="nav-actions">
-            <a href="/login" class="btn-login"><i class="fas fa-terminal"></i> Панель управления</a>
-        </div>
-    </nav>
+    <div class="top-nav">
+        <a href="/login" class="admin-link"><i class="fas fa-terminal"></i> Панель управления</a>
+    </div>
 
-    <header class="hero">
-        <h1>Веб-системы & Разработка</h1>
-        <p>Комплексные панели управления для государственных структур, специализированные Discord-боты и автоматизация игровых процессов.</p>
-        
-        <div class="hero-art-container" id="heroArtContainer">
-            <img src="" alt="Frizworld Art" class="hero-art" id="heroArtImg">
+    <header class="header">
+        <h1>FRIZ <span>WORLD</span></h1>
+        <p>Портфолио проектов и веб-системы GTA5RP</p>
+        <div class="illustration-box" id="illustrationBox">
+            <img src="" id="illustrationImg" class="illustration-img" alt="">
         </div>
     </header>
 
-    <main class="projects-section">
-        <div class="section-header">
-            <h2>Проекты и модули</h2>
-        </div>
+    <div class="grid" id="projectsGrid"></div>
 
-        <div class="projects-grid" id="projectsGrid">
-            <div class="loading-state">
-                <div class="spinner"></div>
-                <p>Загрузка каталога проектов...</p>
-            </div>
+    <div class="modal-overlay" id="detailsModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <img src="" id="modalImg" class="modal-img" alt="">
+            <h2 id="modalTitle" class="modal-title"></h2>
+            <p id="modalDesc" class="modal-desc"></p>
+            <div id="modalActions" class="modal-actions"></div>
         </div>
-    </main>
-
-    <footer>
-        <p>&copy; 2026 Frizworld Portfolio & GTA5RP Web Systems. All rights reserved.</p>
-    </footer>
+    </div>
 
     <script>
-        async function initSite() {
+        let allProjects = [];
+
+        async function loadData() {
             try {
-                const settingsRes = await fetch('/api/settings');
-                if (settingsRes.ok) {
-                    const settings = await settingsRes.json();
+                const setRes = await fetch('/api/settings');
+                if (setRes.ok) {
+                    const settings = await setRes.json();
                     if (settings.illustrationUrl) {
-                        const artImg = document.getElementById('heroArtImg');
-                        artImg.src = settings.illustrationUrl;
-                        document.getElementById('heroArtContainer').style.display = 'block';
+                        const illBox = document.getElementById('illustrationBox');
+                        const illImg = document.getElementById('illustrationImg');
+                        illImg.src = settings.illustrationUrl;
+                        illBox.style.display = 'block';
                     }
                 }
 
-                const projectsRes = await fetch('/api/projects');
-                const grid = document.getElementById('projectsGrid');
+                const res = await fetch('/api/projects');
+                if (!res.ok) return;
+                allProjects = await res.json();
                 
-                if (!projectsRes.ok) {
-                    throw new Error('Ошибка сети');
-                }
+                const grid = document.getElementById('projectsGrid');
+                grid.innerHTML = '';
 
-                const projects = await projectsRes.json();
-
-                if (!projects || projects.length === 0) {
-                    grid.innerHTML = '<div class="empty-state"><i class="fas fa-folder-open" style="font-size: 32px; margin-bottom: 10px; display: block;"></i>Список проектов пока пуст. Добавьте их через панель управления.</div>';
+                if (allProjects.length === 0) {
+                    grid.innerHTML = '<div class="empty-msg">Список проектов пуст</div>';
                     return;
                 }
 
-                grid.innerHTML = projects.map(p => {
-                    const title = p.title || 'Безымянный проект';
-                    const desc = p.shortDesc || p.desc || p.fullDesc || 'Описание отсутствует.';
-                    const url = p.link || p.path || '#';
-                    const image = p.imageUrl || p.image || '';
+                allProjects.forEach((p, index) => {
+                    const title = p.title || 'Проект';
+                    const desc = p.shortDesc || p.desc || p.fullDesc || '';
+                    const imgUrl = p.imageUrl || p.image;
                     
-                    let tagsArray = [];
+                    let tagsHtml = '';
                     if (Array.isArray(p.tags)) {
-                        tagsArray = p.tags;
+                        tagsHtml = p.tags.map(t => `<span class="tag">${t}</span>`).join('');
                     } else if (typeof p.tags === 'string' && p.tags.trim() !== '') {
-                        tagsArray = p.tags.split(',').map(t => t.trim());
+                        tagsHtml = p.tags.split(',').map(t => `<span class="tag">${t.trim()}</span>`).join('');
                     }
 
-                    const tagsHtml = tagsArray.map(t => `<span class="tag">${t}</span>`).join('');
+                    const imgTag = imgUrl 
+                        ? `<img src="${imgUrl}" class="card-img" alt="">` 
+                        : `<div class="card-no-img"><i class="fas fa-layer-group"></i></div>`;
 
-                    const imageHtml = image 
-                        ? `<img src="${image}" alt="${title}" class="card-image" loading="lazy">` 
-                        : `<div class="card-image-placeholder"><i class="fas fa-code"></i></div>`;
-
-                    return `
-                        <a href="${url}" class="project-card" ${url.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''}>
-                            <div class="card-image-wrap">
-                                ${imageHtml}
+                    grid.innerHTML += `
+                        <div class="card" onclick="openModal(${index})">
+                            <div class="card-img-wrap">
+                                ${imgTag}
                             </div>
-                            <div class="card-content">
-                                <h3 class="card-title">${title}</h3>
-                                <p class="card-desc">${desc}</p>
+                            <div class="card-info">
+                                <h3>${title}</h3>
+                                <p>${desc}</p>
                                 <div class="card-tags">${tagsHtml}</div>
                             </div>
-                        </a>
+                        </div>
                     `;
-                }).join('');
+                });
+            } catch (e) {}
+        }
 
-            } catch (err) {
-                document.getElementById('projectsGrid').innerHTML = 
-                    `<div class="empty-state" style="color: #ef4444;"><i class="fas fa-exclamation-circle" style="font-size: 32px; margin-bottom: 10px; display: block;"></i>Не удалось загрузить проекты. Проверьте работу сервера.</div>`;
+        function openModal(index) {
+            const p = allProjects[index];
+            if (!p) return;
+
+            document.getElementById('modalTitle').textContent = p.title || 'Проект';
+            document.getElementById('modalDesc').innerText = p.fullDesc || p.desc || 'Полное описание отсутствует.';
+            
+            let img = document.getElementById('modalImg');
+            const imgUrl = p.imageUrl || p.image;
+            if (imgUrl) {
+                img.src = imgUrl;
+                img.style.display = 'block';
+            } else {
+                img.style.display = 'none';
+            }
+
+            let actions = document.getElementById('modalActions');
+            actions.innerHTML = '';
+            const pathUrl = p.path || p.link;
+            if (pathUrl) {
+                let testBtn = document.createElement('a');
+                testBtn.className = 'card-btn';
+                testBtn.href = pathUrl;
+                testBtn.target = '_blank';
+                testBtn.textContent = 'Открыть и протестировать';
+                actions.appendChild(testBtn);
+            }
+
+            document.getElementById('detailsModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('detailsModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
             }
         }
 
-        window.addEventListener('DOMContentLoaded', initSite);
+        window.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>
 </html>
