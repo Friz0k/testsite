@@ -45,29 +45,46 @@ const sendDiscordWebhook = (webhookUrl, payload) => {
     });
 };
 
+const getMskTime = () => {
+    const d = new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/Moscow"}));
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())} ${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+};
+
 router.get('/questions', (req, res) => {
     const config = getConfig();
-    const rank = parseInt(req.query.rank) || 3;
+    const rank = parseInt(req.query.rank) || 5;
     const testSettings = config.testSettings || {};
     const rawQuestions = testSettings.questions || [];
 
-    const filteredQuestions = rawQuestions
-        .filter(q => !q.ranks || q.ranks.includes(rank))
-        .map((q, index) => ({
-            id: q.id || (index + 1),
-            text: q.text || q.question || '',
-            type: q.type || 'single',
-            options: (q.options || []).map(opt => (typeof opt === 'string' ? opt : opt.text || ''))
-        }));
+    let filteredQuestions = rawQuestions.filter(q => !q.ranks || q.ranks.includes(rank));
+
+    for (let i = filteredQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [filteredQuestions[i], filteredQuestions[j]] = [filteredQuestions[j], filteredQuestions[i]];
+    }
+
+    const questionCount = rank === 7 
+        ? (testSettings.questionCountRank7 || 20) 
+        : (testSettings.questionCountRank5 || 10);
+
+    filteredQuestions = filteredQuestions.slice(0, questionCount);
+
+    const mappedQuestions = filteredQuestions.map((q) => ({
+        id: q.id,
+        text: q.text || q.question || '',
+        type: q.type || 'single',
+        options: (q.options || []).map(opt => (typeof opt === 'string' ? opt : opt.text || ''))
+    }));
 
     const durationMinutes = rank === 7 
         ? (testSettings.durationMinutesRank7 || 20)
-        : (testSettings.durationMinutesRank3 || 15);
+        : (testSettings.durationMinutesRank5 || 15);
 
     res.json({
         success: true,
         durationMinutes: durationMinutes,
-        questions: filteredQuestions
+        questions: mappedQuestions
     });
 });
 
@@ -77,23 +94,23 @@ router.post('/submit', async (req, res) => {
     const rawQuestions = testSettings.questions || [];
     const { rank, nickname, discordTag, questions, questionTimes, leaveCount } = req.body;
 
-    const numericRank = parseInt(rank) || 3;
+    const numericRank = parseInt(rank) || 5;
     const passingScore = numericRank === 7 
-        ? (testSettings.passingScoreRank7 || 10) 
-        : (testSettings.passingScoreRank3 || 8);
+        ? (testSettings.passingScoreRank7 || 12) 
+        : (testSettings.passingScoreRank5 || 6);
 
     let totalScore = 0;
     let maxPossibleScore = 0;
-    const detailedResults = [];
 
-    rawQuestions.forEach((storedQ, idx) => {
-        if (storedQ.ranks && !storedQ.ranks.includes(numericRank)) return;
+    (questions || []).forEach((userQ) => {
+        const storedQ = rawQuestions.find(q => q.id === userQ.id);
+        if (!storedQ) return;
+
         maxPossibleScore++;
-
-        const userQ = (questions || []).find(q => q.id === storedQ.id || q.id === (idx + 1));
-        const selectedIndices = userQ && Array.isArray(userQ.selectedAnswers) ? userQ.selectedAnswers : [];
         
+        const selectedIndices = Array.isArray(userQ.selectedAnswers) ? userQ.selectedAnswers : [];
         let correctIndices = [];
+        
         if (Array.isArray(storedQ.correctAnswers) && storedQ.correctAnswers.length > 0) {
             correctIndices = storedQ.correctAnswers.map(ans => storedQ.options.indexOf(ans)).filter(i => i !== -1);
         } else if (storedQ.correctAnswer) {
@@ -101,18 +118,13 @@ router.post('/submit', async (req, res) => {
             if (idxCorrect !== -1) correctIndices = [idxCorrect];
         }
 
+        correctIndices.sort();
+        selectedIndices.sort();
+
         const isCorrect = correctIndices.length === selectedIndices.length && 
-            correctIndices.every(val => selectedIndices.includes(val));
+            correctIndices.every((val, i) => val === selectedIndices[i]);
 
         if (isCorrect) totalScore++;
-
-        detailedResults.push({
-            question: storedQ.text || storedQ.question,
-            isCorrect: isCorrect,
-            selected: selectedIndices.map(i => storedQ.options[i]).join(', ') || 'Нет ответа',
-            correct: correctIndices.map(i => storedQ.options[i]).join(', '),
-            timeSpent: questionTimes ? (questionTimes[idx] || 0) : 0
-        });
     });
 
     const passed = totalScore >= passingScore;
@@ -120,22 +132,23 @@ router.post('/submit', async (req, res) => {
     const pingRole = config.roles?.ping ? `<@&${config.roles.ping}>` : '';
 
     if (webhookUrl) {
-        const embedColor = passed ? 0x00ffaa : 0xff3366;
-        const statusText = passed ? '✅ УСПЕШНО СДАНО' : '❌ НЕ СДАНО';
+        const embedColor = passed ? 65450 : 16724838;
+        const statusText = passed ? 'СДАНО' : 'НЕ СДАНО';
+        const mskTime = getMskTime();
         
         const payload = {
-            content: pingRole ? `Уведомление переаттестации: ${pingRole}` : null,
+            content: pingRole ? pingRole : null,
             embeds: [
                 {
                     title: `📋 Результат переаттестации FIB | Ранг: ${numericRank}`,
                     color: embedColor,
                     fields: [
-                        { name: '👤 Сотрудник', value: `${nickname || 'Не указан'} (${discordTag || 'Нет Discord'})`, inline: true },
-                        { name: '📊 Статус', value: `${statusText} (${totalScore} из ${maxPossibleScore})`, inline: true },
-                        { name: '🎯 Проходной балл', value: `${passingScore}`, inline: true },
-                        { name: '⚠️ Покиданий вкладки', value: `${leaveCount || 0}`, inline: true }
+                        { name: 'Сотрудник', value: `${nickname || 'Не указан'}`, inline: true },
+                        { name: 'Тег дс', value: `${discordTag || 'Нет Discord'}`, inline: true },
+                        { name: 'Статус', value: `${statusText} (${totalScore})`, inline: true },
+                        { name: 'Покиданий вкладки', value: `${leaveCount || 0}`, inline: true }
                     ],
-                    footer: { text: `Frizworld Web Systems | ${new Date().toLocaleString('ru-RU')}` }
+                    footer: { text: `Время по МСК: ${mskTime} | by Frizworld` }
                 }
             ]
         };
