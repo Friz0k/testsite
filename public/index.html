@@ -3,486 +3,423 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friz World | Portfolio</title>
+    <title>Frizworld — Web Systems & Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥶</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
     <style>
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-        }
-
-        html, body {
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-
-        ::-webkit-scrollbar {
-            display: none;
-        }
-        
         :root {
-            --primary: #8a2be2;
-            --primary-light: #b026ff;
-            --bg: #050505;
-            --card-bg: rgba(15, 15, 40, 0.4);
-            --border: rgba(138, 43, 226, 0.3);
-            --text: #ffffff;
-            --text-muted: #cccccc;
+            --bg-main: #050507;
+            --bg-card: #101014;
+            --bg-card-hover: #16161c;
+            --border: #22222a;
+            --border-hover: #7c3aed;
+            --accent: #7c3aed;
+            --text-main: #ffffff;
+            --text-muted: #9ca3af;
         }
 
-        html { scroll-behavior: smooth; }
-        
-        body { 
-            background-color: var(--bg);
-            color: var(--text); 
-            line-height: 1.6; 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
             overflow-x: hidden;
-            position: relative;
-            zoom: 0.8; 
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.12) 0%, transparent 60%),
+                radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.05) 0%, transparent 40%);
         }
 
-        .animated-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 125vw;
-            height: 125vh;
-            z-index: -1;
-            overflow: hidden;
-            pointer-events: none;
-            background: linear-gradient(-45deg, #050505, #11051f, #0a0a0a, #160824);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+        .navbar {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.3;
-            animation: floatOrb 20s infinite alternate;
-        }
-
-        .orb:nth-child(1) { width: 400px; height: 400px; background: #8a2be2; top: -10%; left: -10%; }
-        .orb:nth-child(2) { width: 500px; height: 500px; background: #b026ff; bottom: -20%; right: -10%; animation-delay: -5s; }
-        .orb:nth-child(3) { width: 300px; height: 300px; background: #4c1d95; top: 40%; left: 50%; animation-delay: -10s; }
-
-        @keyframes floatOrb {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(150px, 100px) scale(1.2); }
-        }
-
-        .holiday-widget {
-            position: fixed;
-            top: 100px;
-            left: 30px;
-            z-index: 90;
-            background: rgba(15, 15, 40, 0.85);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 12px 16px;
-            max-width: 260px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 24px;
+            font-weight: 900;
+            color: #fff;
+            text-decoration: none;
+            letter-spacing: 2px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            transition: transform 0.3s, border-color 0.3s;
+            gap: 10px;
         }
 
-        .holiday-widget:hover {
-            transform: translateY(-2px);
-            border-color: var(--primary);
+        .logo span {
+            color: var(--accent);
         }
 
-        .holiday-widget-icon {
-            font-size: 26px;
-            color: var(--primary-light);
-            flex-shrink: 0;
+        .nav-actions {
+            display: flex;
+            gap: 15px;
         }
 
-        .holiday-widget-title {
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 2px;
-            font-size: 13px;
+        .btn-login {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .holiday-widget-desc {
+        .btn-login:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .hero {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, #fff, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 18px;
             color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .hero-art-container {
+            width: 100%;
+            max-width: 1000px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            display: none;
+            margin-bottom: 30px;
+        }
+
+        .hero-art {
+            width: 100%;
+            max-height: 450px;
+            object-fit: cover;
+            display: block;
+            image-rendering: auto;
+            image-rendering: smooth;
+            transform: translateZ(0);
+            filter: blur(0.3px);
+        }
+
+        .projects-section {
+            max-width: 1400px;
+            margin: 20px auto 80px;
+            padding: 0 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+        }
+
+        .section-header h2 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+        }
+
+        .project-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .project-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--border-hover);
+            background-color: var(--bg-card-hover);
+            box-shadow: 0 12px 30px rgba(124, 58, 237, 0.15);
+        }
+
+        .card-image-wrap {
+            width: 100%;
+            height: 220px;
+            background-color: #181820;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+            image-rendering: auto;
+            image-rendering: smooth;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            filter: blur(0.3px);
+        }
+
+        .project-card:hover .card-image {
+            transform: scale(1.05) translateZ(0);
+        }
+
+        .card-image-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #333340;
+        }
+
+        .card-content {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #fff;
+            transition: color 0.2s;
+        }
+
+        .project-card:hover .card-title {
+            color: #c084fc;
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 20px;
+            flex-grow: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: auto;
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #a1a1aa;
             font-size: 11px;
-            line-height: 1.3;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
-        header { 
-            background: rgba(10, 10, 10, 0.8); 
-            backdrop-filter: blur(10px); 
-            padding: 20px 50px; 
-            border-bottom: 2px solid var(--primary); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
+
+        .loading-state, .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            border: 1px dashed var(--border);
+            border-radius: 16px;
         }
-        .logo { font-size: 26px; font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: 2px; }
-        .logo span { color: var(--primary); }
-        nav a { color: var(--text); text-decoration: none; margin-left: 30px; font-weight: 600; font-size: 14px; text-transform: uppercase; transition: color 0.3s; }
-        nav a:hover { color: var(--primary-light); }
-        
-        .hero { padding: 100px 50px; text-align: center; border-bottom: 1px solid var(--border); background: radial-gradient(circle at center, rgba(26, 11, 46, 0.5) 0%, transparent 100%); }
-        .hero h1 { font-size: 52px; margin-bottom: 20px; font-weight: 800; text-transform: uppercase; }
-        .hero h1 span { background: linear-gradient(90deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero p { font-size: 20px; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
-        
-        .section { padding: 80px 50px; max-width: 1600px; margin: 0 auto; scroll-margin-top: 90px; }
-        .section-title { font-size: 36px; margin-bottom: 60px; text-align: center; color: var(--text); text-transform: uppercase; letter-spacing: 3px; border-bottom: 2px solid var(--primary); display: inline-block; padding-bottom: 10px; position: relative; left: 50%; transform: translateX(-50%); }
 
-        .skills-layout { display: flex; gap: 40px; align-items: stretch; justify-content: space-between; flex-wrap: wrap; }
-        .skills-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; min-width: 60%; }
-        .skill-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 30px 20px; transition: all 0.4s ease; position: relative; overflow: hidden; backdrop-filter: blur(10px); }
-        .skill-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--primary-light)); transform: scaleX(0); transition: transform 0.4s ease; transform-origin: left; }
-        .skill-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 15px 30px rgba(138, 43, 226, 0.15); }
-        .skill-card:hover::before { transform: scaleX(1); }
-        .skill-icon { font-size: 36px; color: var(--primary-light); margin-bottom: 15px; }
-        .skill-card h3 { font-size: 20px; margin-bottom: 10px; font-weight: 700; }
-        .skill-card p { color: var(--text-muted); font-size: 14px; }
-        
-        .skills-illustration { flex: 0 0 350px; background: rgba(10, 10, 10, 0.6); border: 2px dashed var(--primary); border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-light); text-align: center; padding: 20px; min-height: 400px; position: relative; overflow: hidden; backdrop-filter: blur(5px); }
-        .skills-illustration img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; border-radius: 18px; }
-        .skills-illustration i { font-size: 60px; margin-bottom: 20px; opacity: 0.5; }
-
-        .projects-grid { 
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            gap: 15px; 
-            padding: 10px 0; 
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 15px;
         }
-        .project-card { 
-            flex: 0 1 calc(20% - 15px); 
-            min-width: 210px; 
-            max-width: 280px; 
-            background: var(--card-bg); 
-            border: 1px solid var(--border); 
-            border-radius: 14px; 
-            overflow: hidden; 
-            transition: all 0.3s ease; 
-            backdrop-filter: blur(10px); 
-            text-decoration: none; 
-            color: inherit; 
-            display: flex; 
-            flex-direction: column; 
-            cursor: pointer; 
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
-        .project-card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(138, 43, 226, 0.2); }
 
-        .card-image { position: relative; height: 130px; overflow: hidden; }
-        .card-image-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(176, 38, 255, 0.15)); display: flex; align-items: center; justify-content: center; transition: transform 0.4s ease; font-size: 32px; color: var(--primary); }
-        .card-image-placeholder img { width: 100%; height: 100%; object-fit: cover; }
-        .project-card:hover .card-image-placeholder { transform: scale(1.05); }
-        
-        .card-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(5,5,5,0.95)); padding: 1rem 0.5rem 0.5rem; opacity: 0; transition: opacity 0.3s ease; display: flex; justify-content: center; gap: 6px; }
-        .project-card:hover .card-overlay { opacity: 1; }
-
-        .card-btn { background: var(--primary); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; text-decoration: none; font-weight: 600; transition: background 0.2s; border: none; cursor: pointer; }
-        .card-btn:hover { background: var(--primary-light); }
-        .card-btn-details { background: rgba(255, 255, 255, 0.15); }
-        .card-btn-details:hover { background: rgba(255, 255, 255, 0.3); }
-
-        .card-info { padding: 14px; flex-grow: 1; display: flex; flex-direction: column; }
-        .card-info h3 { font-size: 16px; margin-bottom: 6px; }
-        .card-description { color: var(--text-muted); font-size: 12px; margin-bottom: 10px; line-height: 1.4; flex-grow: 1; }
-        
-        .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-        .tag { padding: 2px 8px; background: rgba(138, 43, 226, 0.1); border-radius: 50px; font-size: 10px; color: var(--primary-light); border: 1px solid rgba(138, 43, 226, 0.3); font-weight: 600; }
-
-        #detailsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
-        .modal-box { background: #121214; border: 1px solid var(--primary); border-radius: 20px; padding: 35px; width: 100%; max-width: 600px; position: relative; box-shadow: 0 20px 40px rgba(138, 43, 226, 0.4); text-align: center; }
-        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 28px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
-        .modal-close:hover { color: #fff; }
-        .modal-img { width: 100%; max-height: 240px; object-fit: cover; border-radius: 12px; margin-bottom: 20px; display: none; border: 1px solid var(--border); }
-        .modal-title { color: var(--primary-light); font-size: 24px; font-weight: 700; margin-bottom: 15px; }
-        .modal-desc { color: var(--text-muted); font-size: 15px; line-height: 1.6; text-align: left; margin-bottom: 25px; white-space: pre-wrap; }
-        .modal-actions { display: flex; justify-content: center; gap: 15px; }
-
-        .contact-grid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 20px; padding-bottom: 60px; }
-        .contact-item { display: flex; flex-direction: column; align-items: center; gap: 15px; cursor: pointer; text-decoration: none; color: inherit; transition: all 0.3s ease; background: var(--card-bg); padding: 30px; border-radius: 16px; border: 1px solid var(--border); width: 220px; backdrop-filter: blur(10px); }
-        .contact-item:hover { transform: translateY(-10px); border-color: var(--primary); box-shadow: 0 10px 30px rgba(138, 43, 226, 0.2); }
-        .contact-icon-wrapper { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--border); display: flex; justify-content: center; align-items: center; font-size: 36px; color: var(--primary-light); background: #11051f; transition: 0.4s ease; position: relative; }
-        .contact-item:hover .contact-icon-wrapper { border-color: var(--primary-light); box-shadow: 0 0 20px rgba(176, 38, 255, 0.4); transform: scale(1.1); color: var(--text); background: var(--primary); }
-        .contact-label { font-weight: 700; font-size: 18px; color: var(--text); transition: 0.3s; }
-        .contact-item:hover .contact-label { color: var(--primary-light); }
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 30px 40px;
+            text-align: center;
+            font-size: 13px;
+            color: #52525b;
+        }
 
         @media (max-width: 1200px) {
-            .project-card { flex: 0 1 calc(33.333% - 15px); max-width: 320px; }
+            .projects-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
-        @media (max-width: 900px) {
-            .skills-layout { flex-direction: column; }
-            .skills-illustration { min-height: 300px; width: 100%; }
-            .holiday-widget { display: none; }
-            .project-card { flex: 0 1 calc(50% - 15px); max-width: 380px; }
-        }
-
-        @media (max-width: 600px) {
-            .project-card { flex: 0 1 100%; max-width: 100%; }
+        @media (max-width: 640px) {
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero h1 {
+                font-size: 32px;
+            }
+            .navbar, .hero, .projects-section {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="animated-bg">
-        <div class="orb"></div>
-        <div class="orb"></div>
-        <div class="orb"></div>
-    </div>
 
-    <div class="holiday-widget" id="holidayWidget">
-        <div class="holiday-widget-icon" id="widgetIcon"><i class="fas fa-calendar-alt"></i></div>
-        <div>
-            <div class="holiday-widget-title" id="widgetTitle">Загрузка...</div>
-            <div class="holiday-widget-desc" id="widgetDesc">Синхронизация</div>
+    <nav class="navbar">
+        <a href="/" class="logo">FRIZ<span>WORLD</span></a>
+        <div class="nav-actions">
+            <a href="/login" class="btn-login"><i class="fas fa-terminal"></i> Панель управления</a>
         </div>
-    </div>
+    </nav>
 
-    <header>
-        <div class="logo">FRIZ<span>WORLD</span></div>
-        <nav>
-            <a href="#skills">Навыки</a>
-            <a href="#projects">Проекты</a>
-            <a href="#contact">Контакты</a>
-        </nav>
+    <header class="hero">
+        <h1>Веб-системы & Разработка</h1>
+        <p>Комплексные панели управления для государственных структур, специализированные Discord-боты и автоматизация игровых процессов.</p>
+        
+        <div class="hero-art-container" id="heroArtContainer">
+            <img src="" alt="Frizworld Art" class="hero-art" id="heroArtImg">
+        </div>
     </header>
 
-    <div class="hero">
-        <h1>Системная <span>разработка</span></h1>
-        <p>Программист, специализирующийся на автоматизации процессов, создании масштабных веб-систем, баз данных и написании многофункциональных ботов.</p>
-    </div>
+    <main class="projects-section">
+        <div class="section-header">
+            <h2>Проекты и модули</h2>
+        </div>
 
-    <div class="section" id="skills">
-        <h2 class="section-title">Что я умею</h2>
-        <div class="skills-layout">
-            <div class="skills-grid">
-                <div class="skill-card">
-                    <i class="fab fa-python skill-icon"></i>
-                    <h3>Python & Discord.py</h3>
-                    <p>Разработка и развертывание сложных Discord-ботов, работа с массивами данных и API, хостинг.</p>
-                </div>
-                <div class="skill-card">
-                    <i class="fas fa-server skill-icon"></i>
-                    <h3>GTA5RP Web Systems</h3>
-                    <p>Проектирование веб-панелей для гос. структур (LSSD, LSPD, GOV, FIB, EMS), системы отчетности, переаттестации.</p>
-                </div>
-                <div class="skill-card">
-                    <i class="fas fa-gamepad skill-icon"></i>
-                    <h3>GameDev (RageMP)</h3>
-                    <p>Опыт программирования на Majestic RP: поддержка и оптимизация клиент-серверной архитектуры игрового мода.</p>
-                </div>
-                <div class="skill-card">
-                    <i class="fab fa-js skill-icon"></i>
-                    <h3>Web (JS, HTML, CSS)</h3>
-                    <p>Создание адаптивных и интерактивных интерфейсов, связка фронтенда с бэкендом, интеграция с Node.js.</p>
-                </div>
-                <div class="skill-card">
-                    <i class="fas fa-database skill-icon"></i>
-                    <h3>1С Разработка</h3>
-                    <p>Профильное образование и практические навыки в настройке, администрировании и программировании бизнес-логики.</p>
-                </div>
-                <div class="skill-card">
-                    <i class="fas fa-cogs skill-icon"></i>
-                    <h3>Интеграции</h3>
-                    <p>Связывание различных сервисов между собой, автоматизация сбора данных и рассылка динамических уведомлений.</p>
-                </div>
-            </div>
-            
-            <div class="skills-illustration" id="illustrationContainer">
-                <img id="mainIllustration" src="https://i.pinimg.com/originals/e8/38/5f/e8385f0ef42475e6db9fb3fccf99f345.gif" alt="Арт" style="display: block;">
-                <div id="placeholderIllustration" style="display: none;"></div>
+        <div class="projects-grid" id="projectsGrid">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Загрузка каталога проектов...</p>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="section" id="projects">
-        <h2 class="section-title">Мои Проекты</h2>
-        <div class="projects-grid" id="projectsGrid"></div>
-    </div>
-
-    <div id="detailsModal">
-        <div class="modal-box">
-            <span class="modal-close" onclick="closeModal()">&times;</span>
-            <img id="modalImg" class="modal-img" src="" alt="Фото проекта">
-            <h3 id="modalTitle" class="modal-title"></h3>
-            <p id="modalDesc" class="modal-desc"></p>
-            <div class="modal-actions" id="modalActions"></div>
-        </div>
-    </div>
-
-    <div class="section" id="contact">
-        <h2 class="section-title">Контакты</h2>
-        <div class="contact-grid">
-            <a href="https://t.me/friz_world" target="_blank" class="contact-item">
-                <div class="contact-icon-wrapper"><i class="fab fa-telegram-plane"></i></div>
-                <div class="contact-label">Telegram</div>
-            </a>
-            
-            <a href="https://discord.gg/CrfHznNWT" target="_blank" class="contact-item">
-                <div class="contact-icon-wrapper"><i class="fab fa-discord"></i></div>
-                <div class="contact-label">Discord</div>
-            </a>
-
-            <a href="mailto:friz_world@mail.ru" class="contact-item">
-                <div class="contact-icon-wrapper"><i class="fas fa-envelope"></i></div>
-                <div class="contact-label">E-Mail</div>
-            </a>
-        </div>
-    </div>
+    <footer>
+        <p>&copy; 2026 Frizworld Portfolio & GTA5RP Web Systems. All rights reserved.</p>
+    </footer>
 
     <script>
-        let globalProjects = [];
-
-        function loadHolidayWidget() {
-            const date = new Date();
-            const day = date.getDate();
-            const month = date.getMonth() + 1; 
-            
-            let hTitle = "День для кодинга";
-            let hDesc = "Чистый код и деплои.";
-            let iconClass = "fas fa-laptop-code";
-
-            if (month === 8 && day === 2) {
-                hTitle = "С Днем Рождения! (20 лет)";
-                hDesc = "Бесконечный онлайн и мощный сервер!";
-                iconClass = "fas fa-birthday-cake";
-            } else if (day === 256) { 
-                hTitle = "День Программиста";
-                hDesc = "Код пишется сам, серверы стабильны.";
-                iconClass = "fas fa-code";
-            } else {
-                const funHolidays = [
-                    { t: "День сисадмина", d: "Проверь свободное место на диске!" },
-                    { t: "День без багов", d: "Легендарный мифический праздник." },
-                    { t: "Пятничный деплой", d: "Самый экстремальный кипиш." },
-                    { t: "День чистого кода", d: "Идеальная архитектура и логи." },
-                    { t: "День Кофеина", d: "Главный спонсор ночных фич." },
-                    { t: "День «У меня всё ок»", d: "Оно работает на нашем сервере!" }
-                ];
-                const selected = funHolidays[day % funHolidays.length];
-                hTitle = selected.t;
-                hDesc = selected.d;
-            }
-
-            document.getElementById('widgetTitle').textContent = hTitle;
-            document.getElementById('widgetDesc').textContent = hDesc;
-            document.getElementById('widgetIcon').innerHTML = `<i class="${iconClass}"></i>`;
-        }
-        loadHolidayWidget();
-
-        fetch('/api/settings')
-            .then(res => res.json())
-            .then(data => {
-                if (data.illustrationUrl) {
-                    let img = document.getElementById('mainIllustration');
-                    let placeholder = document.getElementById('placeholderIllustration');
-                    img.src = data.illustrationUrl;
-                    img.style.display = 'block';
-                    placeholder.style.display = 'none';
+        async function initSite() {
+            try {
+                const settingsRes = await fetch('/api/settings');
+                if (settingsRes.ok) {
+                    const settings = await settingsRes.json();
+                    if (settings.illustrationUrl) {
+                        const artImg = document.getElementById('heroArtImg');
+                        artImg.src = settings.illustrationUrl;
+                        document.getElementById('heroArtContainer').style.display = 'block';
+                    }
                 }
-            })
-            .catch(err => console.error(err));
 
-        fetch('/api/projects')
-            .then(res => res.json())
-            .then(projects => {
-                globalProjects = projects || [];
+                const projectsRes = await fetch('/api/projects');
                 const grid = document.getElementById('projectsGrid');
-                grid.innerHTML = '';
                 
-                if (globalProjects.length > 0) {
-                    globalProjects.forEach((p, index) => {
-                        const imgSource = p.imageUrl || p.image;
-                        const mediaContent = imgSource
-                            ? `<img src="${imgSource}" alt="${p.title}">` 
-                            : `<i class="fas fa-folder-open"></i>`;
-                        
-                        const tagsHtml = (p.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
-                        const delay = (index % 3) * -2; 
-                        const pathUrl = p.path || p.link || '';
-                        const shortDesc = p.shortDesc || p.desc || '';
-
-                        grid.innerHTML += `
-                            <div class="project-card" style="animation-delay: ${delay}s" onclick="openModal(${index})">
-                                <div class="card-image">
-                                    <div class="card-image-placeholder">${mediaContent}</div>
-                                    <div class="card-overlay">
-                                        ${pathUrl ? `<a href="${pathUrl}" target="_blank" class="card-btn" onclick="event.stopPropagation()">Тестировать</a>` : ''}
-                                        <button class="card-btn card-btn-details" onclick="event.stopPropagation(); openModal(${index})">Подробнее</button>
-                                    </div>
-                                </div>
-                                <div class="card-info">
-                                    <h3>${p.title || 'Проект'}</h3>
-                                    <p class="card-description">${shortDesc}</p>
-                                    <div class="card-tags">${tagsHtml}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">Проекты пока не добавлены.</p>';
+                if (!projectsRes.ok) {
+                    throw new Error('Ошибка сети');
                 }
-            })
-            .catch(err => console.error(err));
 
-        function openModal(index) {
-            const p = globalProjects[index];
-            if (!p) return;
+                const projects = await projectsRes.json();
 
-            document.getElementById('modalTitle').textContent = p.title || 'Проект';
-            document.getElementById('modalDesc').innerText = p.fullDesc || p.desc || 'Полное описание отсутствует.';
-            
-            let img = document.getElementById('modalImg');
-            const imgUrl = p.imageUrl || p.image;
-            if (imgUrl) {
-                img.src = imgUrl;
-                img.style.display = 'block';
-            } else {
-                img.style.display = 'none';
+                if (!projects || projects.length === 0) {
+                    grid.innerHTML = '<div class="empty-state"><i class="fas fa-folder-open" style="font-size: 32px; margin-bottom: 10px; display: block;"></i>Список проектов пока пуст. Добавьте их через панель управления.</div>';
+                    return;
+                }
+
+                grid.innerHTML = projects.map(p => {
+                    const title = p.title || 'Безымянный проект';
+                    const desc = p.shortDesc || p.desc || p.fullDesc || 'Описание отсутствует.';
+                    const url = p.link || p.path || '#';
+                    const image = p.imageUrl || p.image || '';
+                    
+                    let tagsArray = [];
+                    if (Array.isArray(p.tags)) {
+                        tagsArray = p.tags;
+                    } else if (typeof p.tags === 'string' && p.tags.trim() !== '') {
+                        tagsArray = p.tags.split(',').map(t => t.trim());
+                    }
+
+                    const tagsHtml = tagsArray.map(t => `<span class="tag">${t}</span>`).join('');
+
+                    const imageHtml = image 
+                        ? `<img src="${image}" alt="${title}" class="card-image" loading="lazy">` 
+                        : `<div class="card-image-placeholder"><i class="fas fa-code"></i></div>`;
+
+                    return `
+                        <a href="${url}" class="project-card" ${url.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''}>
+                            <div class="card-image-wrap">
+                                ${imageHtml}
+                            </div>
+                            <div class="card-content">
+                                <h3 class="card-title">${title}</h3>
+                                <p class="card-desc">${desc}</p>
+                                <div class="card-tags">${tagsHtml}</div>
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                document.getElementById('projectsGrid').innerHTML = 
+                    `<div class="empty-state" style="color: #ef4444;"><i class="fas fa-exclamation-circle" style="font-size: 32px; margin-bottom: 10px; display: block;"></i>Не удалось загрузить проекты. Проверьте работу сервера.</div>`;
             }
-
-            let actions = document.getElementById('modalActions');
-            actions.innerHTML = '';
-            const pathUrl = p.path || p.link;
-            if (pathUrl) {
-                let testBtn = document.createElement('a');
-                testBtn.className = 'card-btn';
-                testBtn.href = pathUrl;
-                testBtn.target = '_blank';
-                testBtn.textContent = 'Открыть и протестировать';
-                actions.appendChild(testBtn);
-            }
-
-            document.getElementById('detailsModal').style.display = 'flex';
         }
 
-        function closeModal() {
-            document.getElementById('detailsModal').style.display = 'none';
-        }
-
-        window.onclick = function(event) {
-            let modal = document.getElementById('detailsModal');
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
-        }
+        window.addEventListener('DOMContentLoaded', initSite);
     </script>
 </body>
 </html>
