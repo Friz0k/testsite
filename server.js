@@ -168,22 +168,45 @@ const logger = {
     }
 };
 
+// --- ПОЛНЫЙ БЭКАП ВСЕГО ПРОЕКТА (БАЗЫ, ТОКЕНЫ, КАРТИНКИ, ВЕРСТКА И КОД) ---
 const createBackupArchive = () => {
     try {
         const dateStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
         const backupFolder = path.join(DIR_BACKUPS, `backup-${dateStr}`);
         fs.mkdirSync(backupFolder, { recursive: true });
-        if (fs.existsSync(DIR_DATA)) fs.cpSync(DIR_DATA, path.join(backupFolder, 'data'), { recursive: true });
-        if (fs.existsSync(DIR_UPLOADS)) fs.cpSync(DIR_UPLOADS, path.join(backupFolder, 'uploads'), { recursive: true });
+        
+        const itemsToBackup = [
+            'data',
+            'public',
+            'views',
+            'routes',
+            'middleware',
+            'server.js',
+            'package.json',
+            '.env'
+        ];
+
+        itemsToBackup.forEach(item => {
+            const srcPath = path.join(__dirname, item);
+            const destPath = path.join(backupFolder, item);
+            if (fs.existsSync(srcPath)) {
+                const stat = fs.statSync(srcPath);
+                if (stat.isDirectory()) {
+                    fs.cpSync(srcPath, destPath, { recursive: true });
+                } else {
+                    fs.copyFileSync(srcPath, destPath);
+                }
+            }
+        });
         
         const allBackups = fs.readdirSync(DIR_BACKUPS).filter(f => f.startsWith('backup-')).map(f => ({ name: f, time: fs.statSync(path.join(DIR_BACKUPS, f)).mtimeMs })).sort((a, b) => b.time - a.time);
         if (allBackups.length > 10) {
             allBackups.slice(10).forEach(old => { fs.rmSync(path.join(DIR_BACKUPS, old.name), { recursive: true, force: true }); });
         }
-        logger.info(`Резервная копия создана: backup-${dateStr}`);
+        logger.info(`Полный бэкап проекта успешно создан: backup-${dateStr}`);
         return `backup-${dateStr}`;
     } catch (err) {
-        logger.error('Ошибка создания бэкапа', err);
+        logger.error('Ошибка создания полного бэкапа', err);
         return null;
     }
 };
@@ -392,6 +415,7 @@ app.post('/api/backups/create', (req, res) => {
     }
 });
 
+// --- ВОССТАНОВЛЕНИЕ ВСЕГО ПРОЕКТА ИЗ БЭКАПА ---
 app.post('/api/backups/restore', (req, res) => {
     if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     const { name } = req.body;
@@ -403,21 +427,26 @@ app.post('/api/backups/restore', (req, res) => {
     }
 
     try {
-        const dataSrc = path.join(targetBackup, 'data');
-        const uploadsSrc = path.join(targetBackup, 'uploads');
+        const itemsToRestore = ['data', 'public', 'views', 'routes', 'middleware', 'server.js', 'package.json', '.env'];
 
-        if (fs.existsSync(dataSrc)) {
-            fs.cpSync(dataSrc, DIR_DATA, { recursive: true });
-        }
-        if (fs.existsSync(uploadsSrc)) {
-            fs.cpSync(uploadsSrc, DIR_UPLOADS, { recursive: true });
-        }
+        itemsToRestore.forEach(item => {
+            const srcPath = path.join(targetBackup, item);
+            const destPath = path.join(__dirname, item);
+            if (fs.existsSync(srcPath)) {
+                const stat = fs.statSync(srcPath);
+                if (stat.isDirectory()) {
+                    fs.cpSync(srcPath, destPath, { recursive: true, force: true });
+                } else {
+                    fs.copyFileSync(srcPath, destPath);
+                }
+            }
+        });
 
         try { bannedIps = JSON.parse(fs.readFileSync(FILE_BANS, 'utf8')); } catch (e) {}
         try { userSessions = JSON.parse(fs.readFileSync(FILE_SESSIONS, 'utf8')); } catch (e) {}
         try { ipNotes = JSON.parse(fs.readFileSync(FILE_NOTES, 'utf8')); } catch (e) {}
 
-        logger.info(`Система успешно восстановлена из бэкапа: ${name}`);
+        logger.info(`Весь проект (код, базы, токены и картинки) успешно восстановлен из: ${name}`);
         res.json({ success: true, message: 'Восстановление завершено успешно' });
     } catch (err) {
         logger.error('Ошибка восстановления из бэкапа', err);
