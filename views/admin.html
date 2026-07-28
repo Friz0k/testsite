@@ -59,7 +59,7 @@
         button:hover { background-color: var(--accent-hover); }
         .btn-success { background-color: var(--success-color); }
         .btn-danger { background-color: var(--danger-color); }
-        .btn-sm { padding: 6px 12px; font-size: 12px; margin-top: 0; }
+        .btn-sm { padding: 8px 15px; font-size: 12px; margin-top: 0; }
 
         .btn-group { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
         .preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px; object-fit: cover; }
@@ -71,48 +71,23 @@
         .subsystem-content { display: none; }
         .subsystem-content.active { display: block; }
 
-        .q-card { background: #27272a; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #3f3f46; position: relative; }
-        .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; color: var(--text-main); font-size: 16px; border-bottom: 1px dashed #3f3f46; padding-bottom: 10px; }
-        .q-settings { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; background: #18181b; padding: 12px; border-radius: 6px; flex-wrap: wrap; }
-        .q-settings select, .q-settings input { margin-bottom: 0; padding: 8px; }
-        .q-opt { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: #18181b; padding: 10px; border-radius: 6px; }
-        .q-opt input[type="text"] { margin-bottom: 0; flex-grow: 1; }
-        .q-opt input[type="radio"], .q-opt input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent-color); }
-
-        .rank-badge-group { display: flex; gap: 10px; align-items: center; }
-        .rank-badge { padding: 6px 12px; border-radius: 6px; background: #09090b; border: 1px solid #3f3f46; color: var(--text-muted); cursor: pointer; font-size: 13px; font-weight: bold; }
-        .rank-badge.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
-
-        .token-card { background: #18181b; border: 1px solid var(--border-color); padding: 20px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .token-info h4 { margin: 0 0 5px 0; color: var(--text-main); font-size: 16px; }
-        .token-string { font-family: monospace; background: #09090b; padding: 8px 12px; border-radius: 6px; border: 1px solid #3f3f46; color: #a855f7; font-size: 13px; display: inline-block; margin-top: 5px; user-select: all; word-break: break-all; }
-        .badge-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-        .badge { font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; background: #27272a; color: #a1a1aa; border: 1px solid #3f3f46; }
-        .badge.system { background: rgba(124, 58, 237, 0.2); color: #c084fc; border-color: var(--accent-color); }
-        .badge.perm { background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: var(--success-color); }
-        .checkbox-group { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; background: #09090b; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .checkbox-group label { display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; text-transform: none; font-size: 13px; color: var(--text-main); }
-        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; margin-bottom: 0; accent-color: var(--accent-color); }
-
-        .logs-table-container { max-height: 600px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; background: #050507; }
-        .logs-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-        .logs-table th { background: #121214; padding: 12px; position: sticky; top: 0; z-index: 10; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; }
-        .logs-table td { padding: 10px 12px; border-bottom: 1px solid #18181b; vertical-align: top; color: #d4d4d8; }
-        .logs-table tr:hover { background: rgba(124, 58, 237, 0.08); }
+        .ip-card { background: #121214; border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; margin-bottom: 15px; }
+        .ip-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 12px; margin-bottom: 12px; }
+        .ip-title { font-family: monospace; font-size: 18px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
+        .ip-device { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; word-break: break-all; }
         
-        .status-badge { padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-block; }
-        .status-2xx { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
-        .status-3xx { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
-        .status-4xx { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid #eab308; }
-        .status-5xx { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
-        
-        .method-badge { font-weight: bold; font-family: monospace; color: #a855f7; }
-        .ip-code { font-family: monospace; background: #18181b; padding: 2px 6px; border-radius: 4px; color: #38bdf8; }
-        .device-text { font-size: 11px; color: #71717a; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .data-text { font-family: monospace; font-size: 11px; color: #a1a1aa; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        .banned-card { background: #18181b; border: 1px solid var(--danger-color); padding: 15px 20px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .banned-card span { font-family: monospace; font-size: 15px; font-weight: bold; color: #f87171; }
+        .timeline { max-height: 300px; overflow-y: auto; background: #050507; padding: 12px; border-radius: 8px; border: 1px solid #27272a; margin-top: 10px; }
+        .timeline-item { border-bottom: 1px solid #18181b; padding: 8px 0; font-size: 13px; }
+        .timeline-item:last-child { border-bottom: none; }
+        .timeline-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .timeline-time { color: #71717a; font-size: 11px; }
+        .timeline-url { font-family: monospace; color: #c084fc; font-weight: bold; }
+        .timeline-data { background: #18181b; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 11px; color: #22c55e; margin-top: 5px; white-space: pre-wrap; word-break: break-all; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-body { background: #18181b; border: 1px solid var(--border-color); border-radius: 12px; width: 90%; max-width: 900px; max-height: 85vh; overflow-y: auto; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+
+        .backup-card { background: #121214; border: 1px solid var(--border-color); padding: 15px 20px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
     </style>
 </head>
 <body>
@@ -124,7 +99,8 @@
         <ul class="nav-links" id="siteNavLinks">
             <li class="active" onclick="switchTab('projects', this)">📦 Проекты</li>
             <li onclick="switchTab('illustration', this)">🎨 Арт на главной</li>
-            <li onclick="switchTab('logs', this)">📊 Мониторинг и Логи</li>
+            <li onclick="switchTab('sessions', this)">🌐 Карточки IP и Устройств</li>
+            <li onclick="switchTab('backups', this)">💾 Бэкапы и Восстановление</li>
             <li onclick="switchTab('bans', this)">🚫 Заблокированные IP</li>
             <li onclick="switchTab('code', this)">💻 Редактор кода</li>
         </ul>
@@ -151,9 +127,9 @@
                 <div class="form-grid">
                     <div>
                         <label>Название проекта</label>
-                        <input type="text" id="projTitle" placeholder="Например: SA LSSD">
+                        <input type="text" id="projTitle">
                         <label>Ссылка / Путь</label>
-                        <input type="text" id="projPath" placeholder="/systems/lssd/lssd.SA.html">
+                        <input type="text" id="projPath">
                     </div>
                     <div>
                         <label>Изображение</label>
@@ -161,7 +137,7 @@
                         <input type="file" id="projImageFile" accept="image/*">
                     </div>
                     <div class="full-width">
-                        <label>Краткое описание (на главную)</label>
+                        <label>Краткое описание</label>
                         <textarea id="projShortDesc" rows="2"></textarea>
                     </div>
                     <div class="full-width">
@@ -194,72 +170,57 @@
             </div>
         </div>
 
-        <div id="logs" class="tab-content">
+        <div id="sessions" class="tab-content">
             <div class="admin-section">
-                <h3>Визуальный мониторинг трафика</h3>
+                <h3>Мониторинг IP, устройств и отправленных данных</h3>
+                <div style="margin-bottom: 20px; display: flex; gap: 15px;">
+                    <input type="text" id="ipSearchInput" placeholder="Поиск по IP..." oninput="renderUserSessions()" style="margin-bottom:0;">
+                    <button type="button" onclick="loadSessionsUI()">🔄 Обновить</button>
+                </div>
+                <div id="sessionsListContainer">Загрузка...</div>
+            </div>
+        </div>
+
+        <div id="backups" class="tab-content">
+            <div class="admin-section">
+                <h3>Резервные копии и восстановление</h3>
                 
-                <div class="form-grid full-width" style="margin-bottom: 15px; align-items: end;">
-                    <div>
-                        <label>Поток логов</label>
-                        <select id="logTypeSelect" onchange="fetchLogs()" style="margin-bottom: 0;">
-                            <option value="visits">👀 Визиты и запросы (access.log)</option>
-                            <option value="errors">❌ Системные ошибки (error.log)</option>
-                            <option value="app">📋 Общий журнал (app.log)</option>
-                        </select>
+                <div style="background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
+                    <h4 style="margin-top: 0;">Управление копиями</h4>
+                    <div class="btn-group">
+                        <button type="button" class="btn-success" onclick="createNewBackup()">➕ Создать бэкап сейчас</button>
                     </div>
-                    <div>
-                        <label>Быстрый поиск по IP или URL</label>
-                        <input type="text" id="logSearchInput" placeholder="Фильтр по IP или слову..." oninput="filterLogsTable()" style="margin-bottom: 0;">
+                    <div style="margin-top: 20px;">
+                        <label>Загрузить файл бэкапа с ПК:</label>
+                        <input type="file" id="uploadBackupFileInput" style="margin-bottom: 10px;">
+                        <button type="button" onclick="uploadBackupFile()">📥 Загрузить бэкап на сервер</button>
                     </div>
                 </div>
 
-                <div class="btn-group" style="margin-bottom: 15px;">
-                    <button type="button" onclick="fetchLogs()">🔄 Обновить таблицу</button>
-                    <button type="button" id="autoRefreshBtn" onclick="toggleAutoRefresh()" class="btn-success">Автообновление: ВЫКЛ</button>
-                </div>
-
-                <div class="logs-table-container">
-                    <table class="logs-table">
-                        <thead>
-                            <tr>
-                                <th>Время (МСК)</th>
-                                <th>IP-адрес</th>
-                                <th>Запрос (URL)</th>
-                                <th>Статус</th>
-                                <th>Пакет данных</th>
-                                <th>Устройство (User-Agent)</th>
-                                <th>Действие</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logsTableBody">
-                            <tr><td colspan="7" style="text-align:center; padding: 20px;">Загрузка данных...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                <h4>Доступные точки восстановления</h4>
+                <div id="backupsListContainer">Загрузка...</div>
             </div>
         </div>
 
         <div id="bans" class="tab-content">
             <div class="admin-section">
-                <h3>Управление блокировками и защитой</h3>
-                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">Заблокированные IP мгновенно отсекаются сервером без нагрузки на систему и базу данных.</p>
-                
+                <h3>Управление блокировками</h3>
                 <div style="background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
                     <h4 style="margin-top: 0;">Ручная блокировка IP</h4>
                     <div class="form-grid">
                         <div>
-                            <label>IP-адрес нарушителя</label>
-                            <input type="text" id="banIpInput" placeholder="Например: 91.78.220.167">
+                            <label>IP-адрес</label>
+                            <input type="text" id="banIpInput">
                         </div>
                         <div>
-                            <label>Причина блокировки</label>
-                            <input type="text" id="banReasonInput" placeholder="Скам / Флуд / Подозреваемый">
+                            <label>Причина</label>
+                            <input type="text" id="banReasonInput">
                         </div>
                     </div>
-                    <button type="button" class="btn-danger" onclick="manualBanIp()">🚫 Заблокировать IP навсегда</button>
+                    <button type="button" class="btn-danger" onclick="manualBanIp()">🚫 Заблокировать IP</button>
                 </div>
 
-                <h4>Активный черный список (Banned List)</h4>
+                <h4>Черный список (Banned List)</h4>
                 <div id="bannedListContainer">Загрузка...</div>
             </div>
         </div>
@@ -267,7 +228,7 @@
         <div id="code" class="tab-content">
             <div class="admin-section">
                 <h3>Встроенный редактор кода</h3>
-                <label>Файл для редактирования (папка public)</label>
+                <label>Файл для редактирования</label>
                 <select id="fileSelect" onchange="loadFileCode()"></select>
                 <textarea id="codeEditor" spellcheck="false"></textarea>
                 <div class="btn-group">
@@ -279,14 +240,14 @@
         <div id="faction_manager" class="tab-content">
             <div class="admin-section">
                 <h3>Модуль настройки фракций</h3>
-                <label>Выберите фракцию/проект для настройки:</label>
+                <label>Выберите фракцию:</label>
                 <select id="factionSelector" onchange="loadFactionUI()" style="font-size: 16px; font-weight: bold; padding: 15px;">
-                    <option value="fib">🦅 FIB & CID (Федеральное Бюро)</option>
-                    <option value="lssd">🤠 LSSD (Департамент Шерифа)</option>
-                    <option value="lspd">🚓 LSPD (Полицейский Департамент)</option>
-                    <option value="gov">⚖️ GOV (Правительство / Адвокаты)</option>
-                    <option value="ems">🚑 EMS (Медицинская служба)</option>
-                    <option value="deadly">💀 DEADLY (Семья)</option>
+                    <option value="fib">🦅 FIB & CID</option>
+                    <option value="lssd">🤠 LSSD</option>
+                    <option value="lspd">🚓 LSPD</option>
+                    <option value="gov">⚖️ GOV</option>
+                    <option value="ems">🚑 EMS</option>
+                    <option value="deadly">💀 DEADLY</option>
                 </select>
 
                 <div id="subsystem-nav" class="subsystem-tabs" style="display: none;"></div>
@@ -297,33 +258,33 @@
                 </div>
 
                 <div id="subsystem-testing" class="subsystem-content">
-                    <h4>Настройка параметров тестирования</h4>
+                    <h4>Параметры тестирования</h4>
                     
                     <div id="fib-specific-settings" style="display: none; background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
-                        <h5 style="color: var(--accent-color); margin-bottom: 15px; font-size: 16px;">Настройки переаттестации FIB по рангам</h5>
+                        <h5 style="color: var(--accent-color); margin-bottom: 15px; font-size: 16px;">Переаттестация FIB</h5>
                         <div class="form-grid">
                             <div>
-                                <label>Время на тест для 5 ранга (минут):</label>
+                                <label>Время для 5 ранга (мин):</label>
                                 <input type="number" id="fib-timer-rank5" value="15" min="1" max="180">
                             </div>
                             <div>
-                                <label>Время на тест для 7 ранга (минут):</label>
+                                <label>Время для 7 ранга (мин):</label>
                                 <input type="number" id="fib-timer-rank7" value="20" min="1" max="180">
                             </div>
                             <div>
-                                <label>Кол-во правильных ответов для сдачи (5 ранг):</label>
+                                <label>Проходной балл (5 ранг):</label>
                                 <input type="number" id="fib-score-rank5" value="6" min="1">
                             </div>
                             <div>
-                                <label>Кол-во правильных ответов для сдачи (7 ранг):</label>
+                                <label>Проходной балл (7 ранг):</label>
                                 <input type="number" id="fib-score-rank7" value="14" min="1">
                             </div>
                             <div>
-                                <label>Кол-во вопросов в тесте (5 ранг):</label>
+                                <label>Кол-во вопросов (5 ранг):</label>
                                 <input type="number" id="fib-count-rank5" value="10" min="1">
                             </div>
                             <div>
-                                <label>Кол-во вопросов в тесте (7 ранг):</label>
+                                <label>Кол-во вопросов (7 ранг):</label>
                                 <input type="number" id="fib-count-rank7" value="20" min="1">
                             </div>
                         </div>
@@ -332,11 +293,11 @@
                     <div id="standard-test-settings" style="display: none; background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
                         <div class="form-grid">
                             <div>
-                                <label>Время на тест (минут):</label>
+                                <label>Время на тест (мин):</label>
                                 <input type="number" id="test-duration-minutes" value="15" min="1" max="180">
                             </div>
                             <div>
-                                <label>Проходной балл (минимум для сдачи):</label>
+                                <label>Проходной балл:</label>
                                 <input type="number" id="test-passing-score" value="0" min="0">
                             </div>
                         </div>
@@ -355,18 +316,16 @@
 
         <div id="tokens_manager" class="tab-content">
             <div class="admin-section">
-                <h3>Управление токенами доступа</h3>
-                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">Создавайте изолированные ключи доступа для заместителей или глав подразделений.</p>
-                
+                <h3>Токены доступа</h3>
                 <div style="background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
-                    <h4 style="margin-top: 0;">Выдать новый токен</h4>
+                    <h4 style="margin-top: 0;">Новый токен</h4>
                     <div class="form-grid">
                         <div class="full-width">
-                            <label>Название токена (например: Глава FIB / Наместник LSSD)</label>
-                            <input type="text" id="newTokenName" placeholder="Например: Отдел CID FIB">
+                            <label>Название токена</label>
+                            <input type="text" id="newTokenName">
                         </div>
                         <div class="full-width">
-                            <label>Доступные фракции / системы:</label>
+                            <label>Доступные системы:</label>
                             <div class="checkbox-group">
                                 <label><input type="checkbox" class="tok-sys" value="fib"> FIB</label>
                                 <label><input type="checkbox" class="tok-sys" value="lssd"> LSSD</label>
@@ -378,10 +337,10 @@
                             </div>
                         </div>
                         <div class="full-width">
-                            <label>Разрешенные действия (права):</label>
+                            <label>Права:</label>
                             <div class="checkbox-group">
-                                <label><input type="checkbox" class="tok-perm" value="settings" checked> Изменение вебхуков, ролей и вопросов</label>
-                                <label><input type="checkbox" class="tok-perm" value="files"> Редактирование файлов структуры (публичные страницы)</label>
+                                <label><input type="checkbox" class="tok-perm" value="settings" checked> Настройки</label>
+                                <label><input type="checkbox" class="tok-perm" value="files"> Файлы</label>
                             </div>
                         </div>
                     </div>
@@ -395,13 +354,32 @@
 
     </div>
 
+    <div id="ipModal" class="modal-overlay">
+        <div class="modal-body">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h3 id="modalIpTitle" style="margin: 0; border: none; padding: 0;"></h3>
+                <button class="btn-danger btn-sm" onclick="closeIpModal()">❌ Закрыть</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label>Запись/Заметка об этом IP и Устройстве:</label>
+                <textarea id="modalIpNote" rows="3" placeholder="Введите информацию об IP..."></textarea>
+                <button class="btn-success btn-sm" onclick="saveIpNoteFromModal()">💾 Сохранить заметку</button>
+            </div>
+
+            <h4>Хронология действий и переданных данных</h4>
+            <div id="modalTimeline" class="timeline" style="max-height: 450px;"></div>
+        </div>
+    </div>
+
     <script>
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             if (element) element.classList.add('active');
-            if (tabId === 'logs') fetchLogs();
+            if (tabId === 'sessions') loadSessionsUI();
+            if (tabId === 'backups') loadBackupsUI();
             if (tabId === 'bans') loadBansUI();
             if (tabId === 'faction_manager' && !currentFaction) loadFactionUI();
             if (tabId === 'tokens_manager') loadTokensUI();
@@ -410,14 +388,8 @@
         async function apiCall(url, options = {}) {
             try {
                 const res = await fetch(url, options);
-                if (res.status === 403) {
-                    alert('Сессия истекла или недостаточно прав.');
-                    return null;
-                }
-                if (res.status === 401) {
-                    window.location.href = '/login';
-                    return null;
-                }
+                if (res.status === 403) { alert('Сессия истекла или недостаточно прав.'); return null; }
+                if (res.status === 401) { window.location.href = '/login'; return null; }
                 if (!res.ok) throw new Error(`Ошибка ${res.status}`);
                 return await res.json();
             } catch (err) {
@@ -488,86 +460,178 @@
             reader.readAsDataURL(fileInput.files[0]);
         }
 
-        let refreshInterval = null;
-        let rawLogsData = [];
-        
-        async function fetchLogs() { 
-            const type = document.getElementById('logTypeSelect').value; 
-            const data = await apiCall(`/api/logs?type=${type}`); 
-            if (data && data.logs) {
-                rawLogsData = data.logs.split('\n').filter(Boolean);
-                renderLogsTable();
-            } else {
-                document.getElementById('logsTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">Нет данных в журнале...</td></tr>';
+        let rawSessions = {};
+        let rawNotes = {};
+        let activeModalIp = null;
+
+        async function loadSessionsUI() {
+            const res = await apiCall('/api/user-sessions');
+            if (res && res.success) {
+                rawSessions = res.sessions || {};
+                rawNotes = res.notes || {};
+                renderUserSessions();
             }
         }
 
-        function renderLogsTable() {
-            const tbody = document.getElementById('logsTableBody');
-            const filterText = (document.getElementById('logSearchInput')?.value || '').toLowerCase();
-            tbody.innerHTML = '';
+        function renderUserSessions() {
+            const container = document.getElementById('sessionsListContainer');
+            const search = (document.getElementById('ipSearchInput')?.value || '').toLowerCase();
+            container.innerHTML = '';
 
-            const filtered = rawLogsData.filter(line => line.toLowerCase().includes(filterText));
+            const keys = Object.keys(rawSessions).filter(ip => ip.toLowerCase().includes(search));
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">Записи не найдены</td></tr>';
+            if (keys.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted);">Сессии пользователей не найдены.</p>';
                 return;
             }
 
-            filtered.slice(0, 150).forEach(line => {
-                const timeMatch = line.match(/^\[(.*?)\]/);
-                const ipMatch = line.match(/IP:\s*([^\s|]+)/);
-                const reqMatch = line.match(/\|\s*"(.*?)"/);
-                const statusMatch = line.match(/Статус:\s*(\d+)/);
-                const dataMatch = line.match(/Данные:\s*(.*?)(?=\s*\|\s*Устройство:|$)/);
-                const uaMatch = line.match(/Устройство:\s*(.*)$/);
-
-                const timeStr = timeMatch ? timeMatch[1] : '-';
-                const ipStr = ipMatch ? ipMatch[1].replace('::ffff:', '') : 'unknown';
-                const reqStr = reqMatch ? reqMatch[1] : line;
-                const statusStr = statusMatch ? statusMatch[1] : '0';
-                const dataStr = dataMatch ? dataMatch[1] : '-';
-                const uaStr = uaMatch ? uaMatch[1] : '-';
-
-                let statusClass = 'status-2xx';
-                if (statusStr.startsWith('3')) statusClass = 'status-3xx';
-                if (statusStr.startsWith('4')) statusClass = 'status-4xx';
-                if (statusStr.startsWith('5')) statusClass = 'status-5xx';
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="white-space:nowrap; font-size:12px;">${timeStr}</td>
-                    <td><span class="ip-code">${ipStr}</span></td>
-                    <td><span class="method-badge">${reqStr}</span></td>
-                    <td><span class="status-badge ${statusClass}">${statusStr}</span></td>
-                    <td><div class="data-text" title="${dataStr.replace(/"/g, '&quot;')}">${dataStr}</div></td>
-                    <td><div class="device-text" title="${uaStr.replace(/"/g, '&quot;')}">${uaStr}</div></td>
-                    <td><button class="btn-danger btn-sm" onclick="quickBan('${ipStr}')" title="Забанить IP">🚫</button></td>
+            keys.forEach(ip => {
+                const s = rawSessions[ip];
+                const note = rawNotes[ip] || '';
+                
+                const card = document.createElement('div');
+                card.className = 'ip-card';
+                card.innerHTML = `
+                    <div class="ip-header">
+                        <div class="ip-title">🌐 ${s.ip}</div>
+                        <div>
+                            <button class="btn-success btn-sm" onclick="openIpModal('${s.ip}')">🔍 Посмотреть логи выполнения</button>
+                            <button class="btn-danger btn-sm" onclick="quickBan('${s.ip}')">🚫 Забанить IP</button>
+                        </div>
+                    </div>
+                    <div class="ip-device"><strong>Устройство:</strong> ${s.userAgent}</div>
+                    <div style="font-size:12px; color:var(--text-muted); display:flex; gap:20px; margin-bottom:10px;">
+                        <span>Первый визит: ${s.firstSeen}</span>
+                        <span>Запросов: ${s.requestsCount}</span>
+                    </div>
+                    ${note ? `<div style="background:#18181b; border-left:3px solid var(--accent-color); padding:8px 12px; border-radius:4px; font-size:13px; color:#22c55e;"><strong>Запись:</strong> ${note}</div>` : ''}
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(card);
             });
         }
 
-        function filterLogsTable() { renderLogsTable(); }
+        function openIpModal(ip) {
+            activeModalIp = ip;
+            const s = rawSessions[ip];
+            if (!s) return;
 
-        function toggleAutoRefresh() {
-            const btn = document.getElementById('autoRefreshBtn');
-            if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; btn.innerText = 'Автообновление: ВЫКЛ'; btn.style.backgroundColor = 'var(--accent-color)'; } 
-            else { fetchLogs(); refreshInterval = setInterval(fetchLogs, 3000); btn.innerText = 'Автообновление: ВКЛ'; btn.style.backgroundColor = 'var(--success-color)'; }
+            document.getElementById('modalIpTitle').innerText = `Карточка пользователя [IP: ${ip}]`;
+            document.getElementById('modalIpNote').value = rawNotes[ip] || '';
+
+            const timeline = document.getElementById('modalTimeline');
+            timeline.innerHTML = '';
+
+            (s.history || []).forEach(item => {
+                const dataStr = item.data ? JSON.stringify(item.data, null, 2) : '';
+                const el = document.createElement('div');
+                el.className = 'timeline-item';
+                el.innerHTML = `
+                    <div class="timeline-head">
+                        <span class="timeline-time">[${item.time}]</span>
+                        <span style="font-weight:bold; color:${item.method === 'POST' ? '#f59e0b' : '#38bdf8'}">${item.method}</span>
+                        <span class="timeline-url">${item.url}</span>
+                        <span style="color:${item.status < 400 ? '#22c55e' : '#ef4444'}">(${item.status})</span>
+                    </div>
+                    ${dataStr ? `<div class="timeline-data">${dataStr}</div>` : ''}
+                `;
+                timeline.appendChild(el);
+            });
+
+            document.getElementById('ipModal').style.display = 'flex';
+        }
+
+        function closeIpModal() {
+            document.getElementById('ipModal').style.display = 'none';
+        }
+
+        async function saveIpNoteFromModal() {
+            if (!activeModalIp) return;
+            const note = document.getElementById('modalIpNote').value.trim();
+            const res = await apiCall('/api/ip-notes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ip: activeModalIp, note })
+            });
+            if (res && res.success) {
+                rawNotes = res.notes || {};
+                alert('Заметка сохранена!');
+                renderUserSessions();
+            }
+        }
+
+        async function loadBackupsUI() {
+            const res = await apiCall('/api/backups');
+            const container = document.getElementById('backupsListContainer');
+            if (!res || !res.backups || res.backups.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted);">Резервные копии отсутствуют.</p>';
+                return;
+            }
+
+            container.innerHTML = res.backups.map(b => `
+                <div class="backup-card">
+                    <div>
+                        <strong style="color:#a855f7; font-family:monospace; font-size:15px;">📦 ${b.name}</strong>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Дата создания: ${b.date}</div>
+                    </div>
+                    <div>
+                        <button class="btn-success btn-sm" onclick="restoreBackup('${b.name}')">↺ Восстановить версию</button>
+                        <a href="/api/backups/download/${encodeURIComponent(b.name)}" class="btn-sm" style="background:#27272a; color:#fff; text-decoration:none; display:inline-block; border-radius:6px; padding:8px 15px;">📥 Скачать</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function createNewBackup() {
+            const res = await apiCall('/api/backups/create', { method: 'POST' });
+            if (res && res.success) {
+                alert(`Бэкап ${res.name} успешно создан!`);
+                loadBackupsUI();
+            }
+        }
+
+        async function restoreBackup(name) {
+            if (!confirm(`ВНИМАНИЕ! Восстановить базу данных и файлы из точки [${name}]? Текущие не сохраненные данные будут заменены.`)) return;
+            const res = await apiCall('/api/backups/restore', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            if (res && res.success) {
+                alert('Система успешно восстановлена из резервной копии!');
+                location.reload();
+            }
+        }
+
+        async function uploadBackupFile() {
+            const fileInput = document.getElementById('uploadBackupFileInput');
+            if (fileInput.files.length === 0) return alert('Выберите файл!');
+            const formData = new FormData();
+            formData.append('backupFile', fileInput.files[0]);
+
+            try {
+                const res = await fetch('/api/backups/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data && data.success) {
+                    alert('Файл бэкапа загружен на сервер!');
+                    loadBackupsUI();
+                }
+            } catch (e) {
+                alert('Ошибка загрузки бэкапа');
+            }
         }
 
         async function loadBansUI() {
             const res = await apiCall('/api/bans');
             const container = document.getElementById('bannedListContainer');
             if (!res || !res.banned || res.banned.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted);">Черный список пуст. Все соединения разрешены.</p>';
+                container.innerHTML = '<p style="color:var(--text-muted);">Черный список пуст.</p>';
                 return;
             }
             container.innerHTML = res.banned.map(item => `
-                <div class="banned-card">
+                <div class="backup-card" style="border-color:var(--danger-color);">
                     <div>
-                        <span>🚫 ${item.ip}</span>
-                        <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">Причина: ${item.reason || 'Не указана'} | Дата: ${new Date(item.date || Date.now()).toLocaleString()}</div>
+                        <span style="font-family:monospace; color:#f87171; font-weight:bold;">🚫 ${item.ip}</span>
+                        <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">Причина: ${item.reason || 'Не указана'}</div>
                     </div>
                     <button class="btn-success btn-sm" onclick="unbanIp('${item.ip}')">✔️ Разблокировать</button>
                 </div>
@@ -577,7 +641,7 @@
         async function manualBanIp() {
             const ip = document.getElementById('banIpInput').value.trim();
             const reason = document.getElementById('banReasonInput').value.trim();
-            if (!ip) return alert('Введите IP-адрес!');
+            if (!ip) return alert('Введите IP!');
             const res = await apiCall('/api/bans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip, reason }) });
             if (res && res.success) {
                 document.getElementById('banIpInput').value = '';
@@ -587,13 +651,13 @@
         }
 
         async function quickBan(ip) {
-            if (!confirm(`Точно заблокировать доступ для IP: ${ip}?`)) return;
-            const res = await apiCall('/api/bans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip, reason: 'Быстрая блокировка из мониторинга логов' }) });
-            if (res && res.success) alert(`IP ${ip} успешно занесен в черный список!`);
+            if (!confirm(`Заблокировать IP: ${ip}?`)) return;
+            const res = await apiCall('/api/bans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip, reason: 'Быстрая блокировка' }) });
+            if (res && res.success) alert(`IP ${ip} забанен!`);
         }
 
         async function unbanIp(ip) {
-            if (!confirm(`Снять блокировку с IP: ${ip}?`)) return;
+            if (!confirm(`Разблокировать IP: ${ip}?`)) return;
             const res = await apiCall(`/api/bans/${encodeURIComponent(ip)}`, { method: 'DELETE' });
             if (res && res.success) loadBansUI();
         }
@@ -614,8 +678,8 @@
         const factionSchemas = {
             fib: { 
                 subsystems: [
-                    { id: 'subsystem-general', name: '🕵️ Улики CID (Вебхуки и роли)' },
-                    { id: 'subsystem-testing', name: '📝 Переаттестация FIB (Тесты)' }
+                    { id: 'subsystem-general', name: '🕵️ Улики CID' },
+                    { id: 'subsystem-testing', name: '📝 Переаттестация FIB' }
                 ],
                 webhooks: { main: "Переаттестация FIB", cid_evidence: "Улики CID" }, 
                 roles: { ping: "Пинг FIB", cid_evidence: "Пинг CID" }, 
@@ -680,7 +744,7 @@
             if (!userAuth.isSuperAdmin) {
                 document.querySelectorAll('#siteNavLinks li').forEach(li => {
                     const attr = li.getAttribute('onclick');
-                    if (attr && (attr.includes('projects') || attr.includes('illustration') || attr.includes('logs') || attr.includes('bans'))) {
+                    if (attr && (attr.includes('projects') || attr.includes('illustration') || attr.includes('sessions') || attr.includes('backups') || attr.includes('bans'))) {
                         li.style.display = 'none';
                     }
                     if (attr && attr.includes('code') && !userAuth.permissions.includes('files') && !userAuth.permissions.includes('all')) {
@@ -725,7 +789,7 @@
             if (userAuth.isSuperAdmin) {
                 loadProjects();
                 loadFileList();
-                fetchLogs();
+                loadSessionsUI();
             } else if (userAuth.permissions.includes('files') || userAuth.permissions.includes('all')) {
                 loadFileList();
             }
@@ -755,16 +819,16 @@
                 document.getElementById('subsystem-testing').classList.remove('active');
             }
 
-            let whHtml = '<h4>Вебхуки (Discord)</h4><div class="form-grid">';
+            let whHtml = '<h4>Вебхуки</h4><div class="form-grid">';
             for (let [key, label] of Object.entries(schema.webhooks || {})) {
-                whHtml += `<div><label>${label}</label><input type="text" id="wh_${key}" value="${config.webhooks?.[key] || ''}" placeholder="https://discord.com/api/webhooks/..."></div>`;
+                whHtml += `<div><label>${label}</label><input type="text" id="wh_${key}" value="${config.webhooks?.[key] || ''}"></div>`;
             }
             whHtml += '</div>';
             document.getElementById('faction-webhooks').innerHTML = whHtml;
 
-            let rlHtml = '<h4>Роли (Упоминания ID)</h4><div class="form-grid">';
+            let rlHtml = '<h4>Роли</h4><div class="form-grid">';
             for (let [key, label] of Object.entries(schema.roles || {})) {
-                rlHtml += `<div><label>${label}</label><input type="text" id="rl_${key}" value="${config.roles?.[key] || ''}" placeholder="123456789012345678"></div>`;
+                rlHtml += `<div><label>${label}</label><input type="text" id="rl_${key}" value="${config.roles?.[key] || ''}"></div>`;
             }
             rlHtml += '</div>';
             document.getElementById('faction-roles').innerHTML = rlHtml;
@@ -862,12 +926,12 @@
                         <span>Вопрос #${qIndex + 1}</span>
                         <button class="btn-danger btn-sm" onclick="removeQuestion(${qIndex})">🗑 Удалить вопрос</button>
                     </div>
-                    <input type="text" class="q-text" value="${q.text.replace(/"/g, '&quot;')}" placeholder="Текст вопроса...">
+                    <input type="text" class="q-text" value="${q.text.replace(/"/g, '&quot;')}">
                     <div class="q-settings">
-                        <div><label>Тип вопроса:</label>
+                        <div><label>Тип:</label>
                         <select class="q-type" onchange="syncDOMToState(); renderQuestions();">
-                            <option value="single" ${q.type==='single'?'selected':''}>Один правильный вариант</option>
-                            <option value="multiple" ${q.type==='multiple'?'selected':''}>Мультивопрос (несколько вариантов)</option>
+                            <option value="single" ${q.type==='single'?'selected':''}>Один вариант</option>
+                            <option value="multiple" ${q.type==='multiple'?'selected':''}>Мультивопрос</option>
                             ${currentFaction === 'gov' ? `<option value="text" ${q.type==='text'?'selected':''}>Развернутый ответ</option>` : ''}
                         </select></div>`;
 
@@ -875,7 +939,7 @@
                     const r5 = q.ranks && (q.ranks.includes(5) || q.ranks.includes(3));
                     const r7 = q.ranks && q.ranks.includes(7);
                     html += `
-                        <div><label>Для каких рангов вопрос:</label>
+                        <div><label>Ранги:</label>
                         <div class="rank-badge-group">
                             <div class="rank-badge ${r5 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 5)">5 РАНГ</div>
                             <div class="rank-badge ${r7 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 7)">7 РАНГ</div>
@@ -885,19 +949,19 @@
                 if (currentFaction === 'gov') {
                     html += `
                         <div><label>Баллы:</label><input type="number" class="q-points" value="${q.points}" min="1" style="width:80px"></div>
-                        <div><label style="margin-top:10px;"><input type="checkbox" class="q-bonus" ${q.isBonus?'checked':''}> Бонусный вопрос</label></div>`;
+                        <div><label style="margin-top:10px;"><input type="checkbox" class="q-bonus" ${q.isBonus?'checked':''}> Бонусный</label></div>`;
                 }
 
                 html += `</div>`;
 
                 if (q.type !== 'text') {
                     html += `<div class="q-options-container" style="margin-top:10px;">
-                                <label style="margin-bottom: 5px;">Варианты ответа (отметьте все правильные):</label>`;
+                                <label style="margin-bottom: 5px;">Варианты:</label>`;
                     q.options.forEach((opt, oIndex) => {
                         const inputType = q.type === 'multiple' ? 'checkbox' : 'radio';
                         html += `<div class="q-opt">
-                            <input type="${inputType}" name="correct_${qIndex}" class="opt-correct" ${opt.isCorrect ? 'checked' : ''} title="Правильный ответ">
-                            <input type="text" class="opt-text" value="${opt.text.replace(/"/g, '&quot;')}" placeholder="Вариант ответа">
+                            <input type="${inputType}" name="correct_${qIndex}" class="opt-correct" ${opt.isCorrect ? 'checked' : ''}>
+                            <input type="text" class="opt-text" value="${opt.text.replace(/"/g, '&quot;')}">
                             <button class="btn-danger btn-sm" onclick="removeOpt(${qIndex}, ${oIndex})">❌</button>
                         </div>`;
                     });
@@ -937,7 +1001,7 @@
         }
 
         function removeQuestion(idx) {
-            if(!confirm('Удалить этот вопрос?')) return;
+            if(!confirm('Удалить вопрос?')) return;
             syncDOMToState();
             unifiedQuestions.splice(idx, 1);
             renderQuestions();
@@ -1008,7 +1072,7 @@
         async function loadTokensUI() {
             const data = await apiCall('/api/tokens');
             const container = document.getElementById('tokens-list-container');
-            if (!data || !data.tokens) { container.innerHTML = '<p style="color:var(--text-muted);">Не удалось загрузить список токенов или доступ ограничен.</p>'; return; }
+            if (!data || !data.tokens) { container.innerHTML = '<p style="color:var(--text-muted);">Не удалось загрузить список токенов.</p>'; return; }
             if (data.tokens.length === 0) { container.innerHTML = '<p style="color:var(--text-muted);">Активные токены отсутствуют.</p>'; return; }
 
             container.innerHTML = data.tokens.map(t => {
