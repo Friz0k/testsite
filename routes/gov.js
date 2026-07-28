@@ -136,8 +136,6 @@ router.post('/submit', async (req, res) => {
 
 module.exports = router;
 JavaScript
-// routes/ems.js
-const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
