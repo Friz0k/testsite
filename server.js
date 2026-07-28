@@ -12,8 +12,10 @@ const authMiddleware = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Доверие к прокси (необходимо для корректного определения IP за Cloudflare и Nginx)
 app.set('trust proxy', true);
 
+// Отключение кэширования для динамических страниц и API
 app.use((req, res, next) => {
     res.setHeader('Surrogate-Control', 'no-store');
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -22,6 +24,7 @@ app.use((req, res, next) => {
     next();
 });
 
+// --- ПУТИ К ДИРЕКТОРИЯМ И ФАЙЛАМ ---
 const DIR_DATA = path.join(__dirname, 'data');
 const DIR_LOGS = path.join(__dirname, 'logs');
 const DIR_PUBLIC = path.join(__dirname, 'public');
@@ -37,6 +40,7 @@ const FILE_BANS = path.join(DIR_DATA, 'banned_ips.json');
 
 const LOG_RETENTION_DAYS = 14;
 
+// --- ИНИЦИАЛИЗАЦИЯ ФАЙЛОВОЙ СИСТЕМЫ ---
 const ensureDirectoriesExist = () => {
     const directories = [DIR_DATA, DIR_LOGS, DIR_PUBLIC, DIR_UPLOADS, DIR_SYSTEMS, DIR_VIEWS, DIR_ROUTES, DIR_BACKUPS];
     directories.forEach(dir => {
@@ -44,6 +48,7 @@ const ensureDirectoriesExist = () => {
             try {
                 fs.mkdirSync(dir, { recursive: true });
             } catch (err) {
+                console.error(`Критическая ошибка создания директории ${dir}:`, err);
                 process.exit(1);
             }
         }
@@ -59,6 +64,7 @@ const ensureFilesExist = () => {
 ensureDirectoriesExist();
 ensureFilesExist();
 
+// --- СИСТЕМА ЧЕРНОГО СПИСКА (BAN / DDoS PROTECTION) ---
 let bannedIps = [];
 try {
     bannedIps = JSON.parse(fs.readFileSync(FILE_BANS, 'utf8'));
@@ -69,32 +75,40 @@ try {
 const saveBannedIps = () => {
     try {
         fs.writeFileSync(FILE_BANS, JSON.stringify(bannedIps, null, 2), 'utf8');
-    } catch (e) {}
+    } catch (e) {
+        console.error('Ошибка сохранения файла забаненных IP:', e);
+    }
 };
 
 const requestCounts = new Map();
 setInterval(() => {
     requestCounts.clear();
-}, 60000);
+}, 60000); // Сброс счетчика запросов каждую минуту
 
 app.use((req, res, next) => {
     const clientIp = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || 'unknown';
     const cleanIp = clientIp.replace(/^::ffff:/, '');
 
+    // Проверка на нахождение в черном списке
     if (bannedIps.some(item => item.ip === cleanIp)) {
         return res.status(403).send('Доступ заблокирован системой безопасности Frizworld.');
     }
 
+    // Лимитирование запросов (защита от спама и парсеров), исключая статику и загрузки
     if (!req.originalUrl.startsWith('/uploads') && !req.originalUrl.startsWith('/systems')) {
         const currentCount = (requestCounts.get(cleanIp) || 0) + 1;
         requestCounts.set(cleanIp, currentCount);
 
-        if (currentCount > 120) {
+        if (currentCount > 150) { // Лимит: 150 запросов в минуту с одного IP
             if (!bannedIps.some(item => item.ip === cleanIp)) {
-                bannedIps.push({ ip: cleanIp, reason: 'Автоматический бан: превышение лимита запросов (DDoS/Spam)', date: new Date().toISOString() });
+                bannedIps.push({
+                    ip: cleanIp,
+                    reason: 'Автоматическая блокировка: превышение лимита запросов (DDoS/Spam protection)',
+                    date: new Date().toISOString()
+                });
                 saveBannedIps();
             }
-            return res.status(429).send('Слишком много запросов. IP заблокирован.');
+            return res.status(429).send('Слишком много запросов. Ваш IP был временно заблокирован.');
         }
     }
 
@@ -102,6 +116,7 @@ app.use((req, res, next) => {
     next();
 });
 
+// --- СИСТЕМА ЛОГИРОВАНИЯ С РОТАЦИЕЙ ---
 class RotatingLogger {
     constructor(baseName) {
         this.baseName = baseName;
@@ -188,6 +203,7 @@ const logger = {
     }
 };
 
+// --- СИСТЕМА АВТОМАТИЧЕСКОГО РЕЗЕРВНОГО КОПИРОВАНИЯ ---
 const runAutoBackup = () => {
     try {
         const dateStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -213,9 +229,10 @@ const runAutoBackup = () => {
     }
 };
 
-setInterval(runAutoBackup, 24 * 60 * 60 * 1000);
-setTimeout(runAutoBackup, 60 * 1000);
+setInterval(runAutoBackup, 24 * 60 * 60 * 1000); // Запуск раз в сутки
+setTimeout(runAutoBackup, 60 * 1000); // Первый бэкап через минуту после старта
 
+// --- НАСТРОЙКИ ЗАГРУЗКИ ФАЙЛОВ (MULTER & SHARP) ---
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, DIR_UPLOADS),
     filename: (req, file, cb) => {
@@ -226,10 +243,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 },
+    limits: { fileSize: 15 * 1024 * 1024 }, // 15 MB предел
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) cb(null, true);
-        else cb(new Error('Format error'), false);
+        else cb(new Error('Разрешены только графические форматы изображений'), false);
     }
 });
 
@@ -237,11 +254,12 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser(process.env.COOKIE_SECRET || 'dev-insecure-secret-change-me'));
 
+// --- САНИТАРИЗАЦИЯ И ОБРАБОТКА ВХОДНЫХ ДАННЫХ ---
 const sanitizeInput = (req, res, next) => {
     const sqlRegex = /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND)\b)|(['"])/i;
     const checkObj = (obj) => {
         for (let key in obj) {
-            if (typeof obj[key] === 'string' && !['content', 'image', 'imageUrl', 'path', 'reason'].includes(key)) {
+            if (typeof obj[key] === 'string' && !['content', 'image', 'imageUrl', 'path', 'reason', 'summary', 'desc', 'fullDesc'].includes(key)) {
                 if (sqlRegex.test(obj[key])) obj[key] = obj[key].replace(/['"]/g, '');
                 obj[key] = obj[key].replace(/</g, '&lt;').replace(/>/g, '&gt;');
             } else if (typeof obj[key] === 'object' && obj[key] !== null) {
@@ -256,6 +274,7 @@ const sanitizeInput = (req, res, next) => {
 
 app.use(sanitizeInput);
 
+// --- ПЕРЕХВАТЧИК ЗАПРОСОВ ДЛЯ ЛОГОВ ---
 app.use((req, res, next) => {
     const start = Date.now();
     const sanitizeForLogs = (data) => {
@@ -283,11 +302,13 @@ app.use((req, res, next) => {
     next();
 });
 
+// Публичная раздача статических файлов (CSS, JS, картинки, системы)
 app.use(express.static(DIR_PUBLIC));
 
+// --- МАРШРУТЫ АВТОРИЗАЦИИ И ПАНЕЛИ УПРАВЛЕНИЯ ---
 app.get('/login', (req, res) => {
     const loginPath = path.join(DIR_VIEWS, 'login.html');
-    if (!fs.existsSync(loginPath)) return res.status(500).send('Error 500');
+    if (!fs.existsSync(loginPath)) return res.status(500).send('Ошибка сервера: файл логина не найден.');
     res.sendFile(loginPath);
 });
 
@@ -318,7 +339,7 @@ app.get('/logout', (req, res) => {
 
 app.get('/admin', authMiddleware, (req, res) => {
     const adminPath = path.join(DIR_VIEWS, 'admin.html');
-    if (!fs.existsSync(adminPath)) return res.status(500).send('Error 500');
+    if (!fs.existsSync(adminPath)) return res.status(500).send('Ошибка сервера: файл админки не найден.');
     res.sendFile(adminPath);
 });
 
@@ -329,23 +350,25 @@ async function processGif(inputPath) {
     fs.renameSync(tempPath, inputPath);
 }
 
+// --- ЗАЩИЩЕННОЕ API ДЛЯ АДМИН-ПАНЕЛИ ---
 app.use('/api', authMiddleware);
 
 app.get('/api/me', (req, res) => {
     if (req.isSuperAdmin) return res.json({ isSuperAdmin: true, systems: ['all'], permissions: ['all'] });
     if (req.tokenData) return res.json({ isSuperAdmin: false, name: req.tokenData.name, systems: req.tokenData.systems || [], permissions: req.tokenData.permissions || [] });
-    res.status(401).json({ error: 'Not authenticated' });
+    res.status(401).json({ error: 'Не авторизован' });
 });
 
+// API Управления банами (Чёрный список)
 app.get('/api/bans', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
     res.json({ success: true, banned: bannedIps });
 });
 
 app.post('/api/bans', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
     const { ip, reason } = req.body;
-    if (!ip) return res.status(400).json({ error: 'IP required' });
+    if (!ip) return res.status(400).json({ error: 'Не указан IP-адрес' });
     const cleanIp = ip.trim().replace(/^::ffff:/, '');
     if (!bannedIps.some(item => item.ip === cleanIp)) {
         bannedIps.push({ ip: cleanIp, reason: reason || 'Ручная блокировка через админку', date: new Date().toISOString() });
@@ -355,26 +378,27 @@ app.post('/api/bans', (req, res) => {
 });
 
 app.delete('/api/bans/:ip', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
     const targetIp = req.params.ip;
     bannedIps = bannedIps.filter(item => item.ip !== targetIp);
     saveBannedIps();
     res.json({ success: true, banned: bannedIps });
 });
 
+// API Управления токенами доступа
 app.get('/api/tokens', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
     try {
         const config = JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'));
         res.json({ success: true, tokens: config.apiTokens || [] });
-    } catch (err) { res.status(500).json({ error: 'Read error' }); }
+    } catch (err) { res.status(500).json({ error: 'Ошибка чтения конфигурации' }); }
 });
 
 app.post('/api/tokens/create', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
     try {
         const { name, systems, permissions } = req.body;
-        if (!name || !systems || systems.length === 0) return res.status(400).json({ error: 'Invalid parameters' });
+        if (!name || !systems || systems.length === 0) return res.status(400).json({ error: 'Некорректные параметры токена' });
         const newToken = {
             id: Date.now().toString(),
             token: 'friz_' + crypto.randomBytes(24).toString('hex'),
@@ -389,11 +413,11 @@ app.post('/api/tokens/create', (req, res) => {
         config.apiTokens.push(newToken);
         fs.writeFileSync(FILE_SETTINGS, JSON.stringify(config, null, 2), 'utf8');
         res.json({ success: true, token: newToken });
-    } catch (err) { res.status(500).json({ error: 'Write error' }); }
+    } catch (err) { res.status(500).json({ error: 'Ошибка записи конфигурации' }); }
 });
 
 app.delete('/api/tokens/:id', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
     try {
         const config = JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'));
         if (config.apiTokens) {
@@ -401,23 +425,25 @@ app.delete('/api/tokens/:id', (req, res) => {
             fs.writeFileSync(FILE_SETTINGS, JSON.stringify(config, null, 2), 'utf8');
         }
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Delete error' }); }
+    } catch (err) { res.status(500).json({ error: 'Ошибка удаления токена' }); }
 });
 
+// API Управления проектами
 app.get('/api/projects', (req, res) => {
     try { res.json(JSON.parse(fs.readFileSync(FILE_PROJECTS, 'utf8'))); } 
-    catch (err) { res.status(500).json({ error: 'Read error' }); }
+    catch (err) { res.status(500).json({ error: 'Ошибка чтения базы проектов' }); }
 });
 
 app.post('/api/projects', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
     try { fs.writeFileSync(FILE_PROJECTS, JSON.stringify(req.body, null, 2), 'utf8'); res.json({ success: true }); } 
-    catch (err) { res.status(500).json({ error: 'Write error' }); }
+    catch (err) { res.status(500).json({ error: 'Ошибка сохранения проектов' }); }
 });
 
+// API Управления настройками фракций и общими параметрами
 app.get('/api/settings', (req, res) => {
     try { res.json(JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'))); } 
-    catch (err) { res.status(500).json({ error: 'Read error' }); }
+    catch (err) { res.status(500).json({ error: 'Ошибка чтения конфигурации' }); }
 });
 
 app.post('/api/settings', (req, res) => {
@@ -431,9 +457,10 @@ app.post('/api/settings', (req, res) => {
         }
         fs.writeFileSync(FILE_SETTINGS, JSON.stringify(newConfig, null, 2), 'utf8');
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Write error' }); }
+    } catch (err) { res.status(500).json({ error: 'Ошибка сохранения конфигурации' }); }
 });
 
+// API Загрузки изображений (Поддержка Base64 и файлов через Multer)
 app.post('/api/upload', upload.single('image'), async (req, res) => {
     try {
         if (req.body.image && req.body.image.startsWith('data:image')) {
@@ -446,14 +473,15 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
                 return res.json({ success: true, url: `/uploads/${filename}` });
             }
         }
-        if (!req.file) return res.status(400).json({ error: 'File error' });
+        if (!req.file) return res.status(400).json({ error: 'Файл не был загружен или имеет неверный формат' });
         if (req.file.mimetype === 'image/gif') await processGif(req.file.path);
         res.json({ success: true, url: `/uploads/${req.file.filename}` });
-    } catch (err) { res.status(500).json({ error: 'Upload error' }); }
+    } catch (err) { res.status(500).json({ error: 'Ошибка обработки и сохранения изображения' }); }
 });
 
+// API Получения логов сервера
 app.get('/api/logs', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
     try {
         const typeAlias = { visits: 'access', errors: 'error', access: 'access', error: 'error', app: 'app' };
         const type = typeAlias[req.query.type] || 'access';
@@ -463,9 +491,10 @@ app.get('/api/logs', (req, res) => {
         const data = fs.readFileSync(filePath, 'utf8');
         const lines = data.split('\n').filter(Boolean);
         res.json({ logs: lines.slice(-300).reverse().join('\n'), file: path.basename(filePath) });
-    } catch (err) { res.status(500).json({ error: 'Log error' }); }
+    } catch (err) { res.status(500).json({ error: 'Ошибка чтения журнала логов' }); }
 });
 
+// API Редактора кода (Список файлов и чтение/запись в public)
 app.get('/api/list-files', (req, res) => {
     try {
         const getFilesRecursive = (dir, base = '') => {
@@ -479,35 +508,42 @@ app.get('/api/list-files', (req, res) => {
             return results;
         };
         res.json(getFilesRecursive(DIR_PUBLIC));
-    } catch (err) { res.status(500).json({ error: 'Files error' }); }
+    } catch (err) { res.status(500).json({ error: 'Ошибка сканирования директорий' }); }
 });
 
 app.get('/api/file', (req, res) => {
     try {
         const filePathParam = req.query.path;
-        if (!filePathParam) return res.status(400).json({ error: 'Path error' });
+        if (!filePathParam) return res.status(400).json({ error: 'Не указан путь к файлу' });
         const safePath = path.normalize(filePathParam).replace(/^(\.\.[\/\\])+/, '');
         const fullPath = path.join(DIR_PUBLIC, safePath);
-        if (!fs.existsSync(fullPath)) return res.status(404).json({ error: '404' });
+        if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'Файл не найден (404)' });
         res.json({ content: fs.readFileSync(fullPath, 'utf8') });
-    } catch (err) { res.status(500).json({ error: 'File error' }); }
+    } catch (err) { res.status(500).json({ error: 'Ошибка чтения файла' }); }
 });
 
 app.post('/api/file', (req, res) => {
     try {
         const { filePath, content } = req.body;
-        if (!filePath) return res.status(400).json({ error: 'Path error' });
+        if (!filePath) return res.status(400).json({ error: 'Не указан путь к файлу' });
         const safePath = path.normalize(filePath).replace(/^(\.\.[\/\\])+/, '');
         fs.writeFileSync(path.join(DIR_PUBLIC, safePath), content, 'utf8');
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'File error' }); }
+    } catch (err) { res.status(500).json({ error: 'Ошибка сохранения файла' }); }
 });
 
+// --- ЗАГРУЗКА МОДУЛЬНЫХ МАРШРУТОВ ФРАКЦИЙ ---
 const loadModularRoute = (routeName, routeFile) => {
     const fullPath = path.join(DIR_ROUTES, routeFile);
     if (fs.existsSync(fullPath)) {
-        try { app.use(routeName, require(fullPath)); } 
-        catch (err) { logger.error(`Ошибка загрузки роута ${routeName}`, err); }
+        try {
+            app.use(routeName, require(fullPath));
+            logger.info(`Модуль маршрута [${routeName}] успешно подключен.`);
+        } catch (err) {
+            logger.error(`Критическая ошибка загрузки маршрута ${routeName}:`, err);
+        }
+    } else {
+        logger.warn(`Файл маршрута не найден: ${fullPath} (пропущено)`);
     }
 };
 
@@ -519,22 +555,52 @@ loadModularRoute('/cid', 'cid.js');
 loadModularRoute('/deadly', 'deadly.js');
 loadModularRoute('/ems', 'ems.js');
 
-app.use((req, res) => res.status(404).send('404'));
+// Обработчик ошибки 404
+app.use((req, res) => res.status(404).send('Страница или API эндпоинт не найдены (404)'));
+
+// Обработчик глобальных ошибок и ошибок Multer
 app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) return res.status(400).json({ error: `Upload error: ${err.message}` });
-    res.status(500).json({ error: '500' });
+    if (err instanceof multer.MulterError) {
+        logger.error('Multer upload error:', err);
+        return res.status(400).json({ error: `Ошибка загрузки файла: ${err.message}` });
+    }
+    logger.error('Unhandled Server Error:', err);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера (500)' });
 });
 
-process.on('uncaughtException', (err) => { logger.error('uncaughtException', err); process.exit(1); });
-process.on('unhandledRejection', (reason) => { logger.error('unhandledRejection', reason); });
+// --- ГЛОБАЛЬНАЯ ОБРАБОТКА НЕОТЛОВЛЕННЫХ ИСКЛЮЧЕНИЙ ---
+process.on('uncaughtException', (err) => {
+    logger.error('КРИТИЧЕСКАЯ ОШИБКА (uncaughtException):', err);
+    process.exit(1);
+});
 
+process.on('unhandledRejection', (reason) => {
+    logger.error('Неотловленный отказ промиса (unhandledRejection):', reason);
+});
+
+// --- ЗАПУСК И ПЛАВНАЯ ОСТАНОВКА СЕРВЕРА ---
 const server = http.createServer(app);
-server.on('error', (err) => { logger.error('Server error', err); process.exit(1); });
-server.listen(PORT, () => { logger.info(`Server started on port ${PORT}`); });
 
-const gracefulShutdown = () => {
-    server.close(() => process.exit(0));
-    setTimeout(() => process.exit(1), 10000).unref();
+server.on('error', (err) => {
+    logger.error('Ошибка HTTP сервера:', err);
+    process.exit(1);
+});
+
+server.listen(PORT, () => {
+    logger.info(`Сервер Frizworld успешно запущен на порту ${PORT}`);
+});
+
+const gracefulShutdown = (signal) => {
+    logger.info(`Получен сигнал ${signal}. Завершение работы сервера...`);
+    server.close(() => {
+        logger.info('Сервер остановлен.');
+        process.exit(0);
+    });
+    setTimeout(() => {
+        logger.error('Принудительное завершение по таймауту.');
+        process.exit(1);
+    }, 10000).unref();
 };
-process.on('SIGTERM', gracefulShutdown);
-process.on('SIGINT', gracefulShutdown);
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
