@@ -36,6 +36,7 @@ const FILE_SETTINGS = path.join(DIR_DATA, 'config.json');
 const FILE_BANS = path.join(DIR_DATA, 'banned_ips.json');
 const FILE_SESSIONS = path.join(DIR_DATA, 'user_sessions.json');
 const FILE_NOTES = path.join(DIR_DATA, 'ip_notes.json');
+const FILE_DISCORD_LOGS = path.join(DIR_DATA, 'discord_logs.json');
 
 const LOG_RETENTION_DAYS = 14;
 
@@ -54,6 +55,7 @@ const ensureFilesExist = () => {
     if (!fs.existsSync(FILE_BANS)) fs.writeFileSync(FILE_BANS, '[]', 'utf8');
     if (!fs.existsSync(FILE_SESSIONS)) fs.writeFileSync(FILE_SESSIONS, '{}', 'utf8');
     if (!fs.existsSync(FILE_NOTES)) fs.writeFileSync(FILE_NOTES, '{}', 'utf8');
+    if (!fs.existsSync(FILE_DISCORD_LOGS)) fs.writeFileSync(FILE_DISCORD_LOGS, '[]', 'utf8');
 };
 
 ensureDirectoriesExist();
@@ -68,6 +70,9 @@ try { userSessions = JSON.parse(fs.readFileSync(FILE_SESSIONS, 'utf8')); } catch
 let ipNotes = {};
 try { ipNotes = JSON.parse(fs.readFileSync(FILE_NOTES, 'utf8')); } catch (e) { ipNotes = {}; }
 
+let discordLogs = [];
+try { discordLogs = JSON.parse(fs.readFileSync(FILE_DISCORD_LOGS, 'utf8')); } catch (e) { discordLogs = []; }
+
 const saveBannedIps = () => {
     try { fs.writeFileSync(FILE_BANS, JSON.stringify(bannedIps, null, 2), 'utf8'); } catch (e) {}
 };
@@ -80,9 +85,68 @@ const saveIpNotes = () => {
     try { fs.writeFileSync(FILE_NOTES, JSON.stringify(ipNotes, null, 2), 'utf8'); } catch (e) {}
 };
 
+const saveDiscordLogs = () => {
+    try { fs.writeFileSync(FILE_DISCORD_LOGS, JSON.stringify(discordLogs, null, 2), 'utf8'); } catch (e) {}
+};
+
 const requestCounts = new Map();
 setInterval(() => { requestCounts.clear(); }, 60000);
 setInterval(() => { saveUserSessions(); }, 30000);
+setInterval(() => { saveDiscordLogs(); }, 30000);
+
+const getMskTimestamp = () => new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
+
+const originalFetch = global.fetch;
+if (originalFetch) {
+    global.fetch = async (...args) => {
+        const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : '');
+        const isDiscord = url && (url.includes('discord.com/api/webhooks') || url.includes('discordapp.com/api/webhooks'));
+        if (!isDiscord) return originalFetch(...args);
+
+        const options = args[1] || {};
+        let payloadData = null;
+        if (options.body) {
+            try { payloadData = JSON.parse(options.body); } catch (e) { payloadData = options.body; }
+        }
+
+        const startTime = Date.now();
+        let status = 0;
+        let responseData = null;
+        let errorMsg = null;
+
+        try {
+            const res = await originalFetch(...args);
+            status = res.status;
+            const resClone = res.clone();
+            try { responseData = await resClone.json(); } catch (e) {
+                try { responseData = await resClone.text(); } catch (e2) { responseData = null; }
+            }
+            return res;
+        } catch (err) {
+            status = 500;
+            errorMsg = err.message || String(err);
+            throw err;
+        } finally {
+            const duration = Date.now() - startTime;
+            const safeUrl = url.replace(/(api\/webhooks\/\d+\/)[^/]+/, '$1[СКРЫТО]');
+            discordLogs.unshift({
+                id: Date.now().toString() + '_' + Math.round(Math.random() * 1000),
+                time: getMskTimestamp(),
+                timestamp: Date.now(),
+                url: safeUrl,
+                rawUrl: url,
+                method: options.method || 'POST',
+                status: status,
+                duration: duration,
+                payload: payloadData,
+                response: responseData,
+                error: errorMsg
+            });
+            if (discordLogs.length > 200) discordLogs = discordLogs.slice(0, 200);
+            saveDiscordLogs();
+        }
+    };
+}
 
 app.use((req, res, next) => {
     const clientIp = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || 'unknown';
@@ -153,8 +217,6 @@ class RotatingLogger {
 const accessLog = new RotatingLogger('access');
 const errorLog = new RotatingLogger('error');
 const appLog = new RotatingLogger('app');
-
-const getMskTimestamp = () => new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
 
 const logger = {
     info: (msg) => { const line = `[${getMskTimestamp()}] [INFO] ${msg}`; console.log(line); appLog.write(line); },
@@ -301,7 +363,7 @@ app.use((req, res, next) => {
     };
 
     res.on('finish', () => {
-        if (!req.originalUrl.startsWith('/api/logs') && !req.originalUrl.startsWith('/api/list-files') && !req.originalUrl.startsWith('/api/bans') && !req.originalUrl.startsWith('/api/user-sessions') && !req.originalUrl.startsWith('/api/backups')) {
+        if (!req.originalUrl.startsWith('/api/logs') && !req.originalUrl.startsWith('/api/list-files') && !req.originalUrl.startsWith('/api/bans') && !req.originalUrl.startsWith('/api/user-sessions') && !req.originalUrl.startsWith('/api/backups') && !req.originalUrl.startsWith('/api/discord-monitor')) {
             const payloadObj = {
                 query: Object.keys(req.query).length ? sanitizeForLogs(req.query) : null,
                 body: Object.keys(req.body).length ? sanitizeForLogs(req.body) : null
@@ -422,6 +484,71 @@ app.post('/api/ip-notes', (req, res) => {
     res.json({ success: true, notes: ipNotes });
 });
 
+app.get('/api/discord-monitor', (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    
+    let totalSent = discordLogs.length;
+    let successCount = 0;
+    let rateLimitCount = 0;
+    let errorCount = 0;
+
+    discordLogs.forEach(l => {
+        if (l.status === 200 || l.status === 204 || l.status === 202) successCount++;
+        else if (l.status === 429) rateLimitCount++;
+        else errorCount++;
+    });
+
+    const memUsage = process.memoryUsage();
+    const systemHealth = {
+        rssMb: Math.round(memUsage.rss / 1024 / 1024),
+        heapMb: Math.round(memUsage.heapUsed / 1024 / 1024),
+        uptimeSec: Math.round(process.uptime()),
+        totalSent,
+        successCount,
+        rateLimitCount,
+        errorCount
+    };
+
+    res.json({ success: true, health: systemHealth, logs: discordLogs });
+});
+
+app.post('/api/discord-monitor/test', async (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    const { webhookUrl, payloadText } = req.body;
+    if (!webhookUrl) return res.status(400).json({ error: 'Укажите URL вебхука' });
+
+    let parsedPayload = { content: "🔔 Тестовое уведомление из панели Frizworld Admin" };
+    if (payloadText && payloadText.trim()) {
+        try { parsedPayload = JSON.parse(payloadText); } catch (e) {
+            return res.status(400).json({ error: 'Неверный синтаксис JSON в поле базы данных' });
+        }
+    }
+
+    try {
+        const response = await fetch(webhookUrl.trim(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parsedPayload)
+        });
+        
+        let resBody = null;
+        try { resBody = await response.json(); } catch (e) {
+            try { resBody = await response.text(); } catch (e2) { resBody = null; }
+        }
+
+        res.json({ success: true, status: response.status, statusText: response.statusText, responseBody: resBody });
+    } catch (err) {
+        res.status(500).json({ error: 'Сбой отправки запроса: ' + (err.message || String(err)) });
+    }
+});
+
+app.delete('/api/discord-monitor/clear', (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    discordLogs = [];
+    saveDiscordLogs();
+    res.json({ success: true });
+});
+
 app.get('/api/backups', (req, res) => {
     if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     try {
@@ -481,6 +608,7 @@ app.post('/api/backups/restore', (req, res) => {
         try { bannedIps = JSON.parse(fs.readFileSync(FILE_BANS, 'utf8')); } catch (e) {}
         try { userSessions = JSON.parse(fs.readFileSync(FILE_SESSIONS, 'utf8')); } catch (e) {}
         try { ipNotes = JSON.parse(fs.readFileSync(FILE_NOTES, 'utf8')); } catch (e) {}
+        try { discordLogs = JSON.parse(fs.readFileSync(FILE_DISCORD_LOGS, 'utf8')); } catch (e) {}
 
         logger.info(`Весь проект успешно восстановлен из: ${name}`);
         res.json({ success: true, message: 'Восстановление завершено успешно' });
@@ -701,6 +829,7 @@ server.listen(PORT, () => { logger.info(`Server started on port ${PORT}`); });
 const gracefulShutdown = () => {
     saveUserSessions();
     saveIpNotes();
+    saveDiscordLogs();
     server.close(() => process.exit(0));
     setTimeout(() => process.exit(1), 10000).unref();
 };
