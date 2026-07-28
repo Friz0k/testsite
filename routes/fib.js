@@ -57,7 +57,11 @@ router.get('/questions', (req, res) => {
     const testSettings = config.testSettings || {};
     const rawQuestions = testSettings.questions || [];
 
-    let filteredQuestions = rawQuestions.filter(q => !q.ranks || q.ranks.includes(rank));
+    let filteredQuestions = rawQuestions.filter(q => {
+        if (!q.ranks) return true;
+        const mappedRanks = q.ranks.map(r => r === 3 ? 5 : r);
+        return mappedRanks.includes(rank);
+    });
 
     for (let i = filteredQuestions.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -96,7 +100,7 @@ router.post('/submit', async (req, res) => {
 
     const numericRank = parseInt(rank) || 5;
     const passingScore = numericRank === 7 
-        ? (testSettings.passingScoreRank7 || 12) 
+        ? (testSettings.passingScoreRank7 || 14) 
         : (testSettings.passingScoreRank5 || 6);
 
     let totalScore = 0;
