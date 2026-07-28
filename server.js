@@ -33,6 +33,7 @@ const DIR_BACKUPS = path.join(__dirname, 'backups');
 
 const FILE_PROJECTS = path.join(DIR_DATA, 'projects.json');
 const FILE_SETTINGS = path.join(DIR_DATA, 'config.json');
+const FILE_BANS = path.join(DIR_DATA, 'banned_ips.json');
 
 const LOG_RETENTION_DAYS = 14;
 
@@ -50,16 +51,56 @@ const ensureDirectoriesExist = () => {
 };
 
 const ensureFilesExist = () => {
-    if (!fs.existsSync(FILE_PROJECTS)) {
-        fs.writeFileSync(FILE_PROJECTS, '[]', 'utf8');
-    }
-    if (!fs.existsSync(FILE_SETTINGS)) {
-        fs.writeFileSync(FILE_SETTINGS, '{}', 'utf8');
-    }
+    if (!fs.existsSync(FILE_PROJECTS)) fs.writeFileSync(FILE_PROJECTS, '[]', 'utf8');
+    if (!fs.existsSync(FILE_SETTINGS)) fs.writeFileSync(FILE_SETTINGS, '{}', 'utf8');
+    if (!fs.existsSync(FILE_BANS)) fs.writeFileSync(FILE_BANS, '[]', 'utf8');
 };
 
 ensureDirectoriesExist();
 ensureFilesExist();
+
+let bannedIps = [];
+try {
+    bannedIps = JSON.parse(fs.readFileSync(FILE_BANS, 'utf8'));
+} catch (e) {
+    bannedIps = [];
+}
+
+const saveBannedIps = () => {
+    try {
+        fs.writeFileSync(FILE_BANS, JSON.stringify(bannedIps, null, 2), 'utf8');
+    } catch (e) {}
+};
+
+const requestCounts = new Map();
+setInterval(() => {
+    requestCounts.clear();
+}, 60000);
+
+app.use((req, res, next) => {
+    const clientIp = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || 'unknown';
+    const cleanIp = clientIp.replace(/^::ffff:/, '');
+
+    if (bannedIps.some(item => item.ip === cleanIp)) {
+        return res.status(403).send('Доступ заблокирован системой безопасности Frizworld.');
+    }
+
+    if (!req.originalUrl.startsWith('/uploads') && !req.originalUrl.startsWith('/systems')) {
+        const currentCount = (requestCounts.get(cleanIp) || 0) + 1;
+        requestCounts.set(cleanIp, currentCount);
+
+        if (currentCount > 120) {
+            if (!bannedIps.some(item => item.ip === cleanIp)) {
+                bannedIps.push({ ip: cleanIp, reason: 'Автоматический бан: превышение лимита запросов (DDoS/Spam)', date: new Date().toISOString() });
+                saveBannedIps();
+            }
+            return res.status(429).send('Слишком много запросов. IP заблокирован.');
+        }
+    }
+
+    req.clientIpClean = cleanIp;
+    next();
+});
 
 class RotatingLogger {
     constructor(baseName) {
@@ -91,9 +132,7 @@ class RotatingLogger {
                 .filter(f => f.startsWith(this.baseName + '-'))
                 .forEach(f => {
                     const filePath = path.join(DIR_LOGS, f);
-                    if (fs.statSync(filePath).mtimeMs < cutoff) {
-                        fs.unlinkSync(filePath);
-                    }
+                    if (fs.statSync(filePath).mtimeMs < cutoff) fs.unlinkSync(filePath);
                 });
         } catch (e) {}
     }
@@ -142,9 +181,8 @@ const logger = {
         appLog.write(line);
     },
     access: (req, res, durationMs, payloadStr) => {
-        const clientIp = req.headers['x-forwarded-for'] || req.headers['cf-connecting-ip'] || req.ip || req.connection?.remoteAddress || 'unknown';
         const userAgent = req.headers['user-agent'] || 'No-Agent';
-        const line = `[${getMskTimestamp()}] IP: ${clientIp} | "${req.method} ${req.originalUrl}" | Статус: ${res.statusCode} | Время: ${durationMs}ms | Данные: ${payloadStr} | Устройство: ${userAgent}`;
+        const line = `[${getMskTimestamp()}] IP: ${req.clientIpClean || 'unknown'} | "${req.method} ${req.originalUrl}" | Статус: ${res.statusCode} | Время: ${durationMs}ms | Данные: ${payloadStr} | Устройство: ${userAgent}`;
         console.log(line);
         accessLog.write(line);
     }
@@ -156,12 +194,8 @@ const runAutoBackup = () => {
         const backupFolder = path.join(DIR_BACKUPS, `backup-${dateStr}`);
         fs.mkdirSync(backupFolder, { recursive: true });
         
-        if (fs.existsSync(DIR_DATA)) {
-            fs.cpSync(DIR_DATA, path.join(backupFolder, 'data'), { recursive: true });
-        }
-        if (fs.existsSync(DIR_UPLOADS)) {
-            fs.cpSync(DIR_UPLOADS, path.join(backupFolder, 'uploads'), { recursive: true });
-        }
+        if (fs.existsSync(DIR_DATA)) fs.cpSync(DIR_DATA, path.join(backupFolder, 'data'), { recursive: true });
+        if (fs.existsSync(DIR_UPLOADS)) fs.cpSync(DIR_UPLOADS, path.join(backupFolder, 'uploads'), { recursive: true });
         
         const allBackups = fs.readdirSync(DIR_BACKUPS)
             .filter(f => f.startsWith('backup-'))
@@ -183,9 +217,7 @@ setInterval(runAutoBackup, 24 * 60 * 60 * 1000);
 setTimeout(runAutoBackup, 60 * 1000);
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, DIR_UPLOADS);
-    },
+    destination: (req, file, cb) => cb(null, DIR_UPLOADS),
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, 'media_' + uniqueSuffix + path.extname(file.originalname));
@@ -196,11 +228,8 @@ const upload = multer({
     storage: storage,
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Format error'), false);
-        }
+        if (file.mimetype.startsWith('image/')) cb(null, true);
+        else cb(new Error('Format error'), false);
     }
 });
 
@@ -210,27 +239,18 @@ app.use(cookieParser(process.env.COOKIE_SECRET || 'dev-insecure-secret-change-me
 
 const sanitizeInput = (req, res, next) => {
     const sqlRegex = /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND)\b)|(['"])/i;
-
     const checkObj = (obj) => {
         for (let key in obj) {
-            if (typeof obj[key] === 'string' && key !== 'content' && key !== 'image' && key !== 'imageUrl' && key !== 'path') {
-                if (sqlRegex.test(obj[key])) {
-                    obj[key] = obj[key].replace(/['"]/g, '');
-                }
+            if (typeof obj[key] === 'string' && !['content', 'image', 'imageUrl', 'path', 'reason'].includes(key)) {
+                if (sqlRegex.test(obj[key])) obj[key] = obj[key].replace(/['"]/g, '');
                 obj[key] = obj[key].replace(/</g, '&lt;').replace(/>/g, '&gt;');
             } else if (typeof obj[key] === 'object' && obj[key] !== null) {
                 checkObj(obj[key]);
             }
         }
     };
-
-    if (req.body) {
-        checkObj(req.body);
-    }
-    if (req.query) {
-        checkObj(req.query);
-    }
-
+    if (req.body) checkObj(req.body);
+    if (req.query) checkObj(req.query);
     next();
 };
 
@@ -238,25 +258,20 @@ app.use(sanitizeInput);
 
 app.use((req, res, next) => {
     const start = Date.now();
-    
     const sanitizeForLogs = (data) => {
         if (!data || typeof data !== 'object') return data;
         const copy = JSON.parse(JSON.stringify(data));
         const hiddenKeys = ['password', 'token', 'image', 'file', 'content'];
         for (let key in copy) {
-            if (hiddenKeys.includes(key) && copy[key]) {
-                copy[key] = '[СКРЫТО]';
-            } else if (typeof copy[key] === 'string' && copy[key].length > 150) {
-                copy[key] = copy[key].substring(0, 150) + '... [ОБРЕЗАНО]';
-            } else if (typeof copy[key] === 'object' && copy[key] !== null) {
-                copy[key] = sanitizeForLogs(copy[key]);
-            }
+            if (hiddenKeys.includes(key) && copy[key]) copy[key] = '[СКРЫТО]';
+            else if (typeof copy[key] === 'string' && copy[key].length > 150) copy[key] = copy[key].substring(0, 150) + '... [ОБРЕЗАНО]';
+            else if (typeof copy[key] === 'object' && copy[key] !== null) copy[key] = sanitizeForLogs(copy[key]);
         }
         return copy;
     };
 
     res.on('finish', () => {
-        if (!req.originalUrl.startsWith('/api/logs') && !req.originalUrl.startsWith('/api/list-files')) {
+        if (!req.originalUrl.startsWith('/api/logs') && !req.originalUrl.startsWith('/api/list-files') && !req.originalUrl.startsWith('/api/bans')) {
             const payloadObj = {
                 query: Object.keys(req.query).length ? sanitizeForLogs(req.query) : null,
                 body: Object.keys(req.body).length ? sanitizeForLogs(req.body) : null
@@ -272,43 +287,26 @@ app.use(express.static(DIR_PUBLIC));
 
 app.get('/login', (req, res) => {
     const loginPath = path.join(DIR_VIEWS, 'login.html');
-    if (!fs.existsSync(loginPath)) {
-        return res.status(500).send('Error 500');
-    }
+    if (!fs.existsSync(loginPath)) return res.status(500).send('Error 500');
     res.sendFile(loginPath);
 });
 
 app.post('/login', (req, res) => {
     const { username, password, token } = req.body;
-    const envUser = process.env.ADMIN_USER;
-    const envPass = process.env.ADMIN_PASS;
-
-    if (username && password && username === envUser && password === envPass) {
-        res.cookie('admin_auth', 'true', {
-            httpOnly: true,
-            signed: true,
-            path: '/',
-            maxAge: 24 * 60 * 60 * 1000
-        });
+    if (username && password && username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
+        res.cookie('admin_auth', 'true', { httpOnly: true, signed: true, path: '/', maxAge: 24 * 60 * 60 * 1000 });
         return res.redirect('/admin');
     }
-
     if (token) {
         try {
-            const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
-            const config = JSON.parse(data);
+            const config = JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'));
             const validToken = (config.apiTokens || []).find(t => t.token === token.trim() && t.active !== false);
             if (validToken) {
-                res.cookie('api_token', validToken.token, {
-                    httpOnly: true,
-                    path: '/',
-                    maxAge: 24 * 60 * 60 * 1000
-                });
+                res.cookie('api_token', validToken.token, { httpOnly: true, path: '/', maxAge: 24 * 60 * 60 * 1000 });
                 return res.redirect('/admin');
             }
         } catch (e) {}
     }
-
     res.redirect('/login?error=1');
 });
 
@@ -320,21 +318,13 @@ app.get('/logout', (req, res) => {
 
 app.get('/admin', authMiddleware, (req, res) => {
     const adminPath = path.join(DIR_VIEWS, 'admin.html');
-    if (!fs.existsSync(adminPath)) {
-        return res.status(500).send('Error 500');
-    }
+    if (!fs.existsSync(adminPath)) return res.status(500).send('Error 500');
     res.sendFile(adminPath);
 });
 
 async function processGif(inputPath) {
     const tempPath = path.join(path.dirname(inputPath), 'temp_' + path.basename(inputPath));
-    await sharp(inputPath, { animated: true })
-        .resize({
-            width: 600,
-            withoutEnlargement: true,
-            kernel: sharp.kernel.lanczos3
-        })
-        .toFile(tempPath);
+    await sharp(inputPath, { animated: true }).resize({ width: 600, withoutEnlargement: true, kernel: sharp.kernel.lanczos3 }).toFile(tempPath);
     fs.unlinkSync(inputPath);
     fs.renameSync(tempPath, inputPath);
 }
@@ -342,43 +332,49 @@ async function processGif(inputPath) {
 app.use('/api', authMiddleware);
 
 app.get('/api/me', (req, res) => {
-    if (req.isSuperAdmin) {
-        return res.json({ isSuperAdmin: true, systems: ['all'], permissions: ['all'] });
-    }
-    if (req.tokenData) {
-        return res.json({
-            isSuperAdmin: false,
-            name: req.tokenData.name,
-            systems: req.tokenData.systems || [],
-            permissions: req.tokenData.permissions || []
-        });
-    }
+    if (req.isSuperAdmin) return res.json({ isSuperAdmin: true, systems: ['all'], permissions: ['all'] });
+    if (req.tokenData) return res.json({ isSuperAdmin: false, name: req.tokenData.name, systems: req.tokenData.systems || [], permissions: req.tokenData.permissions || [] });
     res.status(401).json({ error: 'Not authenticated' });
 });
 
+app.get('/api/bans', (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    res.json({ success: true, banned: bannedIps });
+});
+
+app.post('/api/bans', (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    const { ip, reason } = req.body;
+    if (!ip) return res.status(400).json({ error: 'IP required' });
+    const cleanIp = ip.trim().replace(/^::ffff:/, '');
+    if (!bannedIps.some(item => item.ip === cleanIp)) {
+        bannedIps.push({ ip: cleanIp, reason: reason || 'Ручная блокировка через админку', date: new Date().toISOString() });
+        saveBannedIps();
+    }
+    res.json({ success: true, banned: bannedIps });
+});
+
+app.delete('/api/bans/:ip', (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    const targetIp = req.params.ip;
+    bannedIps = bannedIps.filter(item => item.ip !== targetIp);
+    saveBannedIps();
+    res.json({ success: true, banned: bannedIps });
+});
+
 app.get('/api/tokens', (req, res) => {
-    if (!req.isSuperAdmin) {
-        return res.status(403).json({ error: 'Superadmin required' });
-    }
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     try {
-        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
-        const config = JSON.parse(data);
+        const config = JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'));
         res.json({ success: true, tokens: config.apiTokens || [] });
-    } catch (err) {
-        res.status(500).json({ error: 'Read error' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Read error' }); }
 });
 
 app.post('/api/tokens/create', (req, res) => {
-    if (!req.isSuperAdmin) {
-        return res.status(403).json({ error: 'Superadmin required' });
-    }
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     try {
         const { name, systems, permissions } = req.body;
-        if (!name || !systems || systems.length === 0) {
-            return res.status(400).json({ error: 'Invalid parameters' });
-        }
-
+        if (!name || !systems || systems.length === 0) return res.status(400).json({ error: 'Invalid parameters' });
         const newToken = {
             id: Date.now().toString(),
             token: 'friz_' + crypto.randomBytes(24).toString('hex'),
@@ -388,91 +384,54 @@ app.post('/api/tokens/create', (req, res) => {
             createdAt: new Date().toISOString(),
             active: true
         };
-
-        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
-        const config = JSON.parse(data);
+        const config = JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'));
         if (!config.apiTokens) config.apiTokens = [];
-        
         config.apiTokens.push(newToken);
         fs.writeFileSync(FILE_SETTINGS, JSON.stringify(config, null, 2), 'utf8');
-
         res.json({ success: true, token: newToken });
-    } catch (err) {
-        res.status(500).json({ error: 'Write error' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Write error' }); }
 });
 
 app.delete('/api/tokens/:id', (req, res) => {
-    if (!req.isSuperAdmin) {
-        return res.status(403).json({ error: 'Superadmin required' });
-    }
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     try {
-        const tokenId = req.params.id;
-        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
-        const config = JSON.parse(data);
-        
+        const config = JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'));
         if (config.apiTokens) {
-            config.apiTokens = config.apiTokens.filter(t => t.id !== tokenId);
+            config.apiTokens = config.apiTokens.filter(t => t.id !== req.params.id);
             fs.writeFileSync(FILE_SETTINGS, JSON.stringify(config, null, 2), 'utf8');
         }
-
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Delete error' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Delete error' }); }
 });
 
 app.get('/api/projects', (req, res) => {
-    try {
-        const data = fs.readFileSync(FILE_PROJECTS, 'utf8');
-        res.json(JSON.parse(data));
-    } catch (err) {
-        res.status(500).json({ error: 'Read error' });
-    }
+    try { res.json(JSON.parse(fs.readFileSync(FILE_PROJECTS, 'utf8'))); } 
+    catch (err) { res.status(500).json({ error: 'Read error' }); }
 });
 
 app.post('/api/projects', (req, res) => {
-    if (!req.isSuperAdmin) {
-        return res.status(403).json({ error: 'Superadmin required' });
-    }
-    try {
-        fs.writeFileSync(FILE_PROJECTS, JSON.stringify(req.body, null, 2), 'utf8');
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Write error' });
-    }
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    try { fs.writeFileSync(FILE_PROJECTS, JSON.stringify(req.body, null, 2), 'utf8'); res.json({ success: true }); } 
+    catch (err) { res.status(500).json({ error: 'Write error' }); }
 });
 
 app.get('/api/settings', (req, res) => {
-    try {
-        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
-        res.json(JSON.parse(data));
-    } catch (err) {
-        res.status(500).json({ error: 'Read error' });
-    }
+    try { res.json(JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'))); } 
+    catch (err) { res.status(500).json({ error: 'Read error' }); }
 });
 
 app.post('/api/settings', (req, res) => {
     try {
-        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
-        const currentConfig = JSON.parse(data);
+        const currentConfig = JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'));
         const newConfig = req.body;
-
         if (!req.isSuperAdmin && req.tokenData) {
-            req.tokenData.systems.forEach(sys => {
-                if (newConfig[sys]) {
-                    currentConfig[sys] = newConfig[sys];
-                }
-            });
+            req.tokenData.systems.forEach(sys => { if (newConfig[sys]) currentConfig[sys] = newConfig[sys]; });
             fs.writeFileSync(FILE_SETTINGS, JSON.stringify(currentConfig, null, 2), 'utf8');
             return res.json({ success: true, scoped: true });
         }
-
         fs.writeFileSync(FILE_SETTINGS, JSON.stringify(newConfig, null, 2), 'utf8');
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Write error' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Write error' }); }
 });
 
 app.post('/api/upload', upload.single('image'), async (req, res) => {
@@ -487,122 +446,68 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
                 return res.json({ success: true, url: `/uploads/${filename}` });
             }
         }
-
-        if (!req.file) {
-            return res.status(400).json({ error: 'File error' });
-        }
-
-        if (req.file.mimetype === 'image/gif') {
-            await processGif(req.file.path);
-        }
-
+        if (!req.file) return res.status(400).json({ error: 'File error' });
+        if (req.file.mimetype === 'image/gif') await processGif(req.file.path);
         res.json({ success: true, url: `/uploads/${req.file.filename}` });
-    } catch (err) {
-        res.status(500).json({ error: 'Upload error' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Upload error' }); }
 });
 
 app.get('/api/logs', (req, res) => {
-    if (!req.isSuperAdmin) {
-        return res.status(403).json({ error: 'Superadmin required' });
-    }
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     try {
         const typeAlias = { visits: 'access', errors: 'error', access: 'access', error: 'error', app: 'app' };
         const type = typeAlias[req.query.type] || 'access';
         const logSource = { access: accessLog, error: errorLog, app: appLog }[type];
-
         const filePath = logSource.latestFile();
-        if (!filePath || !fs.existsSync(filePath)) {
-            return res.json({ logs: 'Пусто' });
-        }
-
+        if (!filePath || !fs.existsSync(filePath)) return res.json({ logs: 'Пусто' });
         const data = fs.readFileSync(filePath, 'utf8');
         const lines = data.split('\n').filter(Boolean);
-        const lastLines = lines.slice(-300).reverse().join('\n');
-
-        res.json({ logs: lastLines, file: path.basename(filePath) });
-    } catch (err) {
-        res.status(500).json({ error: 'Log error' });
-    }
+        res.json({ logs: lines.slice(-300).reverse().join('\n'), file: path.basename(filePath) });
+    } catch (err) { res.status(500).json({ error: 'Log error' }); }
 });
 
 app.get('/api/list-files', (req, res) => {
     try {
         const getFilesRecursive = (dir, base = '') => {
             let results = [];
-            const list = fs.readdirSync(dir);
-
-            list.forEach(file => {
+            fs.readdirSync(dir).forEach(file => {
                 const filePath = path.join(dir, file);
                 const relativePath = path.join(base, file);
-                const stat = fs.statSync(filePath);
-
-                if (stat && stat.isDirectory()) {
-                    results = results.concat(getFilesRecursive(filePath, relativePath));
-                } else {
-                    results.push(relativePath.replace(/\\/g, '/'));
-                }
+                if (fs.statSync(filePath).isDirectory()) results = results.concat(getFilesRecursive(filePath, relativePath));
+                else results.push(relativePath.replace(/\\/g, '/'));
             });
-
             return results;
         };
-
-        const allFiles = getFilesRecursive(DIR_PUBLIC);
-        res.json(allFiles);
-    } catch (err) {
-        res.status(500).json({ error: 'Files error' });
-    }
+        res.json(getFilesRecursive(DIR_PUBLIC));
+    } catch (err) { res.status(500).json({ error: 'Files error' }); }
 });
 
 app.get('/api/file', (req, res) => {
     try {
         const filePathParam = req.query.path;
-
-        if (!filePathParam) {
-            return res.status(400).json({ error: 'Path error' });
-        }
-
+        if (!filePathParam) return res.status(400).json({ error: 'Path error' });
         const safePath = path.normalize(filePathParam).replace(/^(\.\.[\/\\])+/, '');
         const fullPath = path.join(DIR_PUBLIC, safePath);
-
-        if (!fs.existsSync(fullPath)) {
-            return res.status(404).json({ error: '404' });
-        }
-
-        const content = fs.readFileSync(fullPath, 'utf8');
-        res.json({ content });
-    } catch (err) {
-        res.status(500).json({ error: 'File error' });
-    }
+        if (!fs.existsSync(fullPath)) return res.status(404).json({ error: '404' });
+        res.json({ content: fs.readFileSync(fullPath, 'utf8') });
+    } catch (err) { res.status(500).json({ error: 'File error' }); }
 });
 
 app.post('/api/file', (req, res) => {
     try {
         const { filePath, content } = req.body;
-
-        if (!filePath) {
-            return res.status(400).json({ error: 'Path error' });
-        }
-
+        if (!filePath) return res.status(400).json({ error: 'Path error' });
         const safePath = path.normalize(filePath).replace(/^(\.\.[\/\\])+/, '');
-        const fullPath = path.join(DIR_PUBLIC, safePath);
-
-        fs.writeFileSync(fullPath, content, 'utf8');
+        fs.writeFileSync(path.join(DIR_PUBLIC, safePath), content, 'utf8');
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'File error' });
-    }
+    } catch (err) { res.status(500).json({ error: 'File error' }); }
 });
 
 const loadModularRoute = (routeName, routeFile) => {
     const fullPath = path.join(DIR_ROUTES, routeFile);
     if (fs.existsSync(fullPath)) {
-        try {
-            const routeModule = require(fullPath);
-            app.use(routeName, routeModule);
-        } catch (err) {
-            logger.error(`Ошибка загрузки роута ${routeName}`, err);
-        }
+        try { app.use(routeName, require(fullPath)); } 
+        catch (err) { logger.error(`Ошибка загрузки роута ${routeName}`, err); }
     }
 };
 
@@ -614,45 +519,22 @@ loadModularRoute('/cid', 'cid.js');
 loadModularRoute('/deadly', 'deadly.js');
 loadModularRoute('/ems', 'ems.js');
 
-app.use((req, res) => {
-    res.status(404).send('404');
-});
-
+app.use((req, res) => res.status(404).send('404'));
 app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        return res.status(400).json({ error: `Upload error: ${err.message}` });
-    }
+    if (err instanceof multer.MulterError) return res.status(400).json({ error: `Upload error: ${err.message}` });
     res.status(500).json({ error: '500' });
 });
 
-process.on('uncaughtException', (err) => {
-    logger.error('uncaughtException', err);
-    process.exit(1);
-});
-
-process.on('unhandledRejection', (reason) => {
-    logger.error('unhandledRejection', reason);
-});
+process.on('uncaughtException', (err) => { logger.error('uncaughtException', err); process.exit(1); });
+process.on('unhandledRejection', (reason) => { logger.error('unhandledRejection', reason); });
 
 const server = http.createServer(app);
+server.on('error', (err) => { logger.error('Server error', err); process.exit(1); });
+server.listen(PORT, () => { logger.info(`Server started on port ${PORT}`); });
 
-server.on('error', (err) => {
-    logger.error('Server error', err);
-    process.exit(1);
-});
-
-server.listen(PORT, () => {
-    logger.info(`Server started on port ${PORT}`);
-});
-
-const gracefulShutdown = (signal) => {
-    server.close(() => {
-        process.exit(0);
-    });
-    setTimeout(() => {
-        process.exit(1);
-    }, 10000).unref();
+const gracefulShutdown = () => {
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(1), 10000).unref();
 };
-
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
