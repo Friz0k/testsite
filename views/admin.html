@@ -37,7 +37,7 @@
         .logout-btn:hover { background: var(--danger-color); color: #fff; }
 
         .content-area { flex-grow: 1; padding: 20px 40px; overflow-y: auto; }
-        .tab-content { display: none; max-width: 1100px; margin: 0 auto; animation: fadeIn 0.3s ease; }
+        .tab-content { display: none; max-width: 1250px; margin: 0 auto; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -59,11 +59,9 @@
         button:hover { background-color: var(--accent-hover); }
         .btn-success { background-color: var(--success-color); }
         .btn-danger { background-color: var(--danger-color); }
-        .btn-sm { padding: 8px 15px; font-size: 12px; margin-top: 5px; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; margin-top: 0; }
 
         .btn-group { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
-
-        pre.logs-view { background-color: #050507; color: #22c55e; padding: 15px; border-radius: 8px; height: 500px; overflow-y: auto; font-family: monospace; font-size: 13px; border: 1px solid var(--border-color); white-space: pre-wrap; word-wrap: break-word; }
         .preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px; object-fit: cover; }
 
         .subsystem-tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
@@ -95,6 +93,26 @@
         .checkbox-group { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; background: #09090b; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); }
         .checkbox-group label { display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; text-transform: none; font-size: 13px; color: var(--text-main); }
         .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; margin-bottom: 0; accent-color: var(--accent-color); }
+
+        .logs-table-container { max-height: 600px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; background: #050507; }
+        .logs-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        .logs-table th { background: #121214; padding: 12px; position: sticky; top: 0; z-index: 10; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; }
+        .logs-table td { padding: 10px 12px; border-bottom: 1px solid #18181b; vertical-align: top; color: #d4d4d8; }
+        .logs-table tr:hover { background: rgba(124, 58, 237, 0.08); }
+        
+        .status-badge { padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-block; }
+        .status-2xx { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+        .status-3xx { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
+        .status-4xx { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid #eab308; }
+        .status-5xx { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+        
+        .method-badge { font-weight: bold; font-family: monospace; color: #a855f7; }
+        .ip-code { font-family: monospace; background: #18181b; padding: 2px 6px; border-radius: 4px; color: #38bdf8; }
+        .device-text { font-size: 11px; color: #71717a; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .data-text { font-family: monospace; font-size: 11px; color: #a1a1aa; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .banned-card { background: #18181b; border: 1px solid var(--danger-color); padding: 15px 20px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .banned-card span { font-family: monospace; font-size: 15px; font-weight: bold; color: #f87171; }
     </style>
 </head>
 <body>
@@ -106,7 +124,8 @@
         <ul class="nav-links" id="siteNavLinks">
             <li class="active" onclick="switchTab('projects', this)">📦 Проекты</li>
             <li onclick="switchTab('illustration', this)">🎨 Арт на главной</li>
-            <li onclick="switchTab('logs', this)">📊 Логи сервера</li>
+            <li onclick="switchTab('logs', this)">📊 Мониторинг и Логи</li>
+            <li onclick="switchTab('bans', this)">🚫 Заблокированные IP</li>
             <li onclick="switchTab('code', this)">💻 Редактор кода</li>
         </ul>
 
@@ -177,22 +196,71 @@
 
         <div id="logs" class="tab-content">
             <div class="admin-section">
-                <h3>Мониторинг сервера</h3>
+                <h3>Визуальный мониторинг трафика</h3>
+                
                 <div class="form-grid full-width" style="margin-bottom: 15px; align-items: end;">
                     <div>
-                        <label>Тип логов</label>
-                        <select id="logTypeSelect" onchange="fetchLogs()">
-                            <option value="visits">👀 Логи визитов (access.log)</option>
-                            <option value="errors">❌ Логи ошибок (error.log)</option>
-                            <option value="app">📋 Логи приложения (app.log)</option>
+                        <label>Поток логов</label>
+                        <select id="logTypeSelect" onchange="fetchLogs()" style="margin-bottom: 0;">
+                            <option value="visits">👀 Визиты и запросы (access.log)</option>
+                            <option value="errors">❌ Системные ошибки (error.log)</option>
+                            <option value="app">📋 Общий журнал (app.log)</option>
                         </select>
                     </div>
-                    <div class="btn-group">
-                        <button type="button" onclick="fetchLogs()">🔄 Обновить</button>
-                        <button type="button" id="autoRefreshBtn" onclick="toggleAutoRefresh()" class="btn-success">Автообновление: ВЫКЛ</button>
+                    <div>
+                        <label>Быстрый поиск по IP или URL</label>
+                        <input type="text" id="logSearchInput" placeholder="Фильтр по IP или слову..." oninput="filterLogsTable()" style="margin-bottom: 0;">
                     </div>
                 </div>
-                <pre id="serverLogs" class="logs-view">Загрузка логов...</pre>
+
+                <div class="btn-group" style="margin-bottom: 15px;">
+                    <button type="button" onclick="fetchLogs()">🔄 Обновить таблицу</button>
+                    <button type="button" id="autoRefreshBtn" onclick="toggleAutoRefresh()" class="btn-success">Автообновление: ВЫКЛ</button>
+                </div>
+
+                <div class="logs-table-container">
+                    <table class="logs-table">
+                        <thead>
+                            <tr>
+                                <th>Время (МСК)</th>
+                                <th>IP-адрес</th>
+                                <th>Запрос (URL)</th>
+                                <th>Статус</th>
+                                <th>Пакет данных</th>
+                                <th>Устройство (User-Agent)</th>
+                                <th>Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <tr><td colspan="7" style="text-align:center; padding: 20px;">Загрузка данных...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="bans" class="tab-content">
+            <div class="admin-section">
+                <h3>Управление блокировками и защитой</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">Заблокированные IP мгновенно отсекаются сервером без нагрузки на систему и базу данных.</p>
+                
+                <div style="background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
+                    <h4 style="margin-top: 0;">Ручная блокировка IP</h4>
+                    <div class="form-grid">
+                        <div>
+                            <label>IP-адрес нарушителя</label>
+                            <input type="text" id="banIpInput" placeholder="Например: 91.78.220.167">
+                        </div>
+                        <div>
+                            <label>Причина блокировки</label>
+                            <input type="text" id="banReasonInput" placeholder="Скам / Флуд / Подозреваемый">
+                        </div>
+                    </div>
+                    <button type="button" class="btn-danger" onclick="manualBanIp()">🚫 Заблокировать IP навсегда</button>
+                </div>
+
+                <h4>Активный черный список (Banned List)</h4>
+                <div id="bannedListContainer">Загрузка...</div>
             </div>
         </div>
 
@@ -334,6 +402,7 @@
             document.getElementById(tabId).classList.add('active');
             if (element) element.classList.add('active');
             if (tabId === 'logs') fetchLogs();
+            if (tabId === 'bans') loadBansUI();
             if (tabId === 'faction_manager' && !currentFaction) loadFactionUI();
             if (tabId === 'tokens_manager') loadTokensUI();
         }
@@ -420,11 +489,113 @@
         }
 
         let refreshInterval = null;
-        async function fetchLogs() { const type = document.getElementById('logTypeSelect').value; const data = await apiCall(`/api/logs?type=${type}`); if (data) document.getElementById('serverLogs').innerText = data.logs || 'Пусто...'; }
+        let rawLogsData = [];
+        
+        async function fetchLogs() { 
+            const type = document.getElementById('logTypeSelect').value; 
+            const data = await apiCall(`/api/logs?type=${type}`); 
+            if (data && data.logs) {
+                rawLogsData = data.logs.split('\n').filter(Boolean);
+                renderLogsTable();
+            } else {
+                document.getElementById('logsTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">Нет данных в журнале...</td></tr>';
+            }
+        }
+
+        function renderLogsTable() {
+            const tbody = document.getElementById('logsTableBody');
+            const filterText = (document.getElementById('logSearchInput')?.value || '').toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = rawLogsData.filter(line => line.toLowerCase().includes(filterText));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">Записи не найдены</td></tr>';
+                return;
+            }
+
+            filtered.slice(0, 150).forEach(line => {
+                const timeMatch = line.match(/^\[(.*?)\]/);
+                const ipMatch = line.match(/IP:\s*([^\s|]+)/);
+                const reqMatch = line.match(/\|\s*"(.*?)"/);
+                const statusMatch = line.match(/Статус:\s*(\d+)/);
+                const dataMatch = line.match(/Данные:\s*(.*?)(?=\s*\|\s*Устройство:|$)/);
+                const uaMatch = line.match(/Устройство:\s*(.*)$/);
+
+                const timeStr = timeMatch ? timeMatch[1] : '-';
+                const ipStr = ipMatch ? ipMatch[1].replace('::ffff:', '') : 'unknown';
+                const reqStr = reqMatch ? reqMatch[1] : line;
+                const statusStr = statusMatch ? statusMatch[1] : '0';
+                const dataStr = dataMatch ? dataMatch[1] : '-';
+                const uaStr = uaMatch ? uaMatch[1] : '-';
+
+                let statusClass = 'status-2xx';
+                if (statusStr.startsWith('3')) statusClass = 'status-3xx';
+                if (statusStr.startsWith('4')) statusClass = 'status-4xx';
+                if (statusStr.startsWith('5')) statusClass = 'status-5xx';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="white-space:nowrap; font-size:12px;">${timeStr}</td>
+                    <td><span class="ip-code">${ipStr}</span></td>
+                    <td><span class="method-badge">${reqStr}</span></td>
+                    <td><span class="status-badge ${statusClass}">${statusStr}</span></td>
+                    <td><div class="data-text" title="${dataStr.replace(/"/g, '&quot;')}">${dataStr}</div></td>
+                    <td><div class="device-text" title="${uaStr.replace(/"/g, '&quot;')}">${uaStr}</div></td>
+                    <td><button class="btn-danger btn-sm" onclick="quickBan('${ipStr}')" title="Забанить IP">🚫</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterLogsTable() { renderLogsTable(); }
+
         function toggleAutoRefresh() {
             const btn = document.getElementById('autoRefreshBtn');
             if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; btn.innerText = 'Автообновление: ВЫКЛ'; btn.style.backgroundColor = 'var(--accent-color)'; } 
             else { fetchLogs(); refreshInterval = setInterval(fetchLogs, 3000); btn.innerText = 'Автообновление: ВКЛ'; btn.style.backgroundColor = 'var(--success-color)'; }
+        }
+
+        async function loadBansUI() {
+            const res = await apiCall('/api/bans');
+            const container = document.getElementById('bannedListContainer');
+            if (!res || !res.banned || res.banned.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted);">Черный список пуст. Все соединения разрешены.</p>';
+                return;
+            }
+            container.innerHTML = res.banned.map(item => `
+                <div class="banned-card">
+                    <div>
+                        <span>🚫 ${item.ip}</span>
+                        <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">Причина: ${item.reason || 'Не указана'} | Дата: ${new Date(item.date || Date.now()).toLocaleString()}</div>
+                    </div>
+                    <button class="btn-success btn-sm" onclick="unbanIp('${item.ip}')">✔️ Разблокировать</button>
+                </div>
+            `).join('');
+        }
+
+        async function manualBanIp() {
+            const ip = document.getElementById('banIpInput').value.trim();
+            const reason = document.getElementById('banReasonInput').value.trim();
+            if (!ip) return alert('Введите IP-адрес!');
+            const res = await apiCall('/api/bans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip, reason }) });
+            if (res && res.success) {
+                document.getElementById('banIpInput').value = '';
+                document.getElementById('banReasonInput').value = '';
+                loadBansUI();
+            }
+        }
+
+        async function quickBan(ip) {
+            if (!confirm(`Точно заблокировать доступ для IP: ${ip}?`)) return;
+            const res = await apiCall('/api/bans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip, reason: 'Быстрая блокировка из мониторинга логов' }) });
+            if (res && res.success) alert(`IP ${ip} успешно занесен в черный список!`);
+        }
+
+        async function unbanIp(ip) {
+            if (!confirm(`Снять блокировку с IP: ${ip}?`)) return;
+            const res = await apiCall(`/api/bans/${encodeURIComponent(ip)}`, { method: 'DELETE' });
+            if (res && res.success) loadBansUI();
         }
 
         async function loadFileList() { const files = await apiCall('/api/list-files'); if (!files) return; const select = document.getElementById('fileSelect'); select.innerHTML = '<option value="">-- Выберите файл --</option>'; files.forEach(f => { select.innerHTML += `<option value="${f}">${f}</option>`; }); }
@@ -509,7 +680,7 @@
             if (!userAuth.isSuperAdmin) {
                 document.querySelectorAll('#siteNavLinks li').forEach(li => {
                     const attr = li.getAttribute('onclick');
-                    if (attr && (attr.includes('projects') || attr.includes('illustration') || attr.includes('logs'))) {
+                    if (attr && (attr.includes('projects') || attr.includes('illustration') || attr.includes('logs') || attr.includes('bans'))) {
                         li.style.display = 'none';
                     }
                     if (attr && attr.includes('code') && !userAuth.permissions.includes('files') && !userAuth.permissions.includes('all')) {
@@ -519,30 +690,23 @@
 
                 document.querySelectorAll('#systemsNavLinks li').forEach(li => {
                     const attr = li.getAttribute('onclick');
-                    if (attr && attr.includes('tokens_manager')) {
-                        li.style.display = 'none';
-                    }
+                    if (attr && attr.includes('tokens_manager')) li.style.display = 'none';
                 });
 
                 const selector = document.getElementById('factionSelector');
                 Array.from(selector.options).forEach(opt => {
-                    if (!userAuth.systems.includes(opt.value) && !userAuth.systems.includes('all')) {
-                        opt.remove();
-                    }
+                    if (!userAuth.systems.includes(opt.value) && !userAuth.systems.includes('all')) opt.remove();
                 });
 
                 const anySiteVisible = Array.from(document.querySelectorAll('#siteNavLinks li')).some(li => li.style.display !== 'none');
-                if (!anySiteVisible) {
-                    document.getElementById('siteNavCat').style.display = 'none';
-                }
+                if (!anySiteVisible) document.getElementById('siteNavCat').style.display = 'none';
 
                 document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
                 document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
 
                 const factionBtn = Array.from(document.querySelectorAll('#systemsNavLinks li')).find(li => li.getAttribute('onclick')?.includes('faction_manager'));
-                if (factionBtn) {
-                    switchTab('faction_manager', factionBtn);
-                } else {
+                if (factionBtn) switchTab('faction_manager', factionBtn);
+                else {
                     const codeBtn = Array.from(document.querySelectorAll('#siteNavLinks li')).find(li => li.style.display !== 'none');
                     if (codeBtn) switchTab('code', codeBtn);
                 }
@@ -553,10 +717,7 @@
                 globalConfig = data;
                 if (data.illustrationUrl) {
                     const ill = document.getElementById('currentIllustration');
-                    if (ill) {
-                        ill.src = data.illustrationUrl;
-                        ill.style.display = 'block';
-                    }
+                    if (ill) { ill.src = data.illustrationUrl; ill.style.display = 'block'; }
                 }
                 loadFactionUI();
             }
@@ -613,26 +774,21 @@
 
             if (schema.hasTest) {
                 let rawQuestions = [];
-                
                 if (currentFaction === 'fib') {
                     fibSettingsBox.style.display = 'block';
                     stdSettingsBox.style.display = 'none';
-                    
                     document.getElementById('fib-timer-rank5').value = config.testSettings?.durationMinutesRank5 || config.testSettings?.durationMinutesRank3 || 15;
                     document.getElementById('fib-timer-rank7').value = config.testSettings?.durationMinutesRank7 || 20;
                     document.getElementById('fib-score-rank5').value = config.testSettings?.passingScoreRank5 || config.testSettings?.passingScoreRank3 || 6;
                     document.getElementById('fib-score-rank7').value = config.testSettings?.passingScoreRank7 || 14;
                     document.getElementById('fib-count-rank5').value = config.testSettings?.questionCountRank5 || 10;
                     document.getElementById('fib-count-rank7').value = config.testSettings?.questionCountRank7 || 20;
-                    
                     rawQuestions = config.testSettings?.questions || [];
                 } else {
                     fibSettingsBox.style.display = 'none';
                     stdSettingsBox.style.display = 'block';
-                    
                     let passingScore = 0;
                     let durationMinutes = 15;
-                    
                     if (currentFaction === 'lssd') {
                         passingScore = config.testPassingScore || 0;
                         durationMinutes = config.testDurationMinutes || 15;
@@ -646,7 +802,6 @@
                         durationMinutes = config.testSettings?.durationMinutes || 15;
                         rawQuestions = config.testSettings?.questions || [];
                     }
-                    
                     document.getElementById('test-passing-score').value = passingScore;
                     document.getElementById('test-duration-minutes').value = durationMinutes;
                 }
@@ -679,7 +834,6 @@
                     }
                     return uq;
                 });
-                
                 renderQuestions();
             } else {
                 fibSettingsBox.style.display = 'none';
@@ -693,11 +847,8 @@
             const uq = unifiedQuestions[qIdx];
             if (!uq.ranks) uq.ranks = [5, 7];
             const i = uq.ranks.indexOf(rankVal);
-            if (i > -1) {
-                if (uq.ranks.length > 1) uq.ranks.splice(i, 1);
-            } else {
-                uq.ranks.push(rankVal);
-            }
+            if (i > -1) { if (uq.ranks.length > 1) uq.ranks.splice(i, 1); } 
+            else uq.ranks.push(rankVal);
             uq.ranks.sort();
             renderQuestions();
         }
@@ -766,19 +917,13 @@
                 const q = { options: [], ranks: oldQ.ranks || [5, 7] };
                 q.text = card.querySelector('.q-text').value;
                 q.type = card.querySelector('.q-type').value;
-                
                 if (currentFaction === 'gov') {
                     q.points = parseInt(card.querySelector('.q-points')?.value) || 1;
                     q.isBonus = card.querySelector('.q-bonus')?.checked || false;
                 }
-
                 if (q.type !== 'text') {
-                    const optDivs = card.querySelectorAll('.q-opt');
-                    optDivs.forEach(optDiv => {
-                        q.options.push({
-                            text: optDiv.querySelector('.opt-text').value,
-                            isCorrect: optDiv.querySelector('.opt-correct').checked
-                        });
+                    card.querySelectorAll('.q-opt').forEach(optDiv => {
+                        q.options.push({ text: optDiv.querySelector('.opt-text').value, isCorrect: optDiv.querySelector('.opt-correct').checked });
                     });
                 }
                 return q;
@@ -798,23 +943,13 @@
             renderQuestions();
         }
 
-        function addOpt(qIdx) {
-            syncDOMToState();
-            unifiedQuestions[qIdx].options.push({ text: '', isCorrect: false });
-            renderQuestions();
-        }
-
-        function removeOpt(qIdx, oIdx) {
-            syncDOMToState();
-            unifiedQuestions[qIdx].options.splice(oIdx, 1);
-            renderQuestions();
-        }
+        function addOpt(qIdx) { syncDOMToState(); unifiedQuestions[qIdx].options.push({ text: '', isCorrect: false }); renderQuestions(); }
+        function removeOpt(qIdx, oIdx) { syncDOMToState(); unifiedQuestions[qIdx].options.splice(oIdx, 1); renderQuestions(); }
 
         async function saveFactionSettings() {
             const schema = factionSchemas[currentFaction];
             if (!globalConfig[currentFaction]) globalConfig[currentFaction] = { webhooks: {}, roles: {} };
             const config = globalConfig[currentFaction];
-
             if (!config.webhooks) config.webhooks = {};
             if (!config.roles) config.roles = {};
 
@@ -829,46 +964,17 @@
 
             if (schema.hasTest) {
                 syncDOMToState();
-                
                 const processedQuestions = unifiedQuestions.map((uq, idx) => {
                     const correctOpts = uq.options.filter(o => o.isCorrect).map(o => o.text);
                     if (currentFaction === 'fib') {
-                        return {
-                            id: idx + 1,
-                            text: uq.text,
-                            type: uq.type,
-                            ranks: uq.ranks || [5, 7],
-                            options: uq.options.map(o => o.text),
-                            correctAnswers: correctOpts,
-                            correctAnswer: correctOpts[0] || ''
-                        };
+                        return { id: idx + 1, text: uq.text, type: uq.type, ranks: uq.ranks || [5, 7], options: uq.options.map(o => o.text), correctAnswers: correctOpts, correctAnswer: correctOpts[0] || '' };
                     } else if (currentFaction === 'lssd') {
                         const correctIndices = uq.options.map((o, i) => o.isCorrect ? i : -1).filter(i => i !== -1);
-                        return {
-                            id: idx + 1,
-                            question: uq.text,
-                            type: uq.type,
-                            options: uq.options.map(o => o.text),
-                            correctIndices: correctIndices,
-                            correctIndex: correctIndices[0] || 0
-                        };
+                        return { id: idx + 1, question: uq.text, type: uq.type, options: uq.options.map(o => o.text), correctIndices: correctIndices, correctIndex: correctIndices[0] || 0 };
                     } else if (currentFaction === 'lspd') {
-                        return {
-                            id: idx + 1,
-                            question: uq.text,
-                            type: uq.type,
-                            options: uq.options.map(o => o.text),
-                            correct: correctOpts
-                        };
+                        return { id: idx + 1, question: uq.text, type: uq.type, options: uq.options.map(o => o.text), correct: correctOpts };
                     } else if (currentFaction === 'gov') {
-                        return {
-                            id: idx + 1,
-                            question: uq.text,
-                            type: uq.type,
-                            points: uq.points,
-                            isBonus: uq.isBonus,
-                            options: uq.type === 'text' ? [] : uq.options.map(o => ({ text: o.text, correct: o.isCorrect }))
-                        };
+                        return { id: idx + 1, question: uq.text, type: uq.type, points: uq.points, isBonus: uq.isBonus, options: uq.type === 'text' ? [] : uq.options.map(o => ({ text: o.text, correct: o.isCorrect })) };
                     }
                 });
 
@@ -895,37 +1001,20 @@
                 }
             }
 
-            const res = await apiCall('/api/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(globalConfig)
-            });
-
-            if (res && res.success) {
-                alert(`Настройки фракции ${currentFaction.toUpperCase()} успешно сохранены!`);
-                loadFactionUI();
-            }
+            const res = await apiCall('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(globalConfig) });
+            if (res && res.success) { alert(`Настройки фракции ${currentFaction.toUpperCase()} успешно сохранены!`); loadFactionUI(); }
         }
 
         async function loadTokensUI() {
             const data = await apiCall('/api/tokens');
             const container = document.getElementById('tokens-list-container');
-            if (!data || !data.tokens) {
-                container.innerHTML = '<p style="color:var(--text-muted);">Не удалось загрузить список токенов или доступ ограничен.</p>';
-                return;
-            }
+            if (!data || !data.tokens) { container.innerHTML = '<p style="color:var(--text-muted);">Не удалось загрузить список токенов или доступ ограничен.</p>'; return; }
+            if (data.tokens.length === 0) { container.innerHTML = '<p style="color:var(--text-muted);">Активные токены отсутствуют.</p>'; return; }
 
-            if (data.tokens.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted);">Активные токены отсутствуют.</p>';
-                return;
-            }
-
-            let html = '';
-            data.tokens.forEach(t => {
+            container.innerHTML = data.tokens.map(t => {
                 const sysBadges = (t.systems || []).map(s => `<span class="badge system">${s.toUpperCase()}</span>`).join('');
                 const permBadges = (t.permissions || []).map(p => `<span class="badge perm">${p === 'settings' ? 'НАСТРОЙКИ' : 'ФАЙЛЫ'}</span>`).join('');
-                
-                html += `
+                return `
                 <div class="token-card">
                     <div class="token-info">
                         <h4>${t.name}</h4>
@@ -934,28 +1023,19 @@
                     </div>
                     <button type="button" class="btn-danger btn-sm" onclick="deleteToken('${t.id}')">🗑 Удалить токен</button>
                 </div>`;
-            });
-
-            container.innerHTML = html;
+            }).join('');
         }
 
         async function createToken() {
             const name = document.getElementById('newTokenName').value.trim();
             const sysInputs = document.querySelectorAll('.tok-sys:checked');
             const permInputs = document.querySelectorAll('.tok-perm:checked');
-
             if (!name) return alert('Введите название токена!');
             if (sysInputs.length === 0) return alert('Выберите хотя бы одну систему!');
 
             const systems = Array.from(sysInputs).map(el => el.value);
             const permissions = Array.from(permInputs).map(el => el.value);
-
-            const res = await apiCall('/api/tokens/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, systems, permissions })
-            });
-
+            const res = await apiCall('/api/tokens/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, systems, permissions }) });
             if (res && res.success) {
                 alert('Токен успешно создан!');
                 document.getElementById('newTokenName').value = '';
@@ -968,9 +1048,7 @@
         async function deleteToken(id) {
             if (!confirm('Удалить данный токен доступ к системе?')) return;
             const res = await apiCall(`/api/tokens/${id}`, { method: 'DELETE' });
-            if (res && res.success) {
-                loadTokensUI();
-            }
+            if (res && res.success) loadTokensUI();
         }
 
         initAdmin();
