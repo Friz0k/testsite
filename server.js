@@ -35,6 +35,7 @@ const FILE_PROJECTS = path.join(DIR_DATA, 'projects.json');
 const FILE_SETTINGS = path.join(DIR_DATA, 'config.json');
 const FILE_BANS = path.join(DIR_DATA, 'banned_ips.json');
 const FILE_SESSIONS = path.join(DIR_DATA, 'user_sessions.json');
+const FILE_NOTES = path.join(DIR_DATA, 'ip_notes.json');
 
 const LOG_RETENTION_DAYS = 14;
 
@@ -42,8 +43,7 @@ const ensureDirectoriesExist = () => {
     const directories = [DIR_DATA, DIR_LOGS, DIR_PUBLIC, DIR_UPLOADS, DIR_SYSTEMS, DIR_VIEWS, DIR_ROUTES, DIR_BACKUPS];
     directories.forEach(dir => {
         if (!fs.existsSync(dir)) {
-            try { fs.mkdirSync(dir, { recursive: true }); } 
-            catch (err) { process.exit(1); }
+            try { fs.mkdirSync(dir, { recursive: true }); } catch (err) { process.exit(1); }
         }
     });
 };
@@ -53,6 +53,7 @@ const ensureFilesExist = () => {
     if (!fs.existsSync(FILE_SETTINGS)) fs.writeFileSync(FILE_SETTINGS, '{}', 'utf8');
     if (!fs.existsSync(FILE_BANS)) fs.writeFileSync(FILE_BANS, '[]', 'utf8');
     if (!fs.existsSync(FILE_SESSIONS)) fs.writeFileSync(FILE_SESSIONS, '{}', 'utf8');
+    if (!fs.existsSync(FILE_NOTES)) fs.writeFileSync(FILE_NOTES, '{}', 'utf8');
 };
 
 ensureDirectoriesExist();
@@ -64,6 +65,9 @@ try { bannedIps = JSON.parse(fs.readFileSync(FILE_BANS, 'utf8')); } catch (e) { 
 let userSessions = {};
 try { userSessions = JSON.parse(fs.readFileSync(FILE_SESSIONS, 'utf8')); } catch (e) { userSessions = {}; }
 
+let ipNotes = {};
+try { ipNotes = JSON.parse(fs.readFileSync(FILE_NOTES, 'utf8')); } catch (e) { ipNotes = {}; }
+
 const saveBannedIps = () => {
     try { fs.writeFileSync(FILE_BANS, JSON.stringify(bannedIps, null, 2), 'utf8'); } catch (e) {}
 };
@@ -72,28 +76,32 @@ const saveUserSessions = () => {
     try { fs.writeFileSync(FILE_SESSIONS, JSON.stringify(userSessions, null, 2), 'utf8'); } catch (e) {}
 };
 
+const saveIpNotes = () => {
+    try { fs.writeFileSync(FILE_NOTES, JSON.stringify(ipNotes, null, 2), 'utf8'); } catch (e) {}
+};
+
 const requestCounts = new Map();
 setInterval(() => { requestCounts.clear(); }, 60000);
-setInterval(() => { saveUserSessions(); }, 30000); // Периодическое сохранение сессий
+setInterval(() => { saveUserSessions(); }, 30000);
 
 app.use((req, res, next) => {
     const clientIp = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || 'unknown';
     const cleanIp = clientIp.replace(/^::ffff:/, '');
 
     if (bannedIps.some(item => item.ip === cleanIp)) {
-        return res.status(403).send('Доступ заблокирован системой безопасности Frizworld.');
+        return res.status(403).send('Доступ заблокирован.');
     }
 
     if (!req.originalUrl.startsWith('/uploads') && !req.originalUrl.startsWith('/systems')) {
         const currentCount = (requestCounts.get(cleanIp) || 0) + 1;
         requestCounts.set(cleanIp, currentCount);
 
-        if (currentCount > 150) {
+        if (currentCount > 180) {
             if (!bannedIps.some(item => item.ip === cleanIp)) {
-                bannedIps.push({ ip: cleanIp, reason: 'Автоматическая блокировка: превышение лимита запросов (DDoS/Spam shield)', date: new Date().toISOString() });
+                bannedIps.push({ ip: cleanIp, reason: 'Автобан: частые запросы', date: new Date().toISOString() });
                 saveBannedIps();
             }
-            return res.status(429).send('Слишком много запросов. IP заблокирован.');
+            return res.status(429).send('Превышен лимит запросов.');
         }
     }
 
@@ -160,21 +168,28 @@ const logger = {
     }
 };
 
-const runAutoBackup = () => {
+const createBackupArchive = () => {
     try {
         const dateStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
         const backupFolder = path.join(DIR_BACKUPS, `backup-${dateStr}`);
         fs.mkdirSync(backupFolder, { recursive: true });
         if (fs.existsSync(DIR_DATA)) fs.cpSync(DIR_DATA, path.join(backupFolder, 'data'), { recursive: true });
         if (fs.existsSync(DIR_UPLOADS)) fs.cpSync(DIR_UPLOADS, path.join(backupFolder, 'uploads'), { recursive: true });
+        
         const allBackups = fs.readdirSync(DIR_BACKUPS).filter(f => f.startsWith('backup-')).map(f => ({ name: f, time: fs.statSync(path.join(DIR_BACKUPS, f)).mtimeMs })).sort((a, b) => b.time - a.time);
-        if (allBackups.length > 7) allBackups.slice(7).forEach(old => { fs.rmSync(path.join(DIR_BACKUPS, old.name), { recursive: true, force: true }); });
-        logger.info(`Автоматический бэкап успешно создан: backup-${dateStr}`);
-    } catch (err) { logger.error('Ошибка создания автоматического бэкапа', err); }
+        if (allBackups.length > 10) {
+            allBackups.slice(10).forEach(old => { fs.rmSync(path.join(DIR_BACKUPS, old.name), { recursive: true, force: true }); });
+        }
+        logger.info(`Резервная копия создана: backup-${dateStr}`);
+        return `backup-${dateStr}`;
+    } catch (err) {
+        logger.error('Ошибка создания бэкапа', err);
+        return null;
+    }
 };
 
-setInterval(runAutoBackup, 24 * 60 * 60 * 1000);
-setTimeout(runAutoBackup, 60 * 1000);
+setInterval(createBackupArchive, 24 * 60 * 60 * 1000);
+setTimeout(createBackupArchive, 60 * 1000);
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, DIR_UPLOADS),
@@ -186,12 +201,18 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 15 * 1024 * 1024 },
+    limits: { fileSize: 25 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) cb(null, true);
-        else cb(new Error('Разрешены только графические форматы изображений'), false);
+        else cb(new Error('Разрешены только изображения'), false);
     }
 });
+
+const backupStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, DIR_BACKUPS),
+    filename: (req, file, cb) => cb(null, 'uploaded_backup_' + Date.now() + '_' + file.originalname)
+});
+const backupUpload = multer({ storage: backupStorage });
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -201,7 +222,7 @@ const sanitizeInput = (req, res, next) => {
     const sqlRegex = /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND)\b)|(['"])/i;
     const checkObj = (obj) => {
         for (let key in obj) {
-            if (typeof obj[key] === 'string' && !['content', 'image', 'imageUrl', 'path', 'reason', 'summary', 'desc', 'fullDesc'].includes(key)) {
+            if (typeof obj[key] === 'string' && !['content', 'image', 'imageUrl', 'path', 'reason', 'summary', 'desc', 'fullDesc', 'note'].includes(key)) {
                 if (sqlRegex.test(obj[key])) obj[key] = obj[key].replace(/['"]/g, '');
                 obj[key] = obj[key].replace(/</g, '&lt;').replace(/>/g, '&gt;');
             } else if (typeof obj[key] === 'object' && obj[key] !== null) {
@@ -216,7 +237,6 @@ const sanitizeInput = (req, res, next) => {
 
 app.use(sanitizeInput);
 
-// ПЕРЕХВАТЧИК И ТРЕКЕР СЕССИЙ
 app.use((req, res, next) => {
     const start = Date.now();
     const sanitizeForLogs = (data) => {
@@ -225,14 +245,14 @@ app.use((req, res, next) => {
         const hiddenKeys = ['password', 'token', 'image', 'file', 'content'];
         for (let key in copy) {
             if (hiddenKeys.includes(key) && copy[key]) copy[key] = '[СКРЫТО]';
-            else if (typeof copy[key] === 'string' && copy[key].length > 150) copy[key] = copy[key].substring(0, 150) + '... [ОБРЕЗАНО]';
+            else if (typeof copy[key] === 'string' && copy[key].length > 200) copy[key] = copy[key].substring(0, 200) + '...';
             else if (typeof copy[key] === 'object' && copy[key] !== null) copy[key] = sanitizeForLogs(copy[key]);
         }
         return copy;
     };
 
     res.on('finish', () => {
-        if (!req.originalUrl.startsWith('/api/logs') && !req.originalUrl.startsWith('/api/list-files') && !req.originalUrl.startsWith('/api/bans') && !req.originalUrl.startsWith('/api/user-sessions')) {
+        if (!req.originalUrl.startsWith('/api/logs') && !req.originalUrl.startsWith('/api/list-files') && !req.originalUrl.startsWith('/api/bans') && !req.originalUrl.startsWith('/api/user-sessions') && !req.originalUrl.startsWith('/api/backups')) {
             const payloadObj = {
                 query: Object.keys(req.query).length ? sanitizeForLogs(req.query) : null,
                 body: Object.keys(req.body).length ? sanitizeForLogs(req.body) : null
@@ -241,7 +261,6 @@ app.use((req, res, next) => {
             
             logger.access(req, res, Date.now() - start, payloadStr);
 
-            // Сохранение в профиль пользователя
             const ip = req.clientIpClean || 'unknown';
             if (!req.originalUrl.startsWith('/uploads') && !req.originalUrl.startsWith('/systems')) {
                 if (!userSessions[ip]) {
@@ -266,8 +285,8 @@ app.use((req, res, next) => {
                     data: (payloadObj.query || payloadObj.body) ? payloadObj : null
                 });
 
-                if (userSessions[ip].history.length > 50) {
-                    userSessions[ip].history = userSessions[ip].history.slice(0, 50);
+                if (userSessions[ip].history.length > 100) {
+                    userSessions[ip].history = userSessions[ip].history.slice(0, 100);
                 }
             }
         }
@@ -329,10 +348,94 @@ app.get('/api/me', (req, res) => {
     res.status(401).json({ error: 'Not authenticated' });
 });
 
-// ЭНДПОИНТ ПОЛУЧЕНИЯ КАРТОЧЕК ПОЛЬЗОВАТЕЛЕЙ
 app.get('/api/user-sessions', (req, res) => {
     if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
-    res.json({ success: true, sessions: userSessions });
+    res.json({ success: true, sessions: userSessions, notes: ipNotes });
+});
+
+app.post('/api/ip-notes', (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    const { ip, note } = req.body;
+    if (!ip) return res.status(400).json({ error: 'IP required' });
+    ipNotes[ip] = note || '';
+    saveIpNotes();
+    res.json({ success: true, notes: ipNotes });
+});
+
+app.get('/api/backups', (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    try {
+        const backups = fs.readdirSync(DIR_BACKUPS).map(name => {
+            const fullPath = path.join(DIR_BACKUPS, name);
+            const stat = fs.statSync(fullPath);
+            return {
+                name: name,
+                sizeBytes: stat.size || 0,
+                time: stat.mtimeMs,
+                date: new Date(stat.mtimeMs).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+                isDirectory: stat.isDirectory()
+            };
+        }).sort((a, b) => b.time - a.time);
+        res.json({ success: true, backups: backups });
+    } catch (err) {
+        res.status(500).json({ error: 'Backup error' });
+    }
+});
+
+app.post('/api/backups/create', (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    const createdName = createBackupArchive();
+    if (createdName) {
+        res.json({ success: true, name: createdName });
+    } else {
+        res.status(500).json({ error: 'Failed to create backup' });
+    }
+});
+
+app.post('/api/backups/restore', (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Backup name required' });
+
+    const targetBackup = path.join(DIR_BACKUPS, name);
+    if (!fs.existsSync(targetBackup)) {
+        return res.status(404).json({ error: 'Backup not found' });
+    }
+
+    try {
+        const dataSrc = path.join(targetBackup, 'data');
+        const uploadsSrc = path.join(targetBackup, 'uploads');
+
+        if (fs.existsSync(dataSrc)) {
+            fs.cpSync(dataSrc, DIR_DATA, { recursive: true });
+        }
+        if (fs.existsSync(uploadsSrc)) {
+            fs.cpSync(uploadsSrc, DIR_UPLOADS, { recursive: true });
+        }
+
+        try { bannedIps = JSON.parse(fs.readFileSync(FILE_BANS, 'utf8')); } catch (e) {}
+        try { userSessions = JSON.parse(fs.readFileSync(FILE_SESSIONS, 'utf8')); } catch (e) {}
+        try { ipNotes = JSON.parse(fs.readFileSync(FILE_NOTES, 'utf8')); } catch (e) {}
+
+        logger.info(`Система успешно восстановлена из бэкапа: ${name}`);
+        res.json({ success: true, message: 'Восстановление завершено успешно' });
+    } catch (err) {
+        logger.error('Ошибка восстановления из бэкапа', err);
+        res.status(500).json({ error: 'Restore failed' });
+    }
+});
+
+app.get('/api/backups/download/:name', (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    const targetPath = path.join(DIR_BACKUPS, req.params.name);
+    if (!fs.existsSync(targetPath)) return res.status(404).send('Not found');
+    res.download(targetPath);
+});
+
+app.post('/api/backups/upload', backupUpload.single('backupFile'), (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    res.json({ success: true, filename: req.file.filename });
 });
 
 app.get('/api/bans', (req, res) => {
@@ -346,7 +449,7 @@ app.post('/api/bans', (req, res) => {
     if (!ip) return res.status(400).json({ error: 'IP required' });
     const cleanIp = ip.trim().replace(/^::ffff:/, '');
     if (!bannedIps.some(item => item.ip === cleanIp)) {
-        bannedIps.push({ ip: cleanIp, reason: reason || 'Ручная блокировка через админку', date: new Date().toISOString() });
+        bannedIps.push({ ip: cleanIp, reason: reason || 'Заблокирован вручную', date: new Date().toISOString() });
         saveBannedIps();
     }
     res.json({ success: true, banned: bannedIps });
@@ -532,6 +635,7 @@ server.listen(PORT, () => { logger.info(`Server started on port ${PORT}`); });
 
 const gracefulShutdown = () => {
     saveUserSessions();
+    saveIpNotes();
     server.close(() => process.exit(0));
     setTimeout(() => process.exit(1), 10000).unref();
 };
