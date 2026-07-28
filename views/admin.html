@@ -235,20 +235,28 @@
                         <h5 style="color: var(--accent-color); margin-bottom: 15px; font-size: 16px;">Настройки переаттестации FIB по рангам</h5>
                         <div class="form-grid">
                             <div>
-                                <label>Время на тест для 3 ранга (минут):</label>
-                                <input type="number" id="fib-timer-rank3" value="15" min="1" max="180">
-                            </div>
-                            <div>
-                                <label>Кол-во правильных ответов для сдачи (3 ранг):</label>
-                                <input type="number" id="fib-score-rank3" value="8" min="1">
+                                <label>Время на тест для 5 ранга (минут):</label>
+                                <input type="number" id="fib-timer-rank5" value="15" min="1" max="180">
                             </div>
                             <div>
                                 <label>Время на тест для 7 ранга (минут):</label>
                                 <input type="number" id="fib-timer-rank7" value="20" min="1" max="180">
                             </div>
                             <div>
+                                <label>Кол-во правильных ответов для сдачи (5 ранг):</label>
+                                <input type="number" id="fib-score-rank5" value="6" min="1">
+                            </div>
+                            <div>
                                 <label>Кол-во правильных ответов для сдачи (7 ранг):</label>
-                                <input type="number" id="fib-score-rank7" value="10" min="1">
+                                <input type="number" id="fib-score-rank7" value="14" min="1">
+                            </div>
+                            <div>
+                                <label>Кол-во вопросов в тесте (5 ранг):</label>
+                                <input type="number" id="fib-count-rank5" value="10" min="1">
+                            </div>
+                            <div>
+                                <label>Кол-во вопросов в тесте (7 ранг):</label>
+                                <input type="number" id="fib-count-rank7" value="20" min="1">
                             </div>
                         </div>
                     </div>
@@ -610,10 +618,12 @@
                     fibSettingsBox.style.display = 'block';
                     stdSettingsBox.style.display = 'none';
                     
-                    document.getElementById('fib-timer-rank3').value = config.testSettings?.durationMinutesRank3 || 15;
+                    document.getElementById('fib-timer-rank5').value = config.testSettings?.durationMinutesRank5 || config.testSettings?.durationMinutesRank3 || 15;
                     document.getElementById('fib-timer-rank7').value = config.testSettings?.durationMinutesRank7 || 20;
-                    document.getElementById('fib-score-rank3').value = config.testSettings?.passingScoreRank3 || 8;
-                    document.getElementById('fib-score-rank7').value = config.testSettings?.passingScoreRank7 || 10;
+                    document.getElementById('fib-score-rank5').value = config.testSettings?.passingScoreRank5 || config.testSettings?.passingScoreRank3 || 6;
+                    document.getElementById('fib-score-rank7').value = config.testSettings?.passingScoreRank7 || 14;
+                    document.getElementById('fib-count-rank5').value = config.testSettings?.questionCountRank5 || 10;
+                    document.getElementById('fib-count-rank7').value = config.testSettings?.questionCountRank7 || 20;
                     
                     rawQuestions = config.testSettings?.questions || [];
                 } else {
@@ -642,11 +652,12 @@
                 }
 
                 unifiedQuestions = rawQuestions.map(q => {
-                    let uq = { text: '', options: [], type: 'single', points: 1, isBonus: false, ranks: [3, 7] };
+                    let uq = { text: '', options: [], type: 'single', points: 1, isBonus: false, ranks: [5, 7] };
                     if (currentFaction === 'fib') {
                         uq.text = q.text || q.question || '';
                         uq.type = q.type || 'single';
-                        uq.ranks = q.ranks || [3, 7];
+                        const rawRanks = q.ranks || [5, 7];
+                        uq.ranks = [...new Set(rawRanks.map(r => r === 3 ? 5 : r))].sort();
                         const corrects = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correctAnswer ? [q.correctAnswer] : []);
                         uq.options = (q.options || []).map(o => ({ text: o, isCorrect: corrects.includes(o) }));
                     } else if (currentFaction === 'lssd') {
@@ -680,7 +691,7 @@
         function toggleRankSelection(qIdx, rankVal) {
             syncDOMToState();
             const uq = unifiedQuestions[qIdx];
-            if (!uq.ranks) uq.ranks = [3, 7];
+            if (!uq.ranks) uq.ranks = [5, 7];
             const i = uq.ranks.indexOf(rankVal);
             if (i > -1) {
                 if (uq.ranks.length > 1) uq.ranks.splice(i, 1);
@@ -710,12 +721,12 @@
                         </select></div>`;
 
                 if (currentFaction === 'fib') {
-                    const r3 = q.ranks && q.ranks.includes(3);
+                    const r5 = q.ranks && (q.ranks.includes(5) || q.ranks.includes(3));
                     const r7 = q.ranks && q.ranks.includes(7);
                     html += `
                         <div><label>Для каких рангов вопрос:</label>
                         <div class="rank-badge-group">
-                            <div class="rank-badge ${r3 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 3)">3 РАНГ</div>
+                            <div class="rank-badge ${r5 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 5)">5 РАНГ</div>
                             <div class="rank-badge ${r7 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 7)">7 РАНГ</div>
                         </div></div>`;
                 }
@@ -752,7 +763,7 @@
             const qCards = document.querySelectorAll('.q-card');
             unifiedQuestions = Array.from(qCards).map((card, qIndex) => {
                 const oldQ = unifiedQuestions[qIndex] || {};
-                const q = { options: [], ranks: oldQ.ranks || [3, 7] };
+                const q = { options: [], ranks: oldQ.ranks || [5, 7] };
                 q.text = card.querySelector('.q-text').value;
                 q.type = card.querySelector('.q-type').value;
                 
@@ -776,7 +787,7 @@
 
         function addQuestion() {
             syncDOMToState();
-            unifiedQuestions.push({ text: '', type: 'single', points: 1, isBonus: false, ranks: [3, 7], options: [{text: '', isCorrect: false}, {text: '', isCorrect: false}] });
+            unifiedQuestions.push({ text: '', type: 'single', points: 1, isBonus: false, ranks: [5, 7], options: [{text: '', isCorrect: false}, {text: '', isCorrect: false}] });
             renderQuestions();
         }
 
@@ -826,7 +837,7 @@
                             id: idx + 1,
                             text: uq.text,
                             type: uq.type,
-                            ranks: uq.ranks || [3, 7],
+                            ranks: uq.ranks || [5, 7],
                             options: uq.options.map(o => o.text),
                             correctAnswers: correctOpts,
                             correctAnswer: correctOpts[0] || ''
@@ -863,10 +874,14 @@
 
                 if (currentFaction === 'fib') {
                     if (!config.testSettings) config.testSettings = {};
-                    config.testSettings.durationMinutesRank3 = parseInt(document.getElementById('fib-timer-rank3').value) || 15;
+                    config.testSettings.durationMinutesRank5 = parseInt(document.getElementById('fib-timer-rank5').value) || 15;
                     config.testSettings.durationMinutesRank7 = parseInt(document.getElementById('fib-timer-rank7').value) || 20;
-                    config.testSettings.passingScoreRank3 = parseInt(document.getElementById('fib-score-rank3').value) || 8;
-                    config.testSettings.passingScoreRank7 = parseInt(document.getElementById('fib-score-rank7').value) || 10;
+                    config.testSettings.passingScoreRank5 = parseInt(document.getElementById('fib-score-rank5').value) || 6;
+                    config.testSettings.passingScoreRank7 = parseInt(document.getElementById('fib-score-rank7').value) || 14;
+                    config.testSettings.questionCountRank5 = parseInt(document.getElementById('fib-count-rank5').value) || 10;
+                    config.testSettings.questionCountRank7 = parseInt(document.getElementById('fib-count-rank7').value) || 20;
+                    delete config.testSettings.durationMinutesRank3;
+                    delete config.testSettings.passingScoreRank3;
                     config.testSettings.questions = processedQuestions;
                 } else if (currentFaction === 'lssd' || currentFaction === 'lspd') {
                     config.testPassingScore = parseInt(document.getElementById('test-passing-score').value) || 0;
