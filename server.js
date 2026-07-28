@@ -12,10 +12,8 @@ const authMiddleware = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Доверие к прокси (необходимо для корректного определения IP за Cloudflare и Nginx)
 app.set('trust proxy', true);
 
-// Отключение кэширования для динамических страниц и API
 app.use((req, res, next) => {
     res.setHeader('Surrogate-Control', 'no-store');
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -24,7 +22,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- ПУТИ К ДИРЕКТОРИЯМ И ФАЙЛАМ ---
 const DIR_DATA = path.join(__dirname, 'data');
 const DIR_LOGS = path.join(__dirname, 'logs');
 const DIR_PUBLIC = path.join(__dirname, 'public');
@@ -37,20 +34,16 @@ const DIR_BACKUPS = path.join(__dirname, 'backups');
 const FILE_PROJECTS = path.join(DIR_DATA, 'projects.json');
 const FILE_SETTINGS = path.join(DIR_DATA, 'config.json');
 const FILE_BANS = path.join(DIR_DATA, 'banned_ips.json');
+const FILE_SESSIONS = path.join(DIR_DATA, 'user_sessions.json');
 
 const LOG_RETENTION_DAYS = 14;
 
-// --- ИНИЦИАЛИЗАЦИЯ ФАЙЛОВОЙ СИСТЕМЫ ---
 const ensureDirectoriesExist = () => {
     const directories = [DIR_DATA, DIR_LOGS, DIR_PUBLIC, DIR_UPLOADS, DIR_SYSTEMS, DIR_VIEWS, DIR_ROUTES, DIR_BACKUPS];
     directories.forEach(dir => {
         if (!fs.existsSync(dir)) {
-            try {
-                fs.mkdirSync(dir, { recursive: true });
-            } catch (err) {
-                console.error(`Критическая ошибка создания директории ${dir}:`, err);
-                process.exit(1);
-            }
+            try { fs.mkdirSync(dir, { recursive: true }); } 
+            catch (err) { process.exit(1); }
         }
     });
 };
@@ -59,56 +52,48 @@ const ensureFilesExist = () => {
     if (!fs.existsSync(FILE_PROJECTS)) fs.writeFileSync(FILE_PROJECTS, '[]', 'utf8');
     if (!fs.existsSync(FILE_SETTINGS)) fs.writeFileSync(FILE_SETTINGS, '{}', 'utf8');
     if (!fs.existsSync(FILE_BANS)) fs.writeFileSync(FILE_BANS, '[]', 'utf8');
+    if (!fs.existsSync(FILE_SESSIONS)) fs.writeFileSync(FILE_SESSIONS, '{}', 'utf8');
 };
 
 ensureDirectoriesExist();
 ensureFilesExist();
 
-// --- СИСТЕМА ЧЕРНОГО СПИСКА (BAN / DDoS PROTECTION) ---
 let bannedIps = [];
-try {
-    bannedIps = JSON.parse(fs.readFileSync(FILE_BANS, 'utf8'));
-} catch (e) {
-    bannedIps = [];
-}
+try { bannedIps = JSON.parse(fs.readFileSync(FILE_BANS, 'utf8')); } catch (e) { bannedIps = []; }
+
+let userSessions = {};
+try { userSessions = JSON.parse(fs.readFileSync(FILE_SESSIONS, 'utf8')); } catch (e) { userSessions = {}; }
 
 const saveBannedIps = () => {
-    try {
-        fs.writeFileSync(FILE_BANS, JSON.stringify(bannedIps, null, 2), 'utf8');
-    } catch (e) {
-        console.error('Ошибка сохранения файла забаненных IP:', e);
-    }
+    try { fs.writeFileSync(FILE_BANS, JSON.stringify(bannedIps, null, 2), 'utf8'); } catch (e) {}
+};
+
+const saveUserSessions = () => {
+    try { fs.writeFileSync(FILE_SESSIONS, JSON.stringify(userSessions, null, 2), 'utf8'); } catch (e) {}
 };
 
 const requestCounts = new Map();
-setInterval(() => {
-    requestCounts.clear();
-}, 60000); // Сброс счетчика запросов каждую минуту
+setInterval(() => { requestCounts.clear(); }, 60000);
+setInterval(() => { saveUserSessions(); }, 30000); // Периодическое сохранение сессий
 
 app.use((req, res, next) => {
     const clientIp = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || 'unknown';
     const cleanIp = clientIp.replace(/^::ffff:/, '');
 
-    // Проверка на нахождение в черном списке
     if (bannedIps.some(item => item.ip === cleanIp)) {
         return res.status(403).send('Доступ заблокирован системой безопасности Frizworld.');
     }
 
-    // Лимитирование запросов (защита от спама и парсеров), исключая статику и загрузки
     if (!req.originalUrl.startsWith('/uploads') && !req.originalUrl.startsWith('/systems')) {
         const currentCount = (requestCounts.get(cleanIp) || 0) + 1;
         requestCounts.set(cleanIp, currentCount);
 
-        if (currentCount > 150) { // Лимит: 150 запросов в минуту с одного IP
+        if (currentCount > 150) {
             if (!bannedIps.some(item => item.ip === cleanIp)) {
-                bannedIps.push({
-                    ip: cleanIp,
-                    reason: 'Автоматическая блокировка: превышение лимита запросов (DDoS/Spam protection)',
-                    date: new Date().toISOString()
-                });
+                bannedIps.push({ ip: cleanIp, reason: 'Автоматическая блокировка: превышение лимита запросов (DDoS/Spam shield)', date: new Date().toISOString() });
                 saveBannedIps();
             }
-            return res.status(429).send('Слишком много запросов. Ваш IP был временно заблокирован.');
+            return res.status(429).send('Слишком много запросов. IP заблокирован.');
         }
     }
 
@@ -116,19 +101,16 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- СИСТЕМА ЛОГИРОВАНИЯ С РОТАЦИЕЙ ---
 class RotatingLogger {
     constructor(baseName) {
         this.baseName = baseName;
         this.currentDate = null;
         this.stream = null;
     }
-
     _dateStr() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
-
     _rotateIfNeeded() {
         const dateStr = this._dateStr();
         if (dateStr !== this.currentDate) {
@@ -139,31 +121,21 @@ class RotatingLogger {
             this._cleanup();
         }
     }
-
     _cleanup() {
         try {
             const cutoff = Date.now() - LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000;
-            fs.readdirSync(DIR_LOGS)
-                .filter(f => f.startsWith(this.baseName + '-'))
-                .forEach(f => {
-                    const filePath = path.join(DIR_LOGS, f);
-                    if (fs.statSync(filePath).mtimeMs < cutoff) fs.unlinkSync(filePath);
-                });
+            fs.readdirSync(DIR_LOGS).filter(f => f.startsWith(this.baseName + '-')).forEach(f => {
+                const filePath = path.join(DIR_LOGS, f);
+                if (fs.statSync(filePath).mtimeMs < cutoff) fs.unlinkSync(filePath);
+            });
         } catch (e) {}
     }
-
     latestFile() {
         try {
-            const files = fs.readdirSync(DIR_LOGS)
-                .filter(f => f.startsWith(this.baseName + '-'))
-                .map(f => ({ name: f, mtime: fs.statSync(path.join(DIR_LOGS, f)).mtimeMs }))
-                .sort((a, b) => b.mtime - a.mtime);
+            const files = fs.readdirSync(DIR_LOGS).filter(f => f.startsWith(this.baseName + '-')).map(f => ({ name: f, mtime: fs.statSync(path.join(DIR_LOGS, f)).mtimeMs })).sort((a, b) => b.mtime - a.mtime);
             return files.length ? path.join(DIR_LOGS, files[0].name) : null;
-        } catch (e) {
-            return null;
-        }
+        } catch (e) { return null; }
     }
-
     write(line) {
         this._rotateIfNeeded();
         this.stream.write(line + '\n');
@@ -174,27 +146,12 @@ const accessLog = new RotatingLogger('access');
 const errorLog = new RotatingLogger('error');
 const appLog = new RotatingLogger('app');
 
-const getMskTimestamp = () => {
-    return new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
-};
+const getMskTimestamp = () => new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
 
 const logger = {
-    info: (msg) => {
-        const line = `[${getMskTimestamp()}] [INFO] ${msg}`;
-        console.log(line);
-        appLog.write(line);
-    },
-    warn: (msg) => {
-        const line = `[${getMskTimestamp()}] [WARN] ${msg}`;
-        console.warn(line);
-        appLog.write(line);
-    },
-    error: (msg, err) => {
-        const line = `[${getMskTimestamp()}] [ERROR] ${msg}${err ? ' | ' + (err.stack || err.message || String(err)) : ''}`;
-        console.error(line);
-        errorLog.write(line);
-        appLog.write(line);
-    },
+    info: (msg) => { const line = `[${getMskTimestamp()}] [INFO] ${msg}`; console.log(line); appLog.write(line); },
+    warn: (msg) => { const line = `[${getMskTimestamp()}] [WARN] ${msg}`; console.warn(line); appLog.write(line); },
+    error: (msg, err) => { const line = `[${getMskTimestamp()}] [ERROR] ${msg}${err ? ' | ' + (err.stack || err.message || String(err)) : ''}`; console.error(line); errorLog.write(line); appLog.write(line); },
     access: (req, res, durationMs, payloadStr) => {
         const userAgent = req.headers['user-agent'] || 'No-Agent';
         const line = `[${getMskTimestamp()}] IP: ${req.clientIpClean || 'unknown'} | "${req.method} ${req.originalUrl}" | Статус: ${res.statusCode} | Время: ${durationMs}ms | Данные: ${payloadStr} | Устройство: ${userAgent}`;
@@ -203,36 +160,22 @@ const logger = {
     }
 };
 
-// --- СИСТЕМА АВТОМАТИЧЕСКОГО РЕЗЕРВНОГО КОПИРОВАНИЯ ---
 const runAutoBackup = () => {
     try {
         const dateStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
         const backupFolder = path.join(DIR_BACKUPS, `backup-${dateStr}`);
         fs.mkdirSync(backupFolder, { recursive: true });
-        
         if (fs.existsSync(DIR_DATA)) fs.cpSync(DIR_DATA, path.join(backupFolder, 'data'), { recursive: true });
         if (fs.existsSync(DIR_UPLOADS)) fs.cpSync(DIR_UPLOADS, path.join(backupFolder, 'uploads'), { recursive: true });
-        
-        const allBackups = fs.readdirSync(DIR_BACKUPS)
-            .filter(f => f.startsWith('backup-'))
-            .map(f => ({ name: f, time: fs.statSync(path.join(DIR_BACKUPS, f)).mtimeMs }))
-            .sort((a, b) => b.time - a.time);
-
-        if (allBackups.length > 7) {
-            allBackups.slice(7).forEach(old => {
-                fs.rmSync(path.join(DIR_BACKUPS, old.name), { recursive: true, force: true });
-            });
-        }
+        const allBackups = fs.readdirSync(DIR_BACKUPS).filter(f => f.startsWith('backup-')).map(f => ({ name: f, time: fs.statSync(path.join(DIR_BACKUPS, f)).mtimeMs })).sort((a, b) => b.time - a.time);
+        if (allBackups.length > 7) allBackups.slice(7).forEach(old => { fs.rmSync(path.join(DIR_BACKUPS, old.name), { recursive: true, force: true }); });
         logger.info(`Автоматический бэкап успешно создан: backup-${dateStr}`);
-    } catch (err) {
-        logger.error('Ошибка создания автоматического бэкапа', err);
-    }
+    } catch (err) { logger.error('Ошибка создания автоматического бэкапа', err); }
 };
 
-setInterval(runAutoBackup, 24 * 60 * 60 * 1000); // Запуск раз в сутки
-setTimeout(runAutoBackup, 60 * 1000); // Первый бэкап через минуту после старта
+setInterval(runAutoBackup, 24 * 60 * 60 * 1000);
+setTimeout(runAutoBackup, 60 * 1000);
 
-// --- НАСТРОЙКИ ЗАГРУЗКИ ФАЙЛОВ (MULTER & SHARP) ---
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, DIR_UPLOADS),
     filename: (req, file, cb) => {
@@ -243,7 +186,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 15 * 1024 * 1024 }, // 15 MB предел
+    limits: { fileSize: 15 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) cb(null, true);
         else cb(new Error('Разрешены только графические форматы изображений'), false);
@@ -254,7 +197,6 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser(process.env.COOKIE_SECRET || 'dev-insecure-secret-change-me'));
 
-// --- САНИТАРИЗАЦИЯ И ОБРАБОТКА ВХОДНЫХ ДАННЫХ ---
 const sanitizeInput = (req, res, next) => {
     const sqlRegex = /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND)\b)|(['"])/i;
     const checkObj = (obj) => {
@@ -274,7 +216,7 @@ const sanitizeInput = (req, res, next) => {
 
 app.use(sanitizeInput);
 
-// --- ПЕРЕХВАТЧИК ЗАПРОСОВ ДЛЯ ЛОГОВ ---
+// ПЕРЕХВАТЧИК И ТРЕКЕР СЕССИЙ
 app.use((req, res, next) => {
     const start = Date.now();
     const sanitizeForLogs = (data) => {
@@ -290,25 +232,54 @@ app.use((req, res, next) => {
     };
 
     res.on('finish', () => {
-        if (!req.originalUrl.startsWith('/api/logs') && !req.originalUrl.startsWith('/api/list-files') && !req.originalUrl.startsWith('/api/bans')) {
+        if (!req.originalUrl.startsWith('/api/logs') && !req.originalUrl.startsWith('/api/list-files') && !req.originalUrl.startsWith('/api/bans') && !req.originalUrl.startsWith('/api/user-sessions')) {
             const payloadObj = {
                 query: Object.keys(req.query).length ? sanitizeForLogs(req.query) : null,
                 body: Object.keys(req.body).length ? sanitizeForLogs(req.body) : null
             };
             const payloadStr = (payloadObj.query || payloadObj.body) ? JSON.stringify(payloadObj) : 'Нет данных';
+            
             logger.access(req, res, Date.now() - start, payloadStr);
+
+            // Сохранение в профиль пользователя
+            const ip = req.clientIpClean || 'unknown';
+            if (!req.originalUrl.startsWith('/uploads') && !req.originalUrl.startsWith('/systems')) {
+                if (!userSessions[ip]) {
+                    userSessions[ip] = {
+                        ip: ip,
+                        firstSeen: getMskTimestamp(),
+                        lastSeen: getMskTimestamp(),
+                        userAgent: req.headers['user-agent'] || 'Неизвестное устройство',
+                        requestsCount: 0,
+                        history: []
+                    };
+                }
+                userSessions[ip].lastSeen = getMskTimestamp();
+                userSessions[ip].userAgent = req.headers['user-agent'] || userSessions[ip].userAgent;
+                userSessions[ip].requestsCount++;
+                
+                userSessions[ip].history.unshift({
+                    time: getMskTimestamp(),
+                    method: req.method,
+                    url: req.originalUrl,
+                    status: res.statusCode,
+                    data: (payloadObj.query || payloadObj.body) ? payloadObj : null
+                });
+
+                if (userSessions[ip].history.length > 50) {
+                    userSessions[ip].history = userSessions[ip].history.slice(0, 50);
+                }
+            }
         }
     });
     next();
 });
 
-// Публичная раздача статических файлов (CSS, JS, картинки, системы)
 app.use(express.static(DIR_PUBLIC));
 
-// --- МАРШРУТЫ АВТОРИЗАЦИИ И ПАНЕЛИ УПРАВЛЕНИЯ ---
 app.get('/login', (req, res) => {
     const loginPath = path.join(DIR_VIEWS, 'login.html');
-    if (!fs.existsSync(loginPath)) return res.status(500).send('Ошибка сервера: файл логина не найден.');
+    if (!fs.existsSync(loginPath)) return res.status(500).send('Error 500');
     res.sendFile(loginPath);
 });
 
@@ -339,7 +310,7 @@ app.get('/logout', (req, res) => {
 
 app.get('/admin', authMiddleware, (req, res) => {
     const adminPath = path.join(DIR_VIEWS, 'admin.html');
-    if (!fs.existsSync(adminPath)) return res.status(500).send('Ошибка сервера: файл админки не найден.');
+    if (!fs.existsSync(adminPath)) return res.status(500).send('Error 500');
     res.sendFile(adminPath);
 });
 
@@ -350,25 +321,29 @@ async function processGif(inputPath) {
     fs.renameSync(tempPath, inputPath);
 }
 
-// --- ЗАЩИЩЕННОЕ API ДЛЯ АДМИН-ПАНЕЛИ ---
 app.use('/api', authMiddleware);
 
 app.get('/api/me', (req, res) => {
     if (req.isSuperAdmin) return res.json({ isSuperAdmin: true, systems: ['all'], permissions: ['all'] });
     if (req.tokenData) return res.json({ isSuperAdmin: false, name: req.tokenData.name, systems: req.tokenData.systems || [], permissions: req.tokenData.permissions || [] });
-    res.status(401).json({ error: 'Не авторизован' });
+    res.status(401).json({ error: 'Not authenticated' });
 });
 
-// API Управления банами (Чёрный список)
+// ЭНДПОИНТ ПОЛУЧЕНИЯ КАРТОЧЕК ПОЛЬЗОВАТЕЛЕЙ
+app.get('/api/user-sessions', (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
+    res.json({ success: true, sessions: userSessions });
+});
+
 app.get('/api/bans', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     res.json({ success: true, banned: bannedIps });
 });
 
 app.post('/api/bans', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     const { ip, reason } = req.body;
-    if (!ip) return res.status(400).json({ error: 'Не указан IP-адрес' });
+    if (!ip) return res.status(400).json({ error: 'IP required' });
     const cleanIp = ip.trim().replace(/^::ffff:/, '');
     if (!bannedIps.some(item => item.ip === cleanIp)) {
         bannedIps.push({ ip: cleanIp, reason: reason || 'Ручная блокировка через админку', date: new Date().toISOString() });
@@ -378,27 +353,26 @@ app.post('/api/bans', (req, res) => {
 });
 
 app.delete('/api/bans/:ip', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     const targetIp = req.params.ip;
     bannedIps = bannedIps.filter(item => item.ip !== targetIp);
     saveBannedIps();
     res.json({ success: true, banned: bannedIps });
 });
 
-// API Управления токенами доступа
 app.get('/api/tokens', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     try {
         const config = JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'));
         res.json({ success: true, tokens: config.apiTokens || [] });
-    } catch (err) { res.status(500).json({ error: 'Ошибка чтения конфигурации' }); }
+    } catch (err) { res.status(500).json({ error: 'Read error' }); }
 });
 
 app.post('/api/tokens/create', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     try {
         const { name, systems, permissions } = req.body;
-        if (!name || !systems || systems.length === 0) return res.status(400).json({ error: 'Некорректные параметры токена' });
+        if (!name || !systems || systems.length === 0) return res.status(400).json({ error: 'Invalid parameters' });
         const newToken = {
             id: Date.now().toString(),
             token: 'friz_' + crypto.randomBytes(24).toString('hex'),
@@ -413,11 +387,11 @@ app.post('/api/tokens/create', (req, res) => {
         config.apiTokens.push(newToken);
         fs.writeFileSync(FILE_SETTINGS, JSON.stringify(config, null, 2), 'utf8');
         res.json({ success: true, token: newToken });
-    } catch (err) { res.status(500).json({ error: 'Ошибка записи конфигурации' }); }
+    } catch (err) { res.status(500).json({ error: 'Write error' }); }
 });
 
 app.delete('/api/tokens/:id', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     try {
         const config = JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'));
         if (config.apiTokens) {
@@ -425,25 +399,23 @@ app.delete('/api/tokens/:id', (req, res) => {
             fs.writeFileSync(FILE_SETTINGS, JSON.stringify(config, null, 2), 'utf8');
         }
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Ошибка удаления токена' }); }
+    } catch (err) { res.status(500).json({ error: 'Delete error' }); }
 });
 
-// API Управления проектами
 app.get('/api/projects', (req, res) => {
     try { res.json(JSON.parse(fs.readFileSync(FILE_PROJECTS, 'utf8'))); } 
-    catch (err) { res.status(500).json({ error: 'Ошибка чтения базы проектов' }); }
+    catch (err) { res.status(500).json({ error: 'Read error' }); }
 });
 
 app.post('/api/projects', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     try { fs.writeFileSync(FILE_PROJECTS, JSON.stringify(req.body, null, 2), 'utf8'); res.json({ success: true }); } 
-    catch (err) { res.status(500).json({ error: 'Ошибка сохранения проектов' }); }
+    catch (err) { res.status(500).json({ error: 'Write error' }); }
 });
 
-// API Управления настройками фракций и общими параметрами
 app.get('/api/settings', (req, res) => {
     try { res.json(JSON.parse(fs.readFileSync(FILE_SETTINGS, 'utf8'))); } 
-    catch (err) { res.status(500).json({ error: 'Ошибка чтения конфигурации' }); }
+    catch (err) { res.status(500).json({ error: 'Read error' }); }
 });
 
 app.post('/api/settings', (req, res) => {
@@ -457,10 +429,9 @@ app.post('/api/settings', (req, res) => {
         }
         fs.writeFileSync(FILE_SETTINGS, JSON.stringify(newConfig, null, 2), 'utf8');
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Ошибка сохранения конфигурации' }); }
+    } catch (err) { res.status(500).json({ error: 'Write error' }); }
 });
 
-// API Загрузки изображений (Поддержка Base64 и файлов через Multer)
 app.post('/api/upload', upload.single('image'), async (req, res) => {
     try {
         if (req.body.image && req.body.image.startsWith('data:image')) {
@@ -473,15 +444,14 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
                 return res.json({ success: true, url: `/uploads/${filename}` });
             }
         }
-        if (!req.file) return res.status(400).json({ error: 'Файл не был загружен или имеет неверный формат' });
+        if (!req.file) return res.status(400).json({ error: 'File error' });
         if (req.file.mimetype === 'image/gif') await processGif(req.file.path);
         res.json({ success: true, url: `/uploads/${req.file.filename}` });
-    } catch (err) { res.status(500).json({ error: 'Ошибка обработки и сохранения изображения' }); }
+    } catch (err) { res.status(500).json({ error: 'Upload error' }); }
 });
 
-// API Получения логов сервера
 app.get('/api/logs', (req, res) => {
-    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Требуются права суперадмина' });
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     try {
         const typeAlias = { visits: 'access', errors: 'error', access: 'access', error: 'error', app: 'app' };
         const type = typeAlias[req.query.type] || 'access';
@@ -491,10 +461,9 @@ app.get('/api/logs', (req, res) => {
         const data = fs.readFileSync(filePath, 'utf8');
         const lines = data.split('\n').filter(Boolean);
         res.json({ logs: lines.slice(-300).reverse().join('\n'), file: path.basename(filePath) });
-    } catch (err) { res.status(500).json({ error: 'Ошибка чтения журнала логов' }); }
+    } catch (err) { res.status(500).json({ error: 'Log error' }); }
 });
 
-// API Редактора кода (Список файлов и чтение/запись в public)
 app.get('/api/list-files', (req, res) => {
     try {
         const getFilesRecursive = (dir, base = '') => {
@@ -508,42 +477,35 @@ app.get('/api/list-files', (req, res) => {
             return results;
         };
         res.json(getFilesRecursive(DIR_PUBLIC));
-    } catch (err) { res.status(500).json({ error: 'Ошибка сканирования директорий' }); }
+    } catch (err) { res.status(500).json({ error: 'Files error' }); }
 });
 
 app.get('/api/file', (req, res) => {
     try {
         const filePathParam = req.query.path;
-        if (!filePathParam) return res.status(400).json({ error: 'Не указан путь к файлу' });
+        if (!filePathParam) return res.status(400).json({ error: 'Path error' });
         const safePath = path.normalize(filePathParam).replace(/^(\.\.[\/\\])+/, '');
         const fullPath = path.join(DIR_PUBLIC, safePath);
-        if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'Файл не найден (404)' });
+        if (!fs.existsSync(fullPath)) return res.status(404).json({ error: '404' });
         res.json({ content: fs.readFileSync(fullPath, 'utf8') });
-    } catch (err) { res.status(500).json({ error: 'Ошибка чтения файла' }); }
+    } catch (err) { res.status(500).json({ error: 'File error' }); }
 });
 
 app.post('/api/file', (req, res) => {
     try {
         const { filePath, content } = req.body;
-        if (!filePath) return res.status(400).json({ error: 'Не указан путь к файлу' });
+        if (!filePath) return res.status(400).json({ error: 'Path error' });
         const safePath = path.normalize(filePath).replace(/^(\.\.[\/\\])+/, '');
         fs.writeFileSync(path.join(DIR_PUBLIC, safePath), content, 'utf8');
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Ошибка сохранения файла' }); }
+    } catch (err) { res.status(500).json({ error: 'File error' }); }
 });
 
-// --- ЗАГРУЗКА МОДУЛЬНЫХ МАРШРУТОВ ФРАКЦИЙ ---
 const loadModularRoute = (routeName, routeFile) => {
     const fullPath = path.join(DIR_ROUTES, routeFile);
     if (fs.existsSync(fullPath)) {
-        try {
-            app.use(routeName, require(fullPath));
-            logger.info(`Модуль маршрута [${routeName}] успешно подключен.`);
-        } catch (err) {
-            logger.error(`Критическая ошибка загрузки маршрута ${routeName}:`, err);
-        }
-    } else {
-        logger.warn(`Файл маршрута не найден: ${fullPath} (пропущено)`);
+        try { app.use(routeName, require(fullPath)); } 
+        catch (err) { logger.error(`Ошибка загрузки роута ${routeName}`, err); }
     }
 };
 
@@ -555,52 +517,23 @@ loadModularRoute('/cid', 'cid.js');
 loadModularRoute('/deadly', 'deadly.js');
 loadModularRoute('/ems', 'ems.js');
 
-// Обработчик ошибки 404
-app.use((req, res) => res.status(404).send('Страница или API эндпоинт не найдены (404)'));
-
-// Обработчик глобальных ошибок и ошибок Multer
+app.use((req, res) => res.status(404).send('404'));
 app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        logger.error('Multer upload error:', err);
-        return res.status(400).json({ error: `Ошибка загрузки файла: ${err.message}` });
-    }
-    logger.error('Unhandled Server Error:', err);
-    res.status(500).json({ error: 'Внутренняя ошибка сервера (500)' });
+    if (err instanceof multer.MulterError) return res.status(400).json({ error: `Upload error: ${err.message}` });
+    res.status(500).json({ error: '500' });
 });
 
-// --- ГЛОБАЛЬНАЯ ОБРАБОТКА НЕОТЛОВЛЕННЫХ ИСКЛЮЧЕНИЙ ---
-process.on('uncaughtException', (err) => {
-    logger.error('КРИТИЧЕСКАЯ ОШИБКА (uncaughtException):', err);
-    process.exit(1);
-});
+process.on('uncaughtException', (err) => { logger.error('uncaughtException', err); process.exit(1); });
+process.on('unhandledRejection', (reason) => { logger.error('unhandledRejection', reason); });
 
-process.on('unhandledRejection', (reason) => {
-    logger.error('Неотловленный отказ промиса (unhandledRejection):', reason);
-});
-
-// --- ЗАПУСК И ПЛАВНАЯ ОСТАНОВКА СЕРВЕРА ---
 const server = http.createServer(app);
+server.on('error', (err) => { logger.error('Server error', err); process.exit(1); });
+server.listen(PORT, () => { logger.info(`Server started on port ${PORT}`); });
 
-server.on('error', (err) => {
-    logger.error('Ошибка HTTP сервера:', err);
-    process.exit(1);
-});
-
-server.listen(PORT, () => {
-    logger.info(`Сервер Frizworld успешно запущен на порту ${PORT}`);
-});
-
-const gracefulShutdown = (signal) => {
-    logger.info(`Получен сигнал ${signal}. Завершение работы сервера...`);
-    server.close(() => {
-        logger.info('Сервер остановлен.');
-        process.exit(0);
-    });
-    setTimeout(() => {
-        logger.error('Принудительное завершение по таймауту.');
-        process.exit(1);
-    }, 10000).unref();
+const gracefulShutdown = () => {
+    saveUserSessions();
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(1), 10000).unref();
 };
-
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
