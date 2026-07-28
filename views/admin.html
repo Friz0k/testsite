@@ -29,18 +29,18 @@
         .sidebar h2 { color: var(--accent-color); font-size: 20px; padding: 0 20px 20px 20px; border-bottom: 1px solid var(--border-color); text-align: center; margin-bottom: 10px; }
         .nav-category { padding: 10px 20px 5px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; font-weight: bold; }
         .nav-links { list-style: none; padding: 0 10px; flex-grow: 1; overflow-y: auto; }
-        .nav-links li { padding: 12px 15px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; color: var(--text-muted); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+        .nav-links li { padding: 12px 15px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; color: var(--text-muted); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
         .nav-links li:hover { background-color: rgba(109, 40, 217, 0.1); color: var(--text-main); }
         .nav-links li.active { background-color: var(--accent-color); color: #ffffff; }
 
-        .logout-btn { margin: 10px 20px; padding: 10px; background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); border-radius: 8px; cursor: pointer; font-size: 14px; text-align: center; }
+        .logout-btn { margin: 10px 20px; padding: 10px; background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); border-radius: 8px; cursor: pointer; font-size: 14px; text-align: center; transition: all 0.2s; }
         .logout-btn:hover { background: var(--danger-color); color: #fff; }
 
-        .content-area { flex-grow: 1; padding: 20px 40px; overflow-y: auto; }
-        .tab-content { display: none; max-width: 1250px; margin: 0 auto; animation: fadeIn 0.3s ease; }
+        .content-area { flex-grow: 1; padding: 30px 40px; overflow-y: auto; }
+        .tab-content { display: none; max-width: 1250px; margin: 0 auto; animation: fadeIn 0.2s ease; }
         .tab-content.active { display: block; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .admin-section { background-color: var(--panel-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); margin-bottom: 20px; }
         h3 { margin-bottom: 20px; font-size: 22px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; color: var(--text-main); }
@@ -55,10 +55,12 @@
 
         textarea#codeEditor { height: 400px; font-family: monospace; color: #c084fc; background-color: #050507; white-space: pre; }
 
-        button { background-color: var(--accent-color); color: #fff; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        button { background-color: var(--accent-color); color: #fff; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
         button:hover { background-color: var(--accent-hover); }
         .btn-success { background-color: var(--success-color); }
+        .btn-success:hover { background-color: #16a34a; }
         .btn-danger { background-color: var(--danger-color); }
+        .btn-danger:hover { background-color: #dc2626; }
         .btn-sm { padding: 8px 15px; font-size: 12px; margin-top: 0; }
 
         .btn-group { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
@@ -70,6 +72,34 @@
         .subsystem-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
         .subsystem-content { display: none; }
         .subsystem-content.active { display: block; }
+
+        /* --- ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ КАРТОЧЕК ВОПРОСОВ --- */
+        .q-card { background: #1f1f23; padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #3f3f46; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; color: var(--text-main); font-size: 16px; border-bottom: 1px solid #3f3f46; padding-bottom: 12px; }
+        
+        .q-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0 20px 0; background: #121214; padding: 15px; border-radius: 8px; border: 1px solid #27272a; align-items: end; }
+        .q-settings > div { display: flex; flex-direction: column; }
+        .q-settings label { margin-bottom: 6px; }
+        .q-settings select, .q-settings input { margin-bottom: 0; }
+        
+        .q-opt { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; background: #121214; padding: 10px 15px; border-radius: 8px; border: 1px solid #27272a; }
+        .q-opt input[type="text"] { margin-bottom: 0; flex-grow: 1; }
+        .q-opt input[type="radio"], .q-opt input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent-color); margin-bottom: 0; }
+
+        .rank-badge-group { display: flex; gap: 10px; align-items: center; height: 42px; }
+        .rank-badge { padding: 8px 14px; border-radius: 6px; background: #09090b; border: 1px solid #3f3f46; color: var(--text-muted); cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s; user-select: none; }
+        .rank-badge.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+
+        .token-card { background: #18181b; border: 1px solid var(--border-color); padding: 20px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .token-info h4 { margin: 0 0 5px 0; color: var(--text-main); font-size: 16px; }
+        .token-string { font-family: monospace; background: #09090b; padding: 8px 12px; border-radius: 6px; border: 1px solid #3f3f46; color: #a855f7; font-size: 13px; display: inline-block; margin-top: 5px; user-select: all; word-break: break-all; }
+        .badge-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+        .badge { font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; background: #27272a; color: #a1a1aa; border: 1px solid #3f3f46; }
+        .badge.system { background: rgba(124, 58, 237, 0.2); color: #c084fc; border-color: var(--accent-color); }
+        .badge.perm { background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: var(--success-color); }
+        .checkbox-group { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; background: #09090b; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .checkbox-group label { display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; text-transform: none; font-size: 13px; color: var(--text-main); }
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; margin-bottom: 0; accent-color: var(--accent-color); }
 
         .ip-card { background: #121214; border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; margin-bottom: 15px; }
         .ip-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 12px; margin-bottom: 12px; }
@@ -305,7 +335,7 @@
 
                     <div id="questions-list" style="margin-top: 20px;"></div>
                     
-                    <button type="button" class="btn-success" onclick="addQuestion()" style="margin-top: 10px;">➕ Добавить вопрос</button>
+                    <button type="button" class="btn-success" onclick="addQuestion()" style="margin-top: 15px;">➕ Добавить вопрос</button>
                 </div>
 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
@@ -504,7 +534,7 @@
                         <span>Первый визит: ${s.firstSeen}</span>
                         <span>Запросов: ${s.requestsCount}</span>
                     </div>
-                    ${note ? `<div style="background:#18181b; border-left:3px solid var(--accent-color); padding:8px 12px; border-radius:4px; font-size:13px; color:#22c55e;"><strong>Запись:</strong> ${note}</div>` : ''}
+                    ${note ? `<div style="background:#18181b; border-left:3px solid var(--accent-color); padding:8px 12px; border-radius:4px; font-size:13px; color:#22c55e;"><strong>Заметка:</strong> ${note}</div>` : ''}
                 `;
                 container.appendChild(card);
             });
@@ -917,55 +947,73 @@
             renderQuestions();
         }
 
+        /* --- ИСПРАВЛЕННАЯ ВЁРСТКА ОТРИСОВКИ ВОПРОСОВ --- */
         function renderQuestions() {
             const list = document.getElementById('questions-list');
             list.innerHTML = '';
+            
             unifiedQuestions.forEach((q, qIndex) => {
                 let html = `<div class="q-card">
                     <div class="q-header">
                         <span>Вопрос #${qIndex + 1}</span>
                         <button class="btn-danger btn-sm" onclick="removeQuestion(${qIndex})">🗑 Удалить вопрос</button>
                     </div>
-                    <input type="text" class="q-text" value="${q.text.replace(/"/g, '&quot;')}">
+                    
+                    <label>Текст вопроса:</label>
+                    <input type="text" class="q-text" value="${(q.text || '').replace(/"/g, '&quot;')}" placeholder="Введите вопрос...">
+                    
                     <div class="q-settings">
-                        <div><label>Тип:</label>
-                        <select class="q-type" onchange="syncDOMToState(); renderQuestions();">
-                            <option value="single" ${q.type==='single'?'selected':''}>Один вариант</option>
-                            <option value="multiple" ${q.type==='multiple'?'selected':''}>Мультивопрос</option>
-                            ${currentFaction === 'gov' ? `<option value="text" ${q.type==='text'?'selected':''}>Развернутый ответ</option>` : ''}
-                        </select></div>`;
+                        <div>
+                            <label>Тип ответа:</label>
+                            <select class="q-type" onchange="syncDOMToState(); renderQuestions();">
+                                <option value="single" ${q.type==='single'?'selected':''}>Один правильный вариант</option>
+                                <option value="multiple" ${q.type==='multiple'?'selected':''}>Несколько вариантов</option>
+                                ${currentFaction === 'gov' ? `<option value="text" ${q.type==='text'?'selected':''}>Развернутый текст</option>` : ''}
+                            </select>
+                        </div>`;
 
                 if (currentFaction === 'fib') {
                     const r5 = q.ranks && (q.ranks.includes(5) || q.ranks.includes(3));
                     const r7 = q.ranks && q.ranks.includes(7);
                     html += `
-                        <div><label>Ранги:</label>
-                        <div class="rank-badge-group">
-                            <div class="rank-badge ${r5 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 5)">5 РАНГ</div>
-                            <div class="rank-badge ${r7 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 7)">7 РАНГ</div>
-                        </div></div>`;
+                        <div>
+                            <label>Доступ по рангам:</label>
+                            <div class="rank-badge-group">
+                                <div class="rank-badge ${r5 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 5)">5 РАНГ</div>
+                                <div class="rank-badge ${r7 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 7)">7 РАНГ</div>
+                            </div>
+                        </div>`;
                 }
 
                 if (currentFaction === 'gov') {
                     html += `
-                        <div><label>Баллы:</label><input type="number" class="q-points" value="${q.points}" min="1" style="width:80px"></div>
-                        <div><label style="margin-top:10px;"><input type="checkbox" class="q-bonus" ${q.isBonus?'checked':''}> Бонусный</label></div>`;
+                        <div>
+                            <label>Баллы за вопрос:</label>
+                            <input type="number" class="q-points" value="${q.points || 1}" min="1" style="width:100px;">
+                        </div>
+                        <div style="display: flex; align-items: center; height: 42px;">
+                            <label style="margin-bottom: 0; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" class="q-bonus" ${q.isBonus?'checked':''} style="width:18px; height:18px; margin:0;"> Бонусный вопрос
+                            </label>
+                        </div>`;
                 }
 
                 html += `</div>`;
 
                 if (q.type !== 'text') {
-                    html += `<div class="q-options-container" style="margin-top:10px;">
-                                <label style="margin-bottom: 5px;">Варианты:</label>`;
+                    html += `<div class="q-options-container" style="margin-top:15px;">
+                                <label style="margin-bottom: 8px;">Варианты ответа (отметьте галочкой правильные):</label>`;
+                    
                     q.options.forEach((opt, oIndex) => {
                         const inputType = q.type === 'multiple' ? 'checkbox' : 'radio';
                         html += `<div class="q-opt">
-                            <input type="${inputType}" name="correct_${qIndex}" class="opt-correct" ${opt.isCorrect ? 'checked' : ''}>
-                            <input type="text" class="opt-text" value="${opt.text.replace(/"/g, '&quot;')}">
-                            <button class="btn-danger btn-sm" onclick="removeOpt(${qIndex}, ${oIndex})">❌</button>
+                            <input type="${inputType}" name="correct_${qIndex}" class="opt-correct" ${opt.isCorrect ? 'checked' : ''} title="Правильный ответ">
+                            <input type="text" class="opt-text" value="${(opt.text || '').replace(/"/g, '&quot;')}" placeholder="Вариант ${oIndex + 1}">
+                            <button class="btn-danger btn-sm" onclick="removeOpt(${qIndex}, ${oIndex})" style="padding: 10px 14px;">❌</button>
                         </div>`;
                     });
-                    html += `<button class="btn-success btn-sm" onclick="addOpt(${qIndex})">+ Добавить вариант</button>`;
+                    
+                    html += `<button class="btn-success btn-sm" onclick="addOpt(${qIndex})" style="margin-top: 5px;">+ Добавить вариант</button>`;
                     html += `</div>`;
                 }
 
@@ -1001,7 +1049,7 @@
         }
 
         function removeQuestion(idx) {
-            if(!confirm('Удалить вопрос?')) return;
+            if(!confirm('Удалить этот вопрос?')) return;
             syncDOMToState();
             unifiedQuestions.splice(idx, 1);
             renderQuestions();
