@@ -168,7 +168,6 @@ const logger = {
     }
 };
 
-// --- ПОЛНЫЙ БЭКАП ВСЕГО ПРОЕКТА (БАЗЫ, ТОКЕНЫ, КАРТИНКИ, ВЕРСТКА И КОД) ---
 const createBackupArchive = () => {
     try {
         const dateStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -260,6 +259,33 @@ const sanitizeInput = (req, res, next) => {
 
 app.use(sanitizeInput);
 
+const detectBot = (req) => {
+    const ua = (req.headers['user-agent'] || '').toLowerCase();
+    const url = req.originalUrl.toLowerCase();
+    
+    if (!ua || ua === 'no-agent' || ua === 'unknown') {
+        return { isBot: true, reason: 'Отсутствует User-Agent' };
+    }
+    
+    const botKeywords = [
+        'bot', 'crawler', 'spider', 'slurp', 'zgrab', 'curl', 'python', 
+        'discordbot', 'telegrambot', 'yandex', 'google', 'bing', 'yahoo',
+        'headless', 'phantom', 'postman', 'insomnia', 'java', 'wget'
+    ];
+    
+    for (let word of botKeywords) {
+        if (ua.includes(word)) {
+            return { isBot: true, reason: `UA: ${word}` };
+        }
+    }
+
+    if (url.includes('wp-admin') || url.includes('wp-login') || url.includes('xmlrpc') || url.includes('actuator')) {
+        return { isBot: true, reason: 'Сканирование уязвимостей' };
+    }
+
+    return { isBot: false, reason: null };
+};
+
 app.use((req, res, next) => {
     const start = Date.now();
     const sanitizeForLogs = (data) => {
@@ -286,19 +312,30 @@ app.use((req, res, next) => {
 
             const ip = req.clientIpClean || 'unknown';
             if (!req.originalUrl.startsWith('/uploads') && !req.originalUrl.startsWith('/systems')) {
+                const botInfo = detectBot(req);
+                
                 if (!userSessions[ip]) {
                     userSessions[ip] = {
                         ip: ip,
                         firstSeen: getMskTimestamp(),
                         lastSeen: getMskTimestamp(),
+                        lastSeenTimestamp: Date.now(),
                         userAgent: req.headers['user-agent'] || 'Неизвестное устройство',
                         requestsCount: 0,
+                        isBot: botInfo.isBot,
+                        botReason: botInfo.reason,
                         history: []
                     };
                 }
                 userSessions[ip].lastSeen = getMskTimestamp();
+                userSessions[ip].lastSeenTimestamp = Date.now();
                 userSessions[ip].userAgent = req.headers['user-agent'] || userSessions[ip].userAgent;
                 userSessions[ip].requestsCount++;
+                
+                if (!userSessions[ip].isBot && botInfo.isBot) {
+                    userSessions[ip].isBot = true;
+                    userSessions[ip].botReason = botInfo.reason;
+                }
                 
                 userSessions[ip].history.unshift({
                     time: getMskTimestamp(),
@@ -415,7 +452,6 @@ app.post('/api/backups/create', (req, res) => {
     }
 });
 
-// --- ВОССТАНОВЛЕНИЕ ВСЕГО ПРОЕКТА ИЗ БЭКАПА ---
 app.post('/api/backups/restore', (req, res) => {
     if (!req.isSuperAdmin) return res.status(403).json({ error: 'Superadmin required' });
     const { name } = req.body;
@@ -446,7 +482,7 @@ app.post('/api/backups/restore', (req, res) => {
         try { userSessions = JSON.parse(fs.readFileSync(FILE_SESSIONS, 'utf8')); } catch (e) {}
         try { ipNotes = JSON.parse(fs.readFileSync(FILE_NOTES, 'utf8')); } catch (e) {}
 
-        logger.info(`Весь проект (код, базы, токены и картинки) успешно восстановлен из: ${name}`);
+        logger.info(`Весь проект успешно восстановлен из: ${name}`);
         res.json({ success: true, message: 'Восстановление завершено успешно' });
     } catch (err) {
         logger.error('Ошибка восстановления из бэкапа', err);
