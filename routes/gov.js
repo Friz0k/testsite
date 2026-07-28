@@ -136,7 +136,6 @@ router.post('/submit', async (req, res) => {
 
 module.exports = router;
 JavaScript
-const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
