@@ -29,6 +29,7 @@ const DIR_UPLOADS = path.join(__dirname, 'public', 'uploads');
 const DIR_SYSTEMS = path.join(__dirname, 'public', 'systems');
 const DIR_VIEWS = path.join(__dirname, 'views');
 const DIR_ROUTES = path.join(__dirname, 'routes');
+const DIR_BACKUPS = path.join(__dirname, 'backups');
 
 const FILE_PROJECTS = path.join(DIR_DATA, 'projects.json');
 const FILE_SETTINGS = path.join(DIR_DATA, 'config.json');
@@ -36,7 +37,7 @@ const FILE_SETTINGS = path.join(DIR_DATA, 'config.json');
 const LOG_RETENTION_DAYS = 14;
 
 const ensureDirectoriesExist = () => {
-    const directories = [DIR_DATA, DIR_LOGS, DIR_PUBLIC, DIR_UPLOADS, DIR_SYSTEMS, DIR_VIEWS, DIR_ROUTES];
+    const directories = [DIR_DATA, DIR_LOGS, DIR_PUBLIC, DIR_UPLOADS, DIR_SYSTEMS, DIR_VIEWS, DIR_ROUTES, DIR_BACKUPS];
     directories.forEach(dir => {
         if (!fs.existsSync(dir)) {
             try {
@@ -119,31 +120,67 @@ const accessLog = new RotatingLogger('access');
 const errorLog = new RotatingLogger('error');
 const appLog = new RotatingLogger('app');
 
-const ts = () => new Date().toISOString();
+const getMskTimestamp = () => {
+    return new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
+};
 
 const logger = {
     info: (msg) => {
-        const line = `[${ts()}] [INFO] ${msg}`;
+        const line = `[${getMskTimestamp()}] [INFO] ${msg}`;
         console.log(line);
         appLog.write(line);
     },
     warn: (msg) => {
-        const line = `[${ts()}] [WARN] ${msg}`;
+        const line = `[${getMskTimestamp()}] [WARN] ${msg}`;
         console.warn(line);
         appLog.write(line);
     },
     error: (msg, err) => {
-        const line = `[${ts()}] [ERROR] ${msg}${err ? ' | ' + (err.stack || err.message || String(err)) : ''}`;
+        const line = `[${getMskTimestamp()}] [ERROR] ${msg}${err ? ' | ' + (err.stack || err.message || String(err)) : ''}`;
         console.error(line);
         errorLog.write(line);
         appLog.write(line);
     },
-    access: (req, res, durationMs) => {
-        const line = `[${ts()}] ${req.ip} "${req.method} ${req.originalUrl}" ${res.statusCode} ${durationMs}ms`;
+    access: (req, res, durationMs, payloadStr) => {
+        const clientIp = req.headers['x-forwarded-for'] || req.headers['cf-connecting-ip'] || req.ip || req.connection?.remoteAddress || 'unknown';
+        const userAgent = req.headers['user-agent'] || 'No-Agent';
+        const line = `[${getMskTimestamp()}] IP: ${clientIp} | "${req.method} ${req.originalUrl}" | Статус: ${res.statusCode} | Время: ${durationMs}ms | Данные: ${payloadStr} | Устройство: ${userAgent}`;
         console.log(line);
         accessLog.write(line);
     }
 };
+
+const runAutoBackup = () => {
+    try {
+        const dateStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        const backupFolder = path.join(DIR_BACKUPS, `backup-${dateStr}`);
+        fs.mkdirSync(backupFolder, { recursive: true });
+        
+        if (fs.existsSync(DIR_DATA)) {
+            fs.cpSync(DIR_DATA, path.join(backupFolder, 'data'), { recursive: true });
+        }
+        if (fs.existsSync(DIR_UPLOADS)) {
+            fs.cpSync(DIR_UPLOADS, path.join(backupFolder, 'uploads'), { recursive: true });
+        }
+        
+        const allBackups = fs.readdirSync(DIR_BACKUPS)
+            .filter(f => f.startsWith('backup-'))
+            .map(f => ({ name: f, time: fs.statSync(path.join(DIR_BACKUPS, f)).mtimeMs }))
+            .sort((a, b) => b.time - a.time);
+
+        if (allBackups.length > 7) {
+            allBackups.slice(7).forEach(old => {
+                fs.rmSync(path.join(DIR_BACKUPS, old.name), { recursive: true, force: true });
+            });
+        }
+        logger.info(`Автоматический бэкап успешно создан: backup-${dateStr}`);
+    } catch (err) {
+        logger.error('Ошибка создания автоматического бэкапа', err);
+    }
+};
+
+setInterval(runAutoBackup, 24 * 60 * 60 * 1000);
+setTimeout(runAutoBackup, 60 * 1000);
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -201,9 +238,31 @@ app.use(sanitizeInput);
 
 app.use((req, res, next) => {
     const start = Date.now();
+    
+    const sanitizeForLogs = (data) => {
+        if (!data || typeof data !== 'object') return data;
+        const copy = JSON.parse(JSON.stringify(data));
+        const hiddenKeys = ['password', 'token', 'image', 'file', 'content'];
+        for (let key in copy) {
+            if (hiddenKeys.includes(key) && copy[key]) {
+                copy[key] = '[СКРЫТО]';
+            } else if (typeof copy[key] === 'string' && copy[key].length > 150) {
+                copy[key] = copy[key].substring(0, 150) + '... [ОБРЕЗАНО]';
+            } else if (typeof copy[key] === 'object' && copy[key] !== null) {
+                copy[key] = sanitizeForLogs(copy[key]);
+            }
+        }
+        return copy;
+    };
+
     res.on('finish', () => {
-        if (!req.originalUrl.startsWith('/api/logs')) {
-            logger.access(req, res, Date.now() - start);
+        if (!req.originalUrl.startsWith('/api/logs') && !req.originalUrl.startsWith('/api/list-files')) {
+            const payloadObj = {
+                query: Object.keys(req.query).length ? sanitizeForLogs(req.query) : null,
+                body: Object.keys(req.body).length ? sanitizeForLogs(req.body) : null
+            };
+            const payloadStr = (payloadObj.query || payloadObj.body) ? JSON.stringify(payloadObj) : 'Нет данных';
+            logger.access(req, res, Date.now() - start, payloadStr);
         }
     });
     next();
@@ -459,7 +518,7 @@ app.get('/api/logs', (req, res) => {
 
         const data = fs.readFileSync(filePath, 'utf8');
         const lines = data.split('\n').filter(Boolean);
-        const lastLines = lines.slice(-200).reverse().join('\n');
+        const lastLines = lines.slice(-300).reverse().join('\n');
 
         res.json({ logs: lastLines, file: path.basename(filePath) });
     } catch (err) {
