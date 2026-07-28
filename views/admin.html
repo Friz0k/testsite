@@ -117,6 +117,15 @@
         .modal-body { background: #18181b; border: 1px solid var(--border-color); border-radius: 12px; width: 90%; max-width: 900px; max-height: 85vh; overflow-y: auto; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
 
         .backup-card { background: #121214; border: 1px solid var(--border-color); padding: 15px 20px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: #121214; border: 1px solid #27272a; padding: 20px; border-radius: 10px; text-align: center; }
+        .stat-number { font-size: 28px; font-weight: bold; margin-top: 5px; font-family: monospace; }
+        .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; font-family: monospace; }
+        .status-success { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+        .status-warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
+        .status-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
     </style>
 </head>
 <body>
@@ -137,6 +146,7 @@
         <div class="nav-category">Системы</div>
         <ul class="nav-links" id="systemsNavLinks">
             <li onclick="switchTab('faction_manager', this)">💼 Управление фракциями</li>
+            <li onclick="switchTab('discord_monitor', this)">📡 Мониторинг Discord</li>
             <li onclick="switchTab('tokens_manager', this)">🔑 Токены доступа</li>
         </ul>
 
@@ -347,6 +357,56 @@
             </div>
         </div>
 
+        <div id="discord_monitor" class="tab-content">
+            <div class="admin-section">
+                <h3>Мониторинг отправок в Discord и статус систем</h3>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Успешно (200/204/202)</div>
+                        <div class="stat-number" id="statSuccessCount" style="color:#4ade80;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Лимиты Discord (429)</div>
+                        <div class="stat-number" id="statRateLimitCount" style="color:#fbbf24;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Ошибки сбоя</div>
+                        <div class="stat-number" id="statErrorCount" style="color:#f87171;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">ОЗУ Сервера</div>
+                        <div class="stat-number" id="statRamUsage" style="color:#38bdf8;">0 MB</div>
+                    </div>
+                </div>
+
+                <div style="background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
+                    <h4 style="margin-top: 0;">Тестовая отправка вебхука</h4>
+                    <div class="form-grid">
+                        <div class="full-width">
+                            <label>URL Вебхука Discord</label>
+                            <input type="text" id="testWebhookUrlInput" placeholder="https://discord.com/api/webhooks/...">
+                        </div>
+                        <div class="full-width">
+                            <label>JSON База (Payload)</label>
+                            <textarea id="testWebhookPayloadInput" rows="3">{"content": "🔔 Тестовая проверка отслеживания кодов ответа из панели администрирования"}</textarea>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-success" onclick="sendTestWebhook()">🚀 Отправить тест и проверить статус</button>
+                    <div id="testWebhookResultBox" style="margin-top:15px; display:none;"></div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h4>Журнал отправок в Discord</h4>
+                    <div>
+                        <button type="button" class="btn-sm" onclick="loadDiscordMonitorUI()">🔄 Обновить</button>
+                        <button type="button" class="btn-danger btn-sm" onclick="clearDiscordLogs()">🗑 Очистить лог</button>
+                    </div>
+                </div>
+                <div id="discordLogsContainer">Загрузка...</div>
+            </div>
+        </div>
+
         <div id="tokens_manager" class="tab-content">
             <div class="admin-section">
                 <h3>Токены доступа</h3>
@@ -405,6 +465,25 @@
         </div>
     </div>
 
+    <div id="discordModal" class="modal-overlay">
+        <div class="modal-body">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h3 id="modalDiscordTitle" style="margin: 0; border: none; padding: 0;"></h3>
+                <button class="btn-danger btn-sm" onclick="closeDiscordModal()">❌ Закрыть</button>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label>Отправленная база (JSON Payload):</label>
+                <div id="modalDiscordPayload" class="timeline-data" style="max-height: 250px; overflow-y: auto;"></div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label>Ответ серверов Discord (Response / Ошибки):</label>
+                <div id="modalDiscordResponse" class="timeline-data" style="max-height: 250px; overflow-y: auto; color:#fbbf24;"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -415,6 +494,7 @@
             if (tabId === 'backups') loadBackupsUI();
             if (tabId === 'bans') loadBansUI();
             if (tabId === 'faction_manager' && !currentFaction) loadFactionUI();
+            if (tabId === 'discord_monitor') loadDiscordMonitorUI();
             if (tabId === 'tokens_manager') loadTokensUI();
         }
 
@@ -603,6 +683,110 @@
                 alert('Заметка сохранена!');
                 renderUserSessions();
             }
+        }
+
+        let rawDiscordLogs = [];
+        async function loadDiscordMonitorUI() {
+            const res = await apiCall('/api/discord-monitor');
+            if (!res || !res.success) return;
+
+            document.getElementById('statSuccessCount').innerText = res.health.successCount || 0;
+            document.getElementById('statRateLimitCount').innerText = res.health.rateLimitCount || 0;
+            document.getElementById('statErrorCount').innerText = res.health.errorCount || 0;
+            document.getElementById('statRamUsage').innerText = (res.health.rssMb || 0) + ' MB';
+
+            rawDiscordLogs = res.logs || [];
+            renderDiscordLogs();
+        }
+
+        function renderDiscordLogs() {
+            const container = document.getElementById('discordLogsContainer');
+            container.innerHTML = '';
+
+            if (rawDiscordLogs.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted);">Записи об отправоках вебхуков отсутствуют.</p>';
+                return;
+            }
+
+            rawDiscordLogs.forEach(l => {
+                let badgeClass = 'status-success';
+                let statusText = l.status;
+                if (l.status === 204 || l.status === 200) statusText += ' OK';
+                else if (l.status === 202) statusText += ' Accepted';
+                else if (l.status === 429) { badgeClass = 'status-warning'; statusText += ' Rate Limit'; }
+                else { badgeClass = 'status-danger'; statusText += ' Error'; }
+
+                const el = document.createElement('div');
+                el.className = 'backup-card';
+                el.style.borderColor = l.status === 429 ? '#f59e0b' : (l.status >= 400 ? '#ef4444' : 'var(--border-color)');
+                el.innerHTML = `
+                    <div>
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                            <span class="status-badge ${badgeClass}">${statusText}</span>
+                            <span style="color:#71717a; font-size:12px;">[${l.time}]</span>
+                            <span style="color:#38bdf8; font-size:12px; font-family:monospace;">${l.duration}ms</span>
+                        </div>
+                        <div style="font-family:monospace; color:#a855f7; font-size:13px; word-break:break-all;">${l.url}</div>
+                        ${l.error ? `<div style="color:#f87171; font-size:12px; margin-top:4px;">Сбой: ${l.error}</div>` : ''}
+                    </div>
+                    <button class="btn-sm" style="background:#27272a; color:#fff;" onclick="openDiscordModal('${l.id}')">📋 Детали и база</button>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function openDiscordModal(id) {
+            const l = rawDiscordLogs.find(item => item.id === id);
+            if (!l) return;
+
+            document.getElementById('modalDiscordTitle').innerText = `Отправка [Статус: ${l.status}] - ${l.time}`;
+            document.getElementById('modalDiscordPayload').innerText = l.payload ? JSON.stringify(l.payload, null, 2) : 'Пустой запрос';
+            
+            let respText = l.response ? JSON.stringify(l.response, null, 2) : (l.error ? String(l.error) : 'Нет ответа от сервера');
+            document.getElementById('modalDiscordResponse').innerText = respText;
+
+            document.getElementById('discordModal').style.display = 'flex';
+        }
+
+        function closeDiscordModal() {
+            document.getElementById('discordModal').style.display = 'none';
+        }
+
+        async function sendTestWebhook() {
+            const urlInput = document.getElementById('testWebhookUrlInput').value.trim();
+            const payloadInput = document.getElementById('testWebhookPayloadInput').value.trim();
+            const resultBox = document.getElementById('testWebhookResultBox');
+            if (!urlInput) return alert('Введите URL вебхука');
+
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = '<span style="color:#38bdf8;">⏳ Отправка запроса в Discord...</span>';
+
+            const res = await apiCall('/api/discord-monitor/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ webhookUrl: urlInput, payloadText: payloadInput })
+            });
+
+            if (res && res.success) {
+                let badgeClass = res.status < 400 ? 'status-success' : (res.status === 429 ? 'status-warning' : 'status-danger');
+                resultBox.innerHTML = `
+                    <div style="background:#121214; padding:15px; border-radius:8px; border:1px solid #27272a;">
+                        <div style="margin-bottom:8px;">
+                            <span class="status-badge ${badgeClass}">HTTP ${res.status} ${res.statusText || ''}</span>
+                        </div>
+                        <div style="font-family:monospace; font-size:12px; color:#fbbf24;">Ответ Discord: ${res.responseBody ? JSON.stringify(res.responseBody) : 'Успешно (без текста)'}</div>
+                    </div>
+                `;
+                loadDiscordMonitorUI();
+            } else if (res && res.error) {
+                resultBox.innerHTML = `<div style="color:#ef4444;">❌ Ошибка: ${res.error}</div>`;
+            }
+        }
+
+        async function clearDiscordLogs() {
+            if (!confirm('Очистить весь журнал отслеживания Discord?')) return;
+            const res = await apiCall('/api/discord-monitor/clear', { method: 'DELETE' });
+            if (res && res.success) loadDiscordMonitorUI();
         }
 
         async function loadBackupsUI() {
@@ -801,6 +985,9 @@
                 document.querySelectorAll('#systemsNavLinks li').forEach(li => {
                     const attr = li.getAttribute('onclick');
                     if (attr && attr.includes('tokens_manager')) li.style.display = 'none';
+                    if (attr && attr.includes('discord_monitor') && !userAuth.permissions.includes('settings') && !userAuth.permissions.includes('all')) {
+                        li.style.display = 'none';
+                    }
                 });
 
                 const selector = document.getElementById('factionSelector');
