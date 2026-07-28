@@ -73,7 +73,6 @@
         .subsystem-content { display: none; }
         .subsystem-content.active { display: block; }
 
-        /* --- ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ КАРТОЧЕК ВОПРОСОВ --- */
         .q-card { background: #1f1f23; padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #3f3f46; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; color: var(--text-main); font-size: 16px; border-bottom: 1px solid #3f3f46; padding-bottom: 12px; }
         
@@ -203,8 +202,12 @@
         <div id="sessions" class="tab-content">
             <div class="admin-section">
                 <h3>Мониторинг IP, устройств и отправленных данных</h3>
-                <div style="margin-bottom: 20px; display: flex; gap: 15px;">
-                    <input type="text" id="ipSearchInput" placeholder="Поиск по IP..." oninput="renderUserSessions()" style="margin-bottom:0;">
+                <div style="margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="ipSearchInput" placeholder="Поиск по IP..." oninput="renderUserSessions()" style="margin-bottom:0; flex-grow: 1;">
+                    <label style="margin-bottom:0; display:flex; align-items:center; gap:8px; cursor:pointer; background:#18181b; padding:10px 15px; border-radius:8px; border:1px solid #3f3f46;">
+                        <input type="checkbox" id="hideBotsCheckbox" onchange="renderUserSessions()" checked style="width:18px; height:18px; margin:0;">
+                        🤖 Скрыть ботов и сканеры
+                    </label>
                     <button type="button" onclick="loadSessionsUI()">🔄 Обновить</button>
                 </div>
                 <div id="sessionsListContainer">Загрузка...</div>
@@ -506,24 +509,36 @@
         function renderUserSessions() {
             const container = document.getElementById('sessionsListContainer');
             const search = (document.getElementById('ipSearchInput')?.value || '').toLowerCase();
+            const hideBots = document.getElementById('hideBotsCheckbox')?.checked || false;
             container.innerHTML = '';
 
-            const keys = Object.keys(rawSessions).filter(ip => ip.toLowerCase().includes(search));
+            let sessionsArray = Object.values(rawSessions);
+            sessionsArray.sort((a, b) => (b.lastSeenTimestamp || 0) - (a.lastSeenTimestamp || 0));
 
-            if (keys.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted);">Сессии пользователей не найдены.</p>';
+            const filtered = sessionsArray.filter(s => {
+                const matchesSearch = s.ip.toLowerCase().includes(search);
+                const matchesBotFilter = hideBots ? !s.isBot : true;
+                return matchesSearch && matchesBotFilter;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted);">Сессии пользователей не найдены или скрыты фильтром.</p>';
                 return;
             }
 
-            keys.forEach(ip => {
-                const s = rawSessions[ip];
-                const note = rawNotes[ip] || '';
-                
+            filtered.forEach(s => {
+                const note = rawNotes[s.ip] || '';
+                const botBadge = s.isBot 
+                    ? `<span style="background:rgba(239, 68, 68, 0.2); color:#ef4444; border:1px solid #ef4444; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:10px;">🤖 БОТ (${s.botReason || 'Автодетект'})</span>` 
+                    : `<span style="background:rgba(34, 197, 94, 0.2); color:#22c55e; border:1px solid #22c55e; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:10px;">👤 Человек</span>`;
+
                 const card = document.createElement('div');
                 card.className = 'ip-card';
+                card.style.borderColor = s.isBot ? '#7f1d1d' : 'var(--border-color)';
+                
                 card.innerHTML = `
                     <div class="ip-header">
-                        <div class="ip-title">🌐 ${s.ip}</div>
+                        <div class="ip-title">🌐 ${s.ip} ${botBadge}</div>
                         <div>
                             <button class="btn-success btn-sm" onclick="openIpModal('${s.ip}')">🔍 Посмотреть логи выполнения</button>
                             <button class="btn-danger btn-sm" onclick="quickBan('${s.ip}')">🚫 Забанить IP</button>
@@ -532,6 +547,7 @@
                     <div class="ip-device"><strong>Устройство:</strong> ${s.userAgent}</div>
                     <div style="font-size:12px; color:var(--text-muted); display:flex; gap:20px; margin-bottom:10px;">
                         <span>Первый визит: ${s.firstSeen}</span>
+                        <span style="color:#38bdf8; font-weight:bold;">Последний визит: ${s.lastSeen}</span>
                         <span>Запросов: ${s.requestsCount}</span>
                     </div>
                     ${note ? `<div style="background:#18181b; border-left:3px solid var(--accent-color); padding:8px 12px; border-radius:4px; font-size:13px; color:#22c55e;"><strong>Заметка:</strong> ${note}</div>` : ''}
@@ -947,7 +963,6 @@
             renderQuestions();
         }
 
-        /* --- ИСПРАВЛЕННАЯ ВЁРСТКА ОТРИСОВКИ ВОПРОСОВ --- */
         function renderQuestions() {
             const list = document.getElementById('questions-list');
             list.innerHTML = '';
