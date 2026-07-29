@@ -2,226 +2,158 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
-const url = require('url');
 
 const FILE_SETTINGS = path.join(__dirname, '../data/config.json');
 
-const getConfig = () => {
+const getSettings = () => {
     try {
         if (!fs.existsSync(FILE_SETTINGS)) return {};
         const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
-        const json = JSON.parse(data);
-        return json.gov || { webhooks: {}, roles: {}, testSettings: {} };
-    } catch (e) {
-        return { webhooks: {}, roles: {}, testSettings: {} };
+        return JSON.parse(data);
+    } catch (err) {
+        return {};
     }
 };
 
-const sendDiscordWebhook = (webhookUrl, payload) => {
-    return new Promise((resolve) => {
-        if (!webhookUrl || !webhookUrl.startsWith('http')) {
-            return resolve(false);
-        }
-        const parsedUrl = url.parse(webhookUrl);
-        const postData = JSON.stringify(payload);
-        const options = {
-            hostname: parsedUrl.hostname,
-            port: parsedUrl.port || 443,
-            path: parsedUrl.path,
+const sendWebhook = async (url, data) => {
+    try {
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(postData)
-            }
-        };
-        const req = https.request(options, (res) => {
-            res.on('data', () => {});
-            res.on('end', () => resolve(res.statusCode >= 200 && res.statusCode < 300));
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
         });
-        req.on('error', () => resolve(false));
-        req.write(postData);
-        req.end();
-    });
+        if (!response.ok) {
+            console.error(`Ошибка вебхука [GOV]: HTTP ${response.status}`);
+        }
+    } catch (err) {
+        console.error(`Ошибка при отправке вебхука [GOV]:`, err);
+    }
 };
-
-router.get('/questions', (req, res) => {
-    const config = getConfig();
-    const testSettings = config.testSettings || {};
-    const rawQuestions = testSettings.questions || [];
-    const durationMinutes = testSettings.durationMinutes || 20;
-
-    const filteredQuestions = rawQuestions.map((q, index) => ({
-        id: q.id || (index + 1),
-        text: q.question || q.text || '',
-        type: q.type || 'single',
-        points: q.points || 1,
-        isBonus: q.isBonus || false,
-        options: (q.options || []).map(opt => (typeof opt === 'string' ? opt : opt.text || ''))
-    }));
-
-    res.json({
-        success: true,
-        durationMinutes: durationMinutes,
-        questions: filteredQuestions
-    });
-});
 
 router.post('/submit', async (req, res) => {
-    const config = getConfig();
-    const testSettings = config.testSettings || {};
-    const rawQuestions = testSettings.questions || [];
-    const passingScore = testSettings.passingScore || 10;
-    const { nickname, discordTag, questions, questionTimes, leaveCount } = req.body;
+    const { 
+        answers, 
+        characterName, 
+        discordId, 
+        staticId, 
+        rank 
+    } = req.body;
 
-    let totalScore = 0;
-    let maxPossibleScore = 0;
+    const settings = getSettings();
+    const govConfig = settings.gov || {};
+    const testConfig = govConfig.testSettings || {};
+    const whUrl = govConfig.webhooks?.test;
+    const pingRole = govConfig.roles?.test;
 
-    rawQuestions.forEach((storedQ, idx) => {
-        if (!storedQ.isBonus) maxPossibleScore += (storedQ.points || 1);
+    if (!whUrl) {
+        return res.status(500).json({ error: 'Вебхук для тестов GOV не настроен' });
+    }
 
-        const userQ = (questions || []).find(q => q.id === storedQ.id || q.id === (idx + 1));
-        const selectedIndices = userQ && Array.isArray(userQ.selectedAnswers) ? userQ.selectedAnswers : [];
-        
-        let correctIndices = [];
-        if (Array.isArray(storedQ.options)) {
-            storedQ.options.forEach((opt, i) => {
-                if (typeof opt === 'object' && opt.correct) correctIndices.push(i);
-            });
+    const testDuration = testConfig.durationMinutes || 15;
+    const testPassingScore = testConfig.passingScore || 0;
+    const questions = testConfig.questions || [];
+
+    if (!answers || !characterName || !discordId || !staticId) {
+        return res.status(400).json({ error: 'Заполнены не все обязательные поля' });
+    }
+
+    let score = 0;
+    let maxScore = 0;
+    const parsedAnswers = Array.isArray(answers) ? answers : [];
+
+    parsedAnswers.forEach(ans => {
+        const q = questions.find(question => question.id == ans.questionId);
+        if (q) {
+            if (q.type !== 'text') {
+                if (q.isBonus) {
+                    // Бонусные вопросы прибавляют баллы, но не увеличивают максимум
+                    if (ans.correct) score += q.points;
+                } else {
+                    maxScore += q.points;
+                    if (ans.correct) score += q.points;
+                }
+            }
         }
-
-        const isCorrect = correctIndices.length === selectedIndices.length && 
-            correctIndices.every(val => selectedIndices.includes(val));
-
-        if (isCorrect) totalScore += (storedQ.points || 1);
     });
 
-    const passed = totalScore >= passingScore;
-    const webhookUrl = config.webhooks?.test;
-    const pingRole = config.roles?.test ? `<@&${config.roles.test}>` : '';
+    const isPassed = score >= testPassingScore;
+    const statusText = isPassed ? "СДАЛ" : "НЕ СДАЛ";
+    const statusColor = isPassed ? 3066993 : 15158332;
 
-    if (webhookUrl) {
-        const embedColor = passed ? 0x10b981 : 0xf43f5e;
-        const statusText = passed ? '✅ АТТЕСТАЦИЯ ПРОЙДЕНА' : '❌ НЕ ПРОЙДЕНА';
-        
-        const payload = {
-            content: pingRole ? `Результат теста адвокатов GOV: ${pingRole}` : null,
-            embeds: [
-                {
-                    title: '⚖️ Результат аттестации Правительства (GOV)',
-                    color: embedColor,
-                    fields: [
-                        { name: '👤 Кандидат / Адвокат', value: `${nickname || 'Не указан'} (${discordTag || 'Нет Discord'})`, inline: true },
-                        { name: '📊 Статус', value: `${statusText}`, inline: true },
-                        { name: '🏆 Набрано баллов', value: `${totalScore} (из ${maxPossibleScore} основных)`, inline: true },
-                        { name: '🎯 Проходной балл', value: `${passingScore}`, inline: true },
-                        { name: '⚠️ Покиданий вкладки', value: `${leaveCount || 0}`, inline: true }
-                    ],
-                    footer: { text: `Frizworld Government Portal | ${new Date().toLocaleString('ru-RU')}` }
-                }
-            ]
-        };
+    const embed = {
+        title: "📄 Результат тестирования (Адвокаты GOV)",
+        color: statusColor,
+        fields: [
+            {
+                name: "👤 Имя персонажа",
+                value: characterName,
+                inline: true
+            },
+            {
+                name: "🆔 Статик (ID)",
+                value: String(staticId),
+                inline: true
+            },
+            {
+                name: "💬 Discord",
+                value: `<@${discordId}>`,
+                inline: true
+            },
+            {
+                name: "📊 Результат",
+                value: `**${statusText}** (${score} из ${maxScore} баллов)`,
+                inline: false
+            }
+        ],
+        timestamp: new Date().toISOString()
+    };
 
-        await sendDiscordWebhook(webhookUrl, payload);
-    }
+    const textPing = pingRole ? `<@&${pingRole}>` : '';
+
+    await sendWebhook(whUrl, {
+        content: textPing,
+        embeds: [embed]
+    });
 
     res.json({
         success: true,
-        passed: passed,
-        score: totalScore,
-        total: maxPossibleScore,
-        passingScore: passingScore
+        score: score,
+        maxScore: maxScore,
+        passed: isPassed
     });
 });
 
-module.exports = router;
-JavaScript
-const fs = require('fs');
-const path = require('path');
-const https = require('https');
-const url = require('url');
-
-const FILE_SETTINGS = path.join(__dirname, '../data/config.json');
-
-const getConfig = () => {
-    try {
-        if (!fs.existsSync(FILE_SETTINGS)) return {};
-        const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
-        const json = JSON.parse(data);
-        return json.ems || { webhooks: {}, roles: {} };
-    } catch (e) {
-        return { webhooks: {}, roles: {} };
-    }
-};
-
-const sendDiscordWebhook = (webhookUrl, payload) => {
-    return new Promise((resolve) => {
-        if (!webhookUrl || !webhookUrl.startsWith('http')) {
-            return resolve(false);
-        }
-        const parsedUrl = url.parse(webhookUrl);
-        const postData = JSON.stringify(payload);
-        const options = {
-            hostname: parsedUrl.hostname,
-            port: parsedUrl.port || 443,
-            path: parsedUrl.path,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(postData)
-            }
+router.get('/questions', (req, res) => {
+    const settings = getSettings();
+    const govConfig = settings.gov || {};
+    const testConfig = govConfig.testSettings || {};
+    const questions = testConfig.questions || [];
+    
+    // Не отправляем правильные ответы на клиент
+    const safeQuestions = questions.map(q => {
+        const safeQ = {
+            id: q.id,
+            question: q.question,
+            type: q.type,
+            points: q.points,
+            isBonus: q.isBonus
         };
-        const req = https.request(options, (res) => {
-            res.on('data', () => {});
-            res.on('end', () => resolve(res.statusCode >= 200 && res.statusCode < 300));
-        });
-        req.on('error', () => resolve(false));
-        req.write(postData);
-        req.end();
+        
+        if (q.type !== 'text' && q.options) {
+            safeQ.options = q.options.map(opt => opt.text);
+        }
+        
+        return safeQ;
     });
-};
 
-router.post('/report', async (req, res) => {
-    const config = getConfig();
-    const { fullname, position, hospital, shiftDuration, patientsTreated, callsAnswered, summary } = req.body;
-
-    if (!fullname || !position || !hospital) {
-        return res.status(400).json({ success: false, message: 'Заполните основные поля отчета' });
-    }
-
-    const webhookUrl = config.webhooks?.main;
-    const pingRole = config.roles?.main ? `<@&${config.roles.main}>` : '';
-
-    if (!webhookUrl) {
-        return res.json({ success: true, message: 'Отчет сохранен (вебхук Discord не настроен)' });
-    }
-
-    const payload = {
-        content: pingRole ? `Новый медицинский отчет: ${pingRole}` : null,
-        embeds: [
-            {
-                title: '🚑 Отчет сотрудника EMS',
-                color: 0xef4444,
-                fields: [
-                    { name: '👨‍⚕️ Сотрудник', value: `${fullname}`, inline: true },
-                    { name: '🩺 Должность', value: `${position}`, inline: true },
-                    { name: '🏥 Отделение / Больница', value: `${hospital}`, inline: true },
-                    { name: '⏱️ Длительность смены', value: `${shiftDuration || '0'} час.`, inline: true },
-                    { name: '💊 Вылечено пациентов', value: `${patientsTreated || '0'}`, inline: true },
-                    { name: '📞 Принято вызовов', value: `${callsAnswered || '0'}`, inline: true },
-                    { name: '📋 Описание проделанной работы', value: `${summary || 'Отсутствует'}`, inline: false }
-                ],
-                footer: { text: `Frizworld EMS Systems | ${new Date().toLocaleString('ru-RU')}` }
-            }
-        ]
-    };
-
-    const sent = await sendDiscordWebhook(webhookUrl, payload);
-    if (sent) {
-        res.json({ success: true, message: '✓ Отчет успешно отправлен в Discord' });
-    } else {
-        res.status(500).json({ success: false, message: 'Ошибка отправки в Discord' });
-    }
+    res.json({
+        success: true,
+        durationMinutes: testConfig.durationMinutes || 15,
+        passingScore: testConfig.passingScore || 0,
+        questions: safeQuestions
+    });
 });
 
 module.exports = router;
