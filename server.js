@@ -376,9 +376,10 @@ app.use((req, res, next) => {
             const monitoredSystems = ['lssd', 'lspd', 'gov', 'fib', 'cid', 'deadly', 'ems'];
             const pathParts = req.originalUrl.split('?')[0].split('/').filter(Boolean);
             if (req.method === 'POST' && res.statusCode >= 200 && res.statusCode < 400 && pathParts.length > 0 && monitoredSystems.includes(pathParts[0])) {
-                if (req.body && Object.keys(req.body).length > 0) {
+                const payloadToLog = res.locals.sheetPayload || req.body;
+                if (payloadToLog && Object.keys(payloadToLog).length > 0) {
                     const actionType = pathParts[1] || 'request';
-                    googleLogger(pathParts[0], actionType, req.body);
+                    googleLogger(pathParts[0], actionType, payloadToLog);
                 }
             }
 
