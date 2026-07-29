@@ -453,6 +453,7 @@
             document.getElementById('globalLoader')?.remove();
             document.querySelector('.tiles').style.display = 'grid';
         } catch (err) {
+            document.getElementById('globalLoader')?.remove();
             alert('Ошибка загрузки данных: ' + err.message);
         }
     }
@@ -592,7 +593,7 @@
     function updateReportTotal() {
         let total = 0, actions = [];
         document.querySelectorAll('#repActions .action-item').forEach(el => {
-            const sel = el.querySelector('.rep-act-type'), qty = parseInt(el.querySelector('.rep-act-qty').value) || 1;
+            const sel = el.querySelector('.rep-act-type'), qty = Math.max(1, parseInt(el.querySelector('.rep-act-qty').value) || 1);
             if(sel && sel.value) {
                 const act = ALL_ACTIONS.find(a => a.id === sel.value);
                 if(act) {
@@ -780,7 +781,7 @@
     window.updatePromoTotal = function() {
         let total = 0, actions = [];
         document.querySelectorAll('#promoActions .action-item').forEach(el => {
-            const sel = el.querySelector('.promo-act-type'), qty = parseInt(el.querySelector('.promo-act-qty').value) || 1;
+            const sel = el.querySelector('.promo-act-type'), qty = Math.max(1, parseInt(el.querySelector('.promo-act-qty').value) || 1);
             if(sel && sel.value) {
                 const act = ALL_ACTIONS.find(a => a.id === sel.value);
                 if(act) {
