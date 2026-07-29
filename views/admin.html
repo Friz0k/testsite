@@ -533,17 +533,28 @@
                 document.getElementById('deleteBtn').style.display = 'inline-block';
             }
         }
-        function saveProjectWithImage() {
+
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ПРОЕКТОВ (FORMDATA ВМЕСТО BASE64)
+        async function saveProjectWithImage() {
             const fileInput = document.getElementById('projImageFile');
             if (fileInput.files.length > 0) {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const data = await apiCall('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: e.target.result }) });
-                    if (data && data.success) { currentProjImageUrl = data.url; saveProjectData(); }
-                };
-                reader.readAsDataURL(fileInput.files[0]);
+                const formData = new FormData();
+                formData.append('image', fileInput.files[0]);
+                try {
+                    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data && data.success) { 
+                        currentProjImageUrl = data.url; 
+                        saveProjectData(); 
+                    } else {
+                        alert('Ошибка загрузки картинки проекта');
+                    }
+                } catch(e) {
+                    alert('Сбой при загрузке картинки проекта: ' + e.message);
+                }
             } else saveProjectData();
         }
+
         async function saveProjectData() {
             const idx = document.getElementById('projectSelect').value;
             const projData = { title: document.getElementById('projTitle').value, path: document.getElementById('projPath').value, shortDesc: document.getElementById('projShortDesc').value, fullDesc: document.getElementById('projFullDesc').value, imageUrl: currentProjImageUrl };
@@ -558,19 +569,30 @@
             const data = await apiCall('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(allProjects) });
             if (data && data.success) { document.getElementById('projectSelect').value = ""; loadProjects(); }
         }
-        function uploadIllustration() {
+
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ИЛЛЮСТРАЦИИ (FORMDATA ВМЕСТО BASE64)
+        async function uploadIllustration() {
             const fileInput = document.getElementById('illustrationFile');
             if (fileInput.files.length === 0) return alert('Выберите файл!');
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const upRes = await apiCall('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: e.target.result }) });
+            
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                const upRes = await res.json();
                 if (upRes && upRes.success) {
                     globalConfig.illustrationUrl = upRes.url;
                     await apiCall('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(globalConfig) });
-                    document.getElementById('currentIllustration').src = upRes.url; document.getElementById('currentIllustration').style.display = 'block'; alert('Арт обновлен!');
+                    document.getElementById('currentIllustration').src = upRes.url; 
+                    document.getElementById('currentIllustration').style.display = 'block'; 
+                    alert('Арт обновлен!');
+                } else {
+                    alert('Ошибка загрузки арта');
                 }
-            };
-            reader.readAsDataURL(fileInput.files[0]);
+            } catch(e) {
+                alert('Сбой при загрузке: ' + e.message);
+            }
         }
 
         let rawSessions = {};
