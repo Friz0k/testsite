@@ -1,3 +1,4 @@
+// lssd.js
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
@@ -144,7 +145,7 @@ router.get('/questions', (req, res) => {
 
     const filteredQuestions = rawQuestions.map((q, index) => ({
         id: q.id || (index + 1),
-        text: q.question || q.text || '',
+        question: q.question || q.text || '',
         type: q.type || 'single',
         options: (q.options || []).map(opt => (typeof opt === 'string' ? opt : opt.text || ''))
     }));
