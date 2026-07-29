@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const googleLogger = require('../googleLogger'); // Прямое подключение логгера
 
 const FILE_SETTINGS = path.join(__dirname, '../data/config.json');
 
@@ -11,7 +12,6 @@ const getSettings = () => {
         const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
         return JSON.parse(data);
     } catch (err) {
-        console.error('[FIB] Ошибка чтения конфига:', err);
         return {};
     }
 };
@@ -22,22 +22,17 @@ const getMskTime = () => {
     const parts = new Intl.DateTimeFormat('ru-RU', opts).formatToParts(d);
     const vals = {};
     parts.forEach(p => vals[p.type] = p.value);
-    return `${vals.hour}:${vals.minute} ${vals.day}.${vals.month}.${vals.year}`;
+    return `${vals.day}.${vals.month}.${vals.year} ${vals.hour}:${vals.minute}`;
 };
 
 const sendWebhook = async (url, data) => {
     try {
-        const res = await fetch(url, {
+        await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        if (!res.ok) {
-            console.error(`[FIB] Ошибка отправки вебхука: HTTP ${res.status}`);
-        }
-    } catch (err) {
-        console.error(`[FIB] Сбой вебхука:`, err.message);
-    }
+    } catch (err) {}
 };
 
 router.get('/settings', (req, res) => {
@@ -60,13 +55,8 @@ router.get('/settings', (req, res) => {
 });
 
 router.get('/questions', (req, res) => {
-    console.log(`[FIB] Запрос вопросов для ранга: ${req.query.rank}`);
     const rank = parseInt(req.query.rank);
-    
-    if (!rank) {
-        console.log('[FIB] Ошибка: Неверный ранг в GET /questions');
-        return res.status(400).json({ error: 'Укажите корректный ранг', message: 'Укажите корректный ранг' });
-    }
+    if (!rank) return res.status(400).json({ error: 'Укажите корректный ранг' });
 
     const settings = getSettings();
     const testConfig = (settings.fib || {}).testSettings || {};
@@ -88,8 +78,6 @@ router.get('/questions', (req, res) => {
         options: q.options || []
     }));
 
-    console.log(`[FIB] Отправлено ${safeQuestions.length} вопросов для ${rank} ранга.`);
-    
     res.json({
         success: true,
         rank, durationMinutes, passingScore, questionCount,
@@ -98,16 +86,11 @@ router.get('/questions', (req, res) => {
 });
 
 router.post('/submit', async (req, res) => {
-    console.log('\n--- [FIB] НОВАЯ ОТПРАВКА ТЕСТА ---');
-    console.log('[FIB] Полученные данные (body):', JSON.stringify(req.body, null, 2));
-
-    const { questions, nickname, discordTag, rank, leaveCount } = req.body;
+    const { questions, nickname, discordTag, rank, leaveCount, timeSpent } = req.body;
     const rankNum = parseInt(rank);
     
     if (!rankNum || !nickname || !discordTag || !questions) {
-        const errorMsg = 'Заполнены не все поля (проверьте никнейм, дискорд и ранг)';
-        console.error('[FIB] Ошибка:', errorMsg);
-        return res.status(400).json({ success: false, error: errorMsg, message: errorMsg });
+        return res.status(400).json({ success: false, error: 'Заполнены не все поля' });
     }
 
     const settings = getSettings();
@@ -121,14 +104,14 @@ router.post('/submit', async (req, res) => {
 
     let score = 0;
     const parsedAnswers = Array.isArray(questions) ? questions : [];
+    let answersLog = '';
 
     parsedAnswers.forEach((ans) => {
         const q = allQuestions.find(question => question.id == ans.id);
         if (q) {
             const correctAnswers = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correctAnswer ? [q.correctAnswer] : []);
             const userAnsArray = Array.isArray(ans.selectedAnswers) ? ans.selectedAnswers : [];
-            
-            const userAnsTexts = userAnsArray.map(idx => q.options ? q.options[idx] : null).filter(Boolean);
+            const userAnsTexts = userAnsArray.map(i => q.options ? q.options[i] : null).filter(Boolean);
             
             let isCorrectForThisQ = false;
             if (q.type === 'multiple') {
@@ -142,43 +125,58 @@ router.post('/submit', async (req, res) => {
                     isCorrectForThisQ = true;
                 }
             }
-            console.log(`[FIB] Вопрос ${q.id} | Ответ юзера: [${userAnsTexts}] | Верный: [${correctAnswers}] -> ${isCorrectForThisQ ? 'ВЕРНО (+1)' : 'НЕВЕРНО'}`);
-        } else {
-            console.log(`[FIB] Вопрос с ID ${ans.id} не найден в базе!`);
+
+            answersLog += `Вопрос: ${q.text || q.question}\nОтвет: ${userAnsTexts.join(', ') || 'Нет ответа'} ${isCorrectForThisQ ? '✅' : '❌'}\n\n`;
         }
     });
 
-    console.log(`[FIB] Итоговый балл: ${score} из ${questionCount}. Проходной: ${passingScore}`);
+    if (answersLog.length > 3000) answersLog = answersLog.substring(0, 3000) + '...';
+    if (!answersLog) answersLog = 'Нет данных об ответах';
 
     const isPassed = score >= passingScore;
-    const statusText = isPassed ? "СДАНО" : "НЕ СДАНО";
+    
+    // Округление времени до 10
+    const roundedTimeSeconds = Math.round((timeSpent || 0) / 10) * 10;
+    const timeStr = timeSpent ? `${Math.floor(roundedTimeSeconds / 60)} мин ${roundedTimeSeconds % 60} сек` : 'Не передано клиентом';
+
+    // 1. Формируем красивые данные для Google Таблицы
+    const sheetPayload = {
+        "Дата": getMskTime(),
+        "Ник-нейм": nickname,
+        "Ранг": rankNum,
+        "Кол-во набранных баллов": score,
+        "Макс баллы": questionCount,
+        "Затраты по времени": timeStr,
+        "Ответы на вопросы": answersLog.trim()
+    };
+
+    // 2. Прямая отправка в Google Таблицу
+    try {
+        await googleLogger('fib', 'Переаттестация', sheetPayload);
+        req.body = {}; // Очищаем req.body, чтобы server.js не отправил сырой дубликат
+    } catch (e) {
+        console.error('[FIB] Ошибка логирования в Google Sheets:', e);
+    }
 
     if (whUrl) {
         const embed = {
-            title: `📋 Результат переаттестации FIB | Ранг: ${rankNum}`,
+            title: `📋 Результат переаттестации FIB`,
             color: isPassed ? 3066993 : 15158332,
             fields: [
-                { name: "Сотрудник", value: String(nickname), inline: true },
-                { name: "Тег дс", value: String(discordTag), inline: true },
-                { name: "Статус", value: `${statusText} (${score})`, inline: true },
-                { name: "Покиданий вкладки", value: String(leaveCount || 0), inline: false }
+                { name: "👤 Ник-нейм", value: String(nickname), inline: true },
+                { name: "💬 Discord", value: String(discordTag), inline: true },
+                { name: "🎖️ Ранг", value: String(rankNum), inline: true },
+                { name: "📊 Баллы", value: `${score} / ${questionCount}`, inline: true },
+                { name: "⏱️ Время", value: timeStr, inline: true },
+                { name: "⚠️ Покиданий вкладки", value: String(leaveCount || 0), inline: true }
             ],
-            footer: {
-                text: `Время по МСК: ${getMskTime()} | by Frizworld`
-            }
+            footer: { text: `Время по МСК: ${getMskTime()}` }
         };
-        
         const pingRole = fibConfig.roles?.ping;
-        await sendWebhook(whUrl, {
-            content: pingRole ? `<@&${pingRole}>` : '',
-            embeds: [embed]
-        });
-        console.log('[FIB] Вебхук успешно отправлен.');
-    } else {
-        console.log('[FIB] Вебхук НЕ отправлен, так как URL не настроен в админке.');
+        await sendWebhook(whUrl, { content: pingRole ? `<@&${pingRole}>` : '', embeds: [embed] });
     }
 
-    res.json({ success: true, score, passingScore, passed: isPassed, message: 'Тест успешно завершен' });
+    res.json({ success: true, score, passingScore, passed: isPassed });
 });
 
 router.post('/evidence', async (req, res) => {
@@ -187,8 +185,7 @@ router.post('/evidence', async (req, res) => {
     const fibConfig = settings.fib || {};
     const whUrl = fibConfig.webhooks?.cid_evidence;
 
-    if (!whUrl) return res.status(500).json({ error: 'Вебхук для улик CID не настроен', message: 'Вебхук для улик CID не настроен' });
-    if (!agentName || !staticId || !violationText) return res.status(400).json({ error: 'Заполните обязательные поля', message: 'Заполните обязательные поля' });
+    if (!whUrl) return res.status(500).json({ error: 'Вебхук для улик CID не настроен' });
 
     const embed = {
         title: "🕵️ Новая улика CID (FIB)",
@@ -205,7 +202,7 @@ router.post('/evidence', async (req, res) => {
 
     const pingRole = fibConfig.roles?.cid_evidence;
     await sendWebhook(whUrl, { content: pingRole ? `<@&${pingRole}>` : '', embeds: [embed] });
-    res.json({ success: true, message: 'Улика загружена' });
+    res.json({ success: true });
 });
 
 module.exports = router;
