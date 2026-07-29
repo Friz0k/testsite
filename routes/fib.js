@@ -11,24 +11,32 @@ const getSettings = () => {
         const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
         return JSON.parse(data);
     } catch (err) {
+        console.error('[FIB] Ошибка чтения конфига:', err);
         return {};
     }
 };
 
+const getMskTime = () => {
+    const d = new Date();
+    const opts = { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
+    const parts = new Intl.DateTimeFormat('ru-RU', opts).formatToParts(d);
+    const vals = {};
+    parts.forEach(p => vals[p.type] = p.value);
+    return `${vals.hour}:${vals.minute} ${vals.day}.${vals.month}.${vals.year}`;
+};
+
 const sendWebhook = async (url, data) => {
     try {
-        const response = await fetch(url, {
+        const res = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        if (!response.ok) {
-            console.error(`Ошибка вебхука [FIB]: HTTP ${response.status}`);
+        if (!res.ok) {
+            console.error(`[FIB] Ошибка отправки вебхука: HTTP ${res.status}`);
         }
     } catch (err) {
-        console.error(`Ошибка при отправке вебхука [FIB]:`, err);
+        console.error(`[FIB] Сбой вебхука:`, err.message);
     }
 };
 
@@ -36,16 +44,15 @@ router.get('/settings', (req, res) => {
     const settings = getSettings();
     const fibConfig = settings.fib || {};
     const testConfig = fibConfig.testSettings || {};
-
     res.json({
         success: true,
         rank5: {
-            durationMinutes: testConfig.durationMinutesRank5 || 5,
+            durationMinutes: testConfig.durationMinutesRank5 || 15,
             passingScore: testConfig.passingScoreRank5 || 6,
             questionCount: testConfig.questionCountRank5 || 10
         },
         rank7: {
-            durationMinutes: testConfig.durationMinutesRank7 || 10,
+            durationMinutes: testConfig.durationMinutesRank7 || 20,
             passingScore: testConfig.passingScoreRank7 || 15,
             questionCount: testConfig.questionCountRank7 || 20
         }
@@ -53,207 +60,152 @@ router.get('/settings', (req, res) => {
 });
 
 router.get('/questions', (req, res) => {
+    console.log(`[FIB] Запрос вопросов для ранга: ${req.query.rank}`);
     const rank = parseInt(req.query.rank);
-    if (!rank || (rank !== 5 && rank !== 7)) {
-        return res.status(400).json({ error: 'Неверный ранг (только 5 или 7)' });
+    
+    if (!rank) {
+        console.log('[FIB] Ошибка: Неверный ранг в GET /questions');
+        return res.status(400).json({ error: 'Укажите корректный ранг', message: 'Укажите корректный ранг' });
     }
 
     const settings = getSettings();
-    const fibConfig = settings.fib || {};
-    const testConfig = fibConfig.testSettings || {};
+    const testConfig = (settings.fib || {}).testSettings || {};
     const allQuestions = testConfig.questions || [];
 
     const rankQuestions = allQuestions.filter(q => q.ranks && (q.ranks.includes(rank) || q.ranks.includes(Number(rank))));
     
     const questionCount = rank === 5 ? (testConfig.questionCountRank5 || 10) : (testConfig.questionCountRank7 || 20);
-    const durationMinutes = rank === 5 ? (testConfig.durationMinutesRank5 || 5) : (testConfig.durationMinutesRank7 || 10);
+    const durationMinutes = rank === 5 ? (testConfig.durationMinutesRank5 || 15) : (testConfig.durationMinutesRank7 || 20);
     const passingScore = rank === 5 ? (testConfig.passingScoreRank5 || 6) : (testConfig.passingScoreRank7 || 15);
 
     const shuffled = [...rankQuestions].sort(() => 0.5 - Math.random());
     const selectedQuestions = shuffled.slice(0, Math.min(questionCount, shuffled.length));
 
-    const safeQuestions = selectedQuestions.map(q => {
-        return {
-            id: q.id,
-            text: q.text || q.question || '',
-            type: q.type || 'single',
-            options: q.options || []
-        };
-    });
+    const safeQuestions = selectedQuestions.map(q => ({
+        id: q.id,
+        text: q.text || q.question || '',
+        type: q.type || 'single',
+        options: q.options || []
+    }));
 
+    console.log(`[FIB] Отправлено ${safeQuestions.length} вопросов для ${rank} ранга.`);
+    
     res.json({
         success: true,
-        rank: rank,
-        durationMinutes: durationMinutes,
-        passingScore: passingScore,
-        questionCount: questionCount,
+        rank, durationMinutes, passingScore, questionCount,
         questions: safeQuestions
     });
 });
 
 router.post('/submit', async (req, res) => {
-    const { 
-        answers, 
-        characterName, 
-        discordId, 
-        staticId, 
-        rank 
-    } = req.body;
+    console.log('\n--- [FIB] НОВАЯ ОТПРАВКА ТЕСТА ---');
+    console.log('[FIB] Полученные данные (body):', JSON.stringify(req.body, null, 2));
 
+    const { questions, nickname, discordTag, rank, leaveCount } = req.body;
     const rankNum = parseInt(rank);
-    if (!rankNum || (rankNum !== 5 && rankNum !== 7)) {
-        return res.status(400).json({ error: 'Указан неверный ранг' });
-    }
-
-    if (!characterName || !discordId || !staticId || !answers) {
-        return res.status(400).json({ error: 'Заполнены не все обязательные поля' });
+    
+    if (!rankNum || !nickname || !discordTag || !questions) {
+        const errorMsg = 'Заполнены не все поля (проверьте никнейм, дискорд и ранг)';
+        console.error('[FIB] Ошибка:', errorMsg);
+        return res.status(400).json({ success: false, error: errorMsg, message: errorMsg });
     }
 
     const settings = getSettings();
     const fibConfig = settings.fib || {};
     const testConfig = fibConfig.testSettings || {};
     const whUrl = fibConfig.webhooks?.main;
-    const pingRole = fibConfig.roles?.ping;
 
     const allQuestions = testConfig.questions || [];
     const passingScore = rankNum === 5 ? (testConfig.passingScoreRank5 || 6) : (testConfig.passingScoreRank7 || 15);
     const questionCount = rankNum === 5 ? (testConfig.questionCountRank5 || 10) : (testConfig.questionCountRank7 || 20);
 
     let score = 0;
-    const parsedAnswers = Array.isArray(answers) ? answers : [];
+    const parsedAnswers = Array.isArray(questions) ? questions : [];
 
-    parsedAnswers.forEach(ans => {
-        const q = allQuestions.find(question => question.id == ans.questionId);
+    parsedAnswers.forEach((ans) => {
+        const q = allQuestions.find(question => question.id == ans.id);
         if (q) {
             const correctAnswers = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correctAnswer ? [q.correctAnswer] : []);
+            const userAnsArray = Array.isArray(ans.selectedAnswers) ? ans.selectedAnswers : [];
             
+            const userAnsTexts = userAnsArray.map(idx => q.options ? q.options[idx] : null).filter(Boolean);
+            
+            let isCorrectForThisQ = false;
             if (q.type === 'multiple') {
-                const userAnsArray = Array.isArray(ans.userAnswer) ? ans.userAnswer : [ans.userAnswer];
-                if (correctAnswers.length === userAnsArray.length && correctAnswers.every(val => userAnsArray.includes(val))) {
+                if (correctAnswers.length === userAnsTexts.length && correctAnswers.every(val => userAnsTexts.includes(val))) {
                     score++;
+                    isCorrectForThisQ = true;
                 }
             } else {
-                if (correctAnswers.includes(ans.userAnswer)) {
+                if (userAnsTexts.length > 0 && correctAnswers.includes(userAnsTexts[0])) {
                     score++;
+                    isCorrectForThisQ = true;
                 }
             }
+            console.log(`[FIB] Вопрос ${q.id} | Ответ юзера: [${userAnsTexts}] | Верный: [${correctAnswers}] -> ${isCorrectForThisQ ? 'ВЕРНО (+1)' : 'НЕВЕРНО'}`);
+        } else {
+            console.log(`[FIB] Вопрос с ID ${ans.id} не найден в базе!`);
         }
     });
 
+    console.log(`[FIB] Итоговый балл: ${score} из ${questionCount}. Проходной: ${passingScore}`);
+
     const isPassed = score >= passingScore;
-    const statusText = isPassed ? "СДАЛ" : "НЕ СДАЛ";
-    const statusColor = isPassed ? 3066993 : 15158332;
+    const statusText = isPassed ? "СДАНО" : "НЕ СДАНО";
 
     if (whUrl) {
         const embed = {
-            title: `📄 Результат переаттестации FIB (${rankNum} ранг)`,
-            color: statusColor,
+            title: `📋 Результат переаттестации FIB | Ранг: ${rankNum}`,
+            color: isPassed ? 3066993 : 15158332,
             fields: [
-                {
-                    name: "👤 Имя персонажа",
-                    value: String(characterName),
-                    inline: true
-                },
-                {
-                    name: "🆔 Статик (ID)",
-                    value: String(staticId),
-                    inline: true
-                },
-                {
-                    name: "💬 Discord",
-                    value: `<@${discordId}>`,
-                    inline: true
-                },
-                {
-                    name: "📊 Результат",
-                    value: `**${statusText}** (${score} из ${questionCount} баллов, минимум нужно: ${passingScore})`,
-                    inline: false
-                }
+                { name: "Сотрудник", value: String(nickname), inline: true },
+                { name: "Тег дс", value: String(discordTag), inline: true },
+                { name: "Статус", value: `${statusText} (${score})`, inline: true },
+                { name: "Покиданий вкладки", value: String(leaveCount || 0), inline: false }
             ],
-            timestamp: new Date().toISOString()
+            footer: {
+                text: `Время по МСК: ${getMskTime()} | by Frizworld`
+            }
         };
-
-        const textPing = pingRole ? `<@&${pingRole}>` : '';
-
+        
+        const pingRole = fibConfig.roles?.ping;
         await sendWebhook(whUrl, {
-            content: textPing,
+            content: pingRole ? `<@&${pingRole}>` : '',
             embeds: [embed]
         });
+        console.log('[FIB] Вебхук успешно отправлен.');
+    } else {
+        console.log('[FIB] Вебхук НЕ отправлен, так как URL не настроен в админке.');
     }
 
-    res.json({
-        success: true,
-        score: score,
-        maxScore: questionCount,
-        passingScore: passingScore,
-        passed: isPassed
-    });
+    res.json({ success: true, score, passingScore, passed: isPassed, message: 'Тест успешно завершен' });
 });
 
 router.post('/evidence', async (req, res) => {
-    const { 
-        agentName, 
-        staticId, 
-        suspectInfo, 
-        violationText, 
-        evidenceLink, 
-        discordId 
-    } = req.body;
-
+    const { agentName, staticId, suspectInfo, violationText, evidenceLink, discordId } = req.body;
     const settings = getSettings();
     const fibConfig = settings.fib || {};
     const whUrl = fibConfig.webhooks?.cid_evidence;
-    const pingRole = fibConfig.roles?.cid_evidence;
 
-    if (!whUrl) {
-        return res.status(500).json({ error: 'Вебхук для улик CID не настроен' });
-    }
-
-    if (!agentName || !staticId || !violationText) {
-        return res.status(400).json({ error: 'Заполните обязательные поля' });
-    }
+    if (!whUrl) return res.status(500).json({ error: 'Вебхук для улик CID не настроен', message: 'Вебхук для улик CID не настроен' });
+    if (!agentName || !staticId || !violationText) return res.status(400).json({ error: 'Заполните обязательные поля', message: 'Заполните обязательные поля' });
 
     const embed = {
         title: "🕵️ Новая улика CID (FIB)",
         color: 3447003,
         fields: [
-            {
-                name: "🕵️ Агент",
-                value: `${agentName} [${staticId}]`,
-                inline: true
-            },
-            {
-                name: "💬 Discord",
-                value: discordId ? `<@${discordId}>` : 'Не указан',
-                inline: true
-            },
-            {
-                name: "👤 Подозрительное лицо",
-                value: suspectInfo || 'Не указано',
-                inline: false
-            },
-            {
-                name: "📜 Описание нарушения",
-                value: violationText,
-                inline: false
-            },
-            {
-                name: "🔗 Доказательства / Материалы",
-                value: evidenceLink || 'Нет ссылки',
-                inline: false
-            }
+            { name: "🕵️ Агент", value: `${agentName} [${staticId}]`, inline: true },
+            { name: "💬 Discord", value: discordId ? `<@${discordId}>` : 'Не указан', inline: true },
+            { name: "👤 Подозрительное лицо", value: suspectInfo || 'Не указано', inline: false },
+            { name: "📜 Описание нарушения", value: violationText, inline: false },
+            { name: "🔗 Доказательства / Материалы", value: evidenceLink || 'Нет ссылки', inline: false }
         ],
         timestamp: new Date().toISOString()
     };
 
-    const textPing = pingRole ? `<@&${pingRole}>` : '';
-
-    await sendWebhook(whUrl, {
-        content: textPing,
-        embeds: [embed]
-    });
-
-    res.json({ success: true });
+    const pingRole = fibConfig.roles?.cid_evidence;
+    await sendWebhook(whUrl, { content: pingRole ? `<@&${pingRole}>` : '', embeds: [embed] });
+    res.json({ success: true, message: 'Улика загружена' });
 });
 
 module.exports = router;
