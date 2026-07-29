@@ -285,7 +285,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 25 * 1024 * 1024 },
+    limits: { fileSize: 150 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) cb(null, true);
         else cb(new Error('Разрешены только изображения'), false);
@@ -298,8 +298,8 @@ const backupStorage = multer.diskStorage({
 });
 const backupUpload = multer({ storage: backupStorage });
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '150mb' }));
+app.use(express.urlencoded({ extended: true, limit: '150mb' }));
 app.use(cookieParser(process.env.COOKIE_SECRET || 'dev-insecure-secret-change-me'));
 
 const sanitizeInput = (req, res, next) => {
@@ -519,8 +519,10 @@ app.post('/api/discord-monitor/test', async (req, res) => {
 
     let parsedPayload = { content: "🔔 Тестовое уведомление из панели Frizworld Admin" };
     if (payloadText && payloadText.trim()) {
-        try { parsedPayload = JSON.parse(payloadText); } catch (e) {
-            return res.status(400).json({ error: 'Неверный синтаксис JSON в поле базы данных' });
+        try {
+            parsedPayload = JSON.parse(payloadText || '{}');
+        } catch (e) {
+            return res.status(400).json({ error: 'Синтаксическая ошибка в JSON: ' + e.message });
         }
     }
 
@@ -532,11 +534,16 @@ app.post('/api/discord-monitor/test', async (req, res) => {
         });
         
         let resBody = null;
-        try { resBody = await response.json(); } catch (e) {
-            try { resBody = await response.text(); } catch (e2) { resBody = null; }
+        try { resBody = await response.json(); } catch (err1) {
+            try { resBody = await response.text(); } catch (err2) { resBody = null; }
         }
 
-        res.json({ success: true, status: response.status, statusText: response.statusText, responseBody: resBody });
+        res.json({ 
+            success: true, 
+            status: response.status, 
+            statusText: response.statusText, 
+            responseBody: resBody 
+        });
     } catch (err) {
         res.status(500).json({ error: 'Сбой отправки запроса: ' + (err.message || String(err)) });
     }
