@@ -308,11 +308,11 @@
                         <div class="form-grid">
                             <div>
                                 <label>Время для 5 ранга (мин):</label>
-                                <input type="number" id="fib-timer-rank5" value="15" min="1" max="180">
+                                <input type="number" id="fib-timer-rank5" value="5" min="1" max="180">
                             </div>
                             <div>
                                 <label>Время для 7 ранга (мин):</label>
-                                <input type="number" id="fib-timer-rank7" value="20" min="1" max="180">
+                                <input type="number" id="fib-timer-rank7" value="10" min="1" max="180">
                             </div>
                             <div>
                                 <label>Проходной балл (5 ранг):</label>
@@ -320,7 +320,7 @@
                             </div>
                             <div>
                                 <label>Проходной балл (7 ранг):</label>
-                                <input type="number" id="fib-score-rank7" value="14" min="1">
+                                <input type="number" id="fib-score-rank7" value="15" min="1">
                             </div>
                             <div>
                                 <label>Кол-во вопросов (5 ранг):</label>
@@ -1074,10 +1074,10 @@
                 if (currentFaction === 'fib') {
                     fibSettingsBox.style.display = 'block';
                     stdSettingsBox.style.display = 'none';
-                    document.getElementById('fib-timer-rank5').value = config.testSettings?.durationMinutesRank5 || config.testSettings?.durationMinutesRank3 || 15;
-                    document.getElementById('fib-timer-rank7').value = config.testSettings?.durationMinutesRank7 || 20;
+                    document.getElementById('fib-timer-rank5').value = config.testSettings?.durationMinutesRank5 || config.testSettings?.durationMinutesRank3 || 5;
+                    document.getElementById('fib-timer-rank7').value = config.testSettings?.durationMinutesRank7 || 10;
                     document.getElementById('fib-score-rank5').value = config.testSettings?.passingScoreRank5 || config.testSettings?.passingScoreRank3 || 6;
-                    document.getElementById('fib-score-rank7').value = config.testSettings?.passingScoreRank7 || 14;
+                    document.getElementById('fib-score-rank7').value = config.testSettings?.passingScoreRank7 || 15;
                     document.getElementById('fib-count-rank5').value = config.testSettings?.questionCountRank5 || 10;
                     document.getElementById('fib-count-rank7').value = config.testSettings?.questionCountRank7 || 20;
                     rawQuestions = config.testSettings?.questions || [];
@@ -1294,10 +1294,10 @@
 
                 if (currentFaction === 'fib') {
                     if (!config.testSettings) config.testSettings = {};
-                    config.testSettings.durationMinutesRank5 = parseInt(document.getElementById('fib-timer-rank5').value) || 15;
-                    config.testSettings.durationMinutesRank7 = parseInt(document.getElementById('fib-timer-rank7').value) || 20;
+                    config.testSettings.durationMinutesRank5 = parseInt(document.getElementById('fib-timer-rank5').value) || 5;
+                    config.testSettings.durationMinutesRank7 = parseInt(document.getElementById('fib-timer-rank7').value) || 10;
                     config.testSettings.passingScoreRank5 = parseInt(document.getElementById('fib-score-rank5').value) || 6;
-                    config.testSettings.passingScoreRank7 = parseInt(document.getElementById('fib-score-rank7').value) || 14;
+                    config.testSettings.passingScoreRank7 = parseInt(document.getElementById('fib-score-rank7').value) || 15;
                     config.testSettings.questionCountRank5 = parseInt(document.getElementById('fib-count-rank5').value) || 10;
                     config.testSettings.questionCountRank7 = parseInt(document.getElementById('fib-count-rank7').value) || 20;
                     delete config.testSettings.durationMinutesRank3;
