@@ -770,7 +770,7 @@
                         acts.push({
                             id: opt.value, name: opt.dataset.name,
                             basePoints: parseInt(opt.dataset.points),
-                            quantity: parseInt(el.querySelector('.action-qty').value) || 1,
+                            quantity: Math.max(1, parseInt(el.querySelector('.action-qty').value) || 1),
                             points: points,
                             evidence: evidenceTextarea ? evidenceTextarea.value : '',
                             requiresEvidence: true
@@ -810,15 +810,18 @@
                 var div = document.getElementById(id);
                 if (!div) return;
                 var select = div.querySelector('.action-type');
-                var qty = parseInt(div.querySelector('.action-qty').value) || 1;
+                var qty = Math.max(1, parseInt(div.querySelector('.action-qty').value) || 1);
                 var opt = select.options[select.selectedIndex];
                 if (!opt || !opt.value) { div.querySelector('.action-points').value = 0; updateTotalPoints(); return; }
                 var points = parseInt(opt.dataset.points) * qty;
                 div.querySelector('.action-points').value = points;
+                
                 var evidenceDiv = div.querySelector('.evidence-container');
-                evidenceDiv.innerHTML = '<textarea class="action-evidence" rows="3" placeholder="Ссылки на скриншоты (каждая с новой строки)"></textarea>';
-                var textarea = evidenceDiv.querySelector('textarea');
-                if (textarea) textarea.addEventListener('input', updateTotalPoints);
+                if (!evidenceDiv.querySelector('textarea')) {
+                    evidenceDiv.innerHTML = '<textarea class="action-evidence" rows="3" placeholder="Ссылки на скриншоты (каждая с новой строки)"></textarea>';
+                    var textarea = evidenceDiv.querySelector('textarea');
+                    if (textarea) textarea.addEventListener('input', updateTotalPoints);
+                }
                 updateTotalPoints();
             };
 
@@ -893,6 +896,13 @@
             var timeLeft = timeLimit;
             var startTimestamp = null;
             var questions = [];
+            var leaveCount = 0;
+
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden && testActive) {
+                    leaveCount++;
+                }
+            });
 
             function updateTimer() {
                 var m = Math.floor(timeLeft / 60); var s = timeLeft % 60;
@@ -909,6 +919,7 @@
                 testArea.style.display = 'none';
                 nickname.disabled = false; discord.disabled = false; startBtn.disabled = false;
                 messageDiv.textContent = ''; questions = []; questionsDiv.innerHTML = '';
+                leaveCount = 0;
             }
 
             startBtn.addEventListener('click', async function() {
@@ -929,6 +940,7 @@
                     }
                     questions = data.questions;
                     timeLeft = timeLimit; updateTimer(); startTimestamp = Date.now();
+                    leaveCount = 0;
                     
                     var html = '';
                     for (var i = 0; i < questions.length; i++) {
@@ -945,10 +957,17 @@
                     questionsDiv.innerHTML = html;
                     testArea.style.display = 'block'; testActive = true;
                     stopTimer();
+                    
                     testInterval = setInterval(function() {
                         if (!testActive) return;
-                        timeLeft--; updateTimer();
-                        if (timeLeft <= 0) { stopTimer(); finishTest(); }
+                        var elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
+                        timeLeft = timeLimit - elapsed;
+                        if (timeLeft <= 0) { 
+                            timeLeft = 0;
+                            stopTimer(); 
+                            finishTest(); 
+                        }
+                        updateTimer();
                     }, 1000);
                 } catch (err) {
                     loading.style.display = 'none';
@@ -984,7 +1003,8 @@
                             questions: qData,
                             timeSpent: elapsed,
                             startTime: startTimestamp,
-                            endTime: Date.now()
+                            endTime: Date.now(),
+                            leaveCount: leaveCount
                         })
                     });
                     const data = await res.json();
