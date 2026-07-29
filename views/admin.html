@@ -534,7 +534,6 @@
             }
         }
 
-        // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ПРОЕКТОВ (FORMDATA ВМЕСТО BASE64)
         async function saveProjectWithImage() {
             const fileInput = document.getElementById('projImageFile');
             if (fileInput.files.length > 0) {
@@ -542,6 +541,7 @@
                 formData.append('image', fileInput.files[0]);
                 try {
                     const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
                     if (data && data.success) { 
                         currentProjImageUrl = data.url; 
@@ -550,7 +550,7 @@
                         alert('Ошибка загрузки картинки проекта');
                     }
                 } catch(e) {
-                    alert('Сбой при загрузке картинки проекта: ' + e.message);
+                    alert('Сбой при загрузке картинки проекта: ' + e.message + '. Вероятно файл слишком большой (лимит сервера Nginx).');
                 }
             } else saveProjectData();
         }
@@ -570,7 +570,6 @@
             if (data && data.success) { document.getElementById('projectSelect').value = ""; loadProjects(); }
         }
 
-        // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ИЛЛЮСТРАЦИИ (FORMDATA ВМЕСТО BASE64)
         async function uploadIllustration() {
             const fileInput = document.getElementById('illustrationFile');
             if (fileInput.files.length === 0) return alert('Выберите файл!');
@@ -580,6 +579,7 @@
 
             try {
                 const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const upRes = await res.json();
                 if (upRes && upRes.success) {
                     globalConfig.illustrationUrl = upRes.url;
@@ -591,7 +591,7 @@
                     alert('Ошибка загрузки арта');
                 }
             } catch(e) {
-                alert('Сбой при загрузке: ' + e.message);
+                alert('Сбой при загрузке: ' + e.message + '. Вероятно файл слишком большой (лимит сервера Nginx).');
             }
         }
 
