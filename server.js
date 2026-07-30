@@ -3,7 +3,6 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const sharp = require('sharp');
 const cookieParser = require('cookie-parser');
 const http = require('http');
 const crypto = require('crypto');
@@ -303,11 +302,21 @@ app.use(express.json({ limit: '150mb' }));
 app.use(express.urlencoded({ extended: true, limit: '150mb' }));
 app.use(cookieParser(process.env.COOKIE_SECRET || 'dev-insecure-secret-change-me'));
 
+// === ИСПРАВЛЕННЫЙ БЛОК САНИТАЙЗЕРА ===
+// Теперь он безопасно пропускает любые поля, в названии которых есть слово "image" или "file", 
+// предотвращая зависание сервера при попытке проверить огромные Base64 строки гифок
 const sanitizeInput = (req, res, next) => {
     const sqlRegex = /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND)\b)|(['"])/i;
+    
+    const isExcluded = (key) => {
+        const k = key.toLowerCase();
+        const allowedExact = ['content', 'path', 'reason', 'summary', 'desc', 'fullDesc', 'note'];
+        return allowedExact.includes(k) || k.includes('image') || k.includes('file');
+    };
+
     const checkObj = (obj) => {
         for (let key in obj) {
-            if (typeof obj[key] === 'string' && !['content', 'image', 'imageUrl', 'path', 'reason', 'summary', 'desc', 'fullDesc', 'note'].includes(key)) {
+            if (typeof obj[key] === 'string' && !isExcluded(key)) {
                 if (sqlRegex.test(obj[key])) obj[key] = obj[key].replace(/['"]/g, '');
                 obj[key] = obj[key].replace(/</g, '&lt;').replace(/>/g, '&gt;');
             } else if (typeof obj[key] === 'object' && obj[key] !== null) {
@@ -319,7 +328,6 @@ const sanitizeInput = (req, res, next) => {
     if (req.query) checkObj(req.query);
     next();
 };
-
 app.use(sanitizeInput);
 
 const detectBot = (req) => {
@@ -354,9 +362,11 @@ app.use((req, res, next) => {
     const sanitizeForLogs = (data) => {
         if (!data || typeof data !== 'object') return data;
         const copy = JSON.parse(JSON.stringify(data));
-        const hiddenKeys = ['password', 'token', 'image', 'file', 'content'];
+        const hiddenKeys = ['password', 'token', 'file', 'content'];
         for (let key in copy) {
-            if (hiddenKeys.includes(key) && copy[key]) copy[key] = '[СКРЫТО]';
+            if ((hiddenKeys.includes(key) || key.toLowerCase().includes('image')) && copy[key]) {
+                copy[key] = '[СКРЫТО]';
+            }
             else if (typeof copy[key] === 'string' && copy[key].length > 200) copy[key] = copy[key].substring(0, 200) + '...';
             else if (typeof copy[key] === 'object' && copy[key] !== null) copy[key] = sanitizeForLogs(copy[key]);
         }
@@ -741,19 +751,28 @@ app.post('/api/settings', (req, res) => {
 
 app.post('/api/upload', upload.single('image'), async (req, res) => {
     try {
-        if (req.body.image && req.body.image.startsWith('data:image')) {
-            const matches = req.body.image.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
-            if (matches && matches.length === 3) {
-                const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
-                const buffer = Buffer.from(matches[2], 'base64');
-                const filename = `media_${Date.now()}_b64.${ext}`;
-                fs.writeFileSync(path.join(DIR_UPLOADS, filename), buffer);
-                return res.json({ success: true, url: `/uploads/${filename}` });
+        if (req.body && typeof req.body === 'object') {
+            for (let key in req.body) {
+                if (typeof req.body[key] === 'string' && req.body[key].startsWith('data:image')) {
+                    const matches = req.body[key].match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
+                    if (matches && matches.length === 3) {
+                        let ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+                        ext = ext.replace(/[^a-z0-9]/gi, ''); 
+                        const buffer = Buffer.from(matches[2], 'base64');
+                        const filename = `media_${Date.now()}_${Math.round(Math.random() * 1000)}.${ext}`;
+                        fs.writeFileSync(path.join(DIR_UPLOADS, filename), buffer);
+                        return res.json({ success: true, url: `/uploads/${filename}` });
+                    }
+                }
             }
         }
-        if (!req.file) return res.status(400).json({ error: 'File error' });
+        
+        if (!req.file) return res.status(400).json({ error: 'Файл не получен' });
         res.json({ success: true, url: `/uploads/${req.file.filename}` });
-    } catch (err) { res.status(500).json({ error: 'Upload error' }); }
+    } catch (err) { 
+        logger.error('Ошибка загрузки файла', err);
+        res.status(500).json({ error: 'Upload error' }); 
+    }
 });
 
 app.get('/api/logs', (req, res) => {
