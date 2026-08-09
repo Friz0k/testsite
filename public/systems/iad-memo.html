@@ -1,12 +1,10 @@
-```html
-<!-- public/iad-memo.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Памятка IAD | LSPD</title>
-    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --bg-color: #070709;
@@ -223,32 +221,13 @@
         }
 
         .scrollable-list {
-            max-height: 250px;
             overflow-y: auto;
             padding-right: 10px;
             margin-top: 10px;
         }
 
         .scrollable-list-tall {
-            max-height: 650px;
             flex-grow: 1;
-        }
-
-        .violation-tag {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            font-size: 13px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .violation-code {
-            color: var(--primary-red);
-            font-weight: bold;
         }
 
         .warning-box {
@@ -633,9 +612,9 @@
                             ${data.violations.map(v => {
                                 const parts = v.split('|');
                                 return `
-                                <div class="violation-tag">
-                                    <span style="flex-grow: 1; padding-right: 10px;">${parts[0].trim()}</span>
-                                    <span class="violation-code">${parts[1] ? parts[1].trim() : ''}</span>
+                                <div class="legis-item">
+                                    <div class="legis-title" style="font-size: 14px; font-weight: normal; line-height: 1.5; color: var(--text-main);">${parts[0].trim()}</div>
+                                    <div class="legis-desc" style="color: var(--primary-red); font-weight: bold; margin-top: 6px;">${parts[1] ? parts[1].trim() : ''}</div>
                                 </div>`;
                             }).join('')}
                         </div>
@@ -685,7 +664,7 @@
                             ${data.macros.map(m => `
                                 <div class="tutorial-card" style="padding: 15px;">
                                     <h3 style="color: #fff; font-size: 16px; margin-bottom: 8px;">${m.title}</h3>
-                                    <div style="background: #09090b; border: 1px solid #3f1515; padding: 12px; border-radius: 8px; color: #f3f4f6; font-family: monospace; font-size: 13px; white-space: pre-wrap; margin-bottom: 10px;">${m.text}</div>
+                                    <div style="background: #09090b; border: 1px solid #3f1515; padding: 12px; border-radius: 8px; color: #f3f4f6; font-family: monospace; font-size: 13px; white-space: pre-wrap;">${m.text}</div>
                                 </div>
                             `).join('')}
                         </div>
