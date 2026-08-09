@@ -94,27 +94,19 @@ try {
 }
 
 const saveBannedIps = () => {
-    try { 
-        fs.writeFileSync(FILE_BANS, JSON.stringify(bannedIps, null, 2), 'utf8'); 
-    } catch (e) {}
+    try { fs.writeFileSync(FILE_BANS, JSON.stringify(bannedIps, null, 2), 'utf8'); } catch (e) {}
 };
 
 const saveUserSessions = () => {
-    try { 
-        fs.writeFileSync(FILE_SESSIONS, JSON.stringify(userSessions, null, 2), 'utf8'); 
-    } catch (e) {}
+    try { fs.writeFileSync(FILE_SESSIONS, JSON.stringify(userSessions, null, 2), 'utf8'); } catch (e) {}
 };
 
 const saveIpNotes = () => {
-    try { 
-        fs.writeFileSync(FILE_NOTES, JSON.stringify(ipNotes, null, 2), 'utf8'); 
-    } catch (e) {}
+    try { fs.writeFileSync(FILE_NOTES, JSON.stringify(ipNotes, null, 2), 'utf8'); } catch (e) {}
 };
 
 const saveDiscordLogs = () => {
-    try { 
-        fs.writeFileSync(FILE_DISCORD_LOGS, JSON.stringify(discordLogs, null, 2), 'utf8'); 
-    } catch (e) {}
+    try { fs.writeFileSync(FILE_DISCORD_LOGS, JSON.stringify(discordLogs, null, 2), 'utf8'); } catch (e) {}
 };
 
 const requestCounts = new Map();
@@ -301,16 +293,7 @@ const createBackupArchive = () => {
         const backupFolder = path.join(DIR_BACKUPS, `backup-${dateStr}`);
         fs.mkdirSync(backupFolder, { recursive: true });
         
-        const itemsToBackup = [
-            'data',
-            'public',
-            'views',
-            'routes',
-            'middleware',
-            'server.js',
-            'package.json',
-            '.env'
-        ];
+        const itemsToBackup = ['data', 'public', 'views', 'routes', 'middleware', 'server.js', 'package.json', '.env'];
 
         itemsToBackup.forEach(item => {
             const srcPath = path.join(__dirname, item);
