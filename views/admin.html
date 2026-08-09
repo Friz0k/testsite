@@ -1443,20 +1443,8 @@
                     <button class="btn-danger btn-sm" style="position: absolute; top: 15px; right: 15px;" onclick="this.parentElement.remove()">Удалить</button>
                     <label>Название макроса</label>
                     <input type="text" class="iad-m-title" value="${(m.title || '').replace(/"/g, '&quot;')}">
-                    <label>Описание (что делает)</label>
-                    <textarea rows="2" class="iad-m-desc">${m.desc || ''}</textarea>
-                    <div class="form-grid" style="margin-top:10px;">
-                        <div>
-                            <label>URL Ссылки для скачивания</label>
-                            <input type="text" class="iad-m-url" value="${(m.url || '').replace(/"/g, '&quot;')}">
-                        </div>
-                        <div>
-                            <label>Загрузить Фото (превью)</label>
-                            <img class="preview-img iad-m-preview" src="${m.imageUrl || ''}" style="${m.imageUrl ? 'display:block;' : 'display:none;'}">
-                            <input type="file" class="iad-m-file" accept="image/*">
-                            <input type="hidden" class="iad-m-img" value="${(m.imageUrl || '').replace(/"/g, '&quot;')}">
-                        </div>
-                    </div>
+                    <label>Текст / Код макроса (будет показан пользователю)</label>
+                    <textarea rows="4" class="iad-m-text" style="font-family: monospace;">${m.text || ''}</textarea>
                 `;
                 container.appendChild(div);
             });
@@ -1470,20 +1458,8 @@
                 <button class="btn-danger btn-sm" style="position: absolute; top: 15px; right: 15px;" onclick="this.parentElement.remove()">Удалить</button>
                 <label>Название макроса</label>
                 <input type="text" class="iad-m-title" placeholder="Макрос на наручники...">
-                <label>Описание (что делает)</label>
-                <textarea rows="2" class="iad-m-desc" placeholder="Автоматически отыгрывает..."></textarea>
-                <div class="form-grid" style="margin-top:10px;">
-                    <div>
-                        <label>URL Ссылки для скачивания</label>
-                        <input type="text" class="iad-m-url" placeholder="https://...">
-                    </div>
-                    <div>
-                        <label>Загрузить Фото (превью)</label>
-                        <img class="preview-img iad-m-preview" src="" style="display:none;">
-                        <input type="file" class="iad-m-file" accept="image/*">
-                        <input type="hidden" class="iad-m-img" value="">
-                    </div>
-                </div>
+                <label>Текст / Код макроса (будет показан пользователю)</label>
+                <textarea rows="4" class="iad-m-text" style="font-family: monospace;" placeholder="Текст макроса..."></textarea>
             `;
             container.appendChild(div);
         }
@@ -1566,15 +1542,6 @@
                 }
             }
 
-            const macroCards = document.querySelectorAll('#iad_macros_list .iad-punish-card');
-            for (let card of macroCards) {
-                const fInp = card.querySelector('.iad-m-file');
-                const mUrl = await uploadFileHelper(fInp);
-                if (mUrl) {
-                    card.querySelector('.iad-m-img').value = mUrl;
-                }
-            }
-
             const newData = {
                 header: {
                     title: document.getElementById('iad_title').value.trim(),
@@ -1621,17 +1588,16 @@
                 }
             }
 
-            for (let card of macroCards) {
+            const macroCards = document.querySelectorAll('#iad_macros_list .iad-punish-card');
+            macroCards.forEach(card => {
                 const title = card.querySelector('.iad-m-title').value.trim();
                 if (title) {
                     newData.macros.push({
                         title: title,
-                        desc: card.querySelector('.iad-m-desc').value.trim(),
-                        url: card.querySelector('.iad-m-url').value.trim(),
-                        imageUrl: card.querySelector('.iad-m-img').value.trim()
+                        text: card.querySelector('.iad-m-text').value.trim()
                     });
                 }
-            }
+            });
 
             const legisCards = document.querySelectorAll('#iad_legis_list .iad-punish-card');
             legisCards.forEach(card => {
