@@ -117,10 +117,10 @@
             grid-column: 1 / -1;
         }
 
-        .card-double-height {
+        .card-tall {
             grid-row: span 2;
-            height: 100%;
-            min-height: 560px;
+            display: flex;
+            flex-direction: column;
         }
 
         .card::before {
@@ -223,18 +223,17 @@
         }
 
         .scrollable-list {
+            max-height: 250px;
             overflow-y: auto;
             padding-right: 10px;
             margin-top: 10px;
-            max-height: 250px;
         }
 
-        .scrollable-list-fixed {
+        .scrollable-list-tall {
+            flex: 1 1 0;
             overflow-y: auto;
             padding-right: 10px;
             margin-top: 10px;
-            flex-grow: 1;
-            max-height: 460px;
         }
 
         .violation-tag {
@@ -344,6 +343,24 @@
             font-size: 13px;
             line-height: 1.5;
             flex-grow: 1;
+        }
+
+        .tutorial-btn {
+            display: inline-block;
+            background: var(--primary-red);
+            color: #fff;
+            text-decoration: none;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 12px;
+            transition: background 0.3s;
+        }
+
+        .tutorial-btn:hover {
+            background: var(--dark-red);
         }
 
         .legis-item {
@@ -470,9 +487,8 @@
             .cluster-container { 
                 grid-template-columns: 1fr; 
             }
-            .card-double-height {
+            .card-tall {
                 grid-row: auto;
-                min-height: auto;
             }
         }
     </style>
@@ -631,9 +647,9 @@
 
             if (data.violations && data.violations.length > 0) {
                 html += `
-                    <div class="card card-double-height">
+                    <div class="card card-tall">
                         <h2><i class="fas fa-exclamation-circle"></i> Нарушения устава</h2>
-                        <div class="scrollable-list-fixed">
+                        <div class="scrollable-list-tall">
                             ${data.violations.map(v => {
                                 const parts = v.split('|');
                                 return `
@@ -649,9 +665,9 @@
 
             if (data.legislation && data.legislation.length > 0) {
                 html += `
-                    <div class="card card-double-height">
+                    <div class="card card-tall">
                         <h2><i class="fas fa-balance-scale-right"></i> Законодательная база</h2>
-                        <div class="scrollable-list-fixed">
+                        <div class="scrollable-list-tall">
                             ${data.legislation.map(l => `
                                 <div class="legis-item">
                                     <div class="legis-header">
@@ -689,7 +705,7 @@
                             ${data.macros.map(m => `
                                 <div class="tutorial-card" style="padding: 15px;">
                                     <h3 style="color: #fff; font-size: 16px; margin-bottom: 8px;">${m.title}</h3>
-                                    <div style="background: #09090b; border: 1px solid #3f1515; padding: 12px; border-radius: 8px; color: #f3f4f6; font-family: monospace; font-size: 13px; white-space: pre-wrap;">${m.text}</div>
+                                    <div style="background: #09090b; border: 1px solid #3f1515; padding: 12px; border-radius: 8px; color: #f3f4f6; font-family: monospace; font-size: 13px; white-space: pre-wrap; margin-bottom: 10px;">${m.text}</div>
                                 </div>
                             `).join('')}
                         </div>
