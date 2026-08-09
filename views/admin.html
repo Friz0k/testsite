@@ -871,8 +871,10 @@
                         <button class="btn-sm" onclick="addIadItem('iad_parking_list')">➕ Добавить правило</button>
                         
                         <div style="margin-top: 15px;">
-                            <label>Фотография / Схема парковки (URL ссылки)</label>
-                            <input type="text" id="iad_parking_image" placeholder="https://... или /uploads/...">
+                            <label>Загрузить фото/схему парковки</label>
+                            <img id="iad_parking_preview" class="preview-img" src="" style="display:none;">
+                            <input type="file" id="iad_parking_file" accept="image/*">
+                            <input type="hidden" id="iad_parking_image" value="">
                         </div>
                     </div>
 
@@ -1267,7 +1269,14 @@
             document.getElementById('iad_subtitle').value = iadDataCache.header?.subtitle || '';
             document.getElementById('iad_whatis').value = iadDataCache.info?.what_is_iad || '';
             document.getElementById('iad_activities').value = iadDataCache.activities || '';
+            
             document.getElementById('iad_parking_image').value = iadDataCache.parking_image || '';
+            if (iadDataCache.parking_image) {
+                document.getElementById('iad_parking_preview').src = iadDataCache.parking_image;
+                document.getElementById('iad_parking_preview').style.display = 'block';
+            } else {
+                document.getElementById('iad_parking_preview').style.display = 'none';
+            }
 
             renderIadList('iad_tasks_list', iadDataCache.tasks || []);
             renderIadList('iad_reqs_list', iadDataCache.requirements || [], true);
@@ -1378,11 +1387,13 @@
                             </select>
                         </div>
                         <div>
-                            <label>URL (Ссылка или путь)</label>
-                            <input type="text" class="iad-t-url" value="${(t.mediaUrl || '').replace(/"/g, '&quot;')}">
+                            <label>Загрузить медиа</label>
+                            <img class="preview-img iad-t-preview" src="${t.mediaUrl || ''}" style="${t.mediaUrl && t.mediaType === 'image' ? 'display:block;' : 'display:none;'}">
+                            <input type="file" class="iad-t-file" accept="image/*,video/*">
+                            <input type="hidden" class="iad-t-url" value="${(t.mediaUrl || '').replace(/"/g, '&quot;')}">
                         </div>
                     </div>
-                    <label>Пояснение к фото/видео (показывается при открытии)</label>
+                    <label style="margin-top:10px;">Пояснение к фото/видео (показывается при открытии)</label>
                     <input type="text" class="iad-t-desc" value="${(t.mediaDesc || '').replace(/"/g, '&quot;')}">
                 `;
                 container.appendChild(div);
@@ -1409,11 +1420,13 @@
                         </select>
                     </div>
                     <div>
-                        <label>URL (Ссылка или путь /uploads/media_...)</label>
-                        <input type="text" class="iad-t-url" placeholder="https://... или /uploads/...">
+                        <label>Загрузить медиа</label>
+                        <img class="preview-img iad-t-preview" src="" style="display:none;">
+                        <input type="file" class="iad-t-file" accept="image/*,video/*">
+                        <input type="hidden" class="iad-t-url" value="">
                     </div>
                 </div>
-                <label>Пояснение к фото/видео (показывается при открытии)</label>
+                <label style="margin-top:10px;">Пояснение к фото/видео (показывается при открытии)</label>
                 <input type="text" class="iad-t-desc" placeholder="Что происходит на медиа?">
             `;
             container.appendChild(div);
@@ -1438,8 +1451,10 @@
                             <input type="text" class="iad-m-url" value="${(m.url || '').replace(/"/g, '&quot;')}">
                         </div>
                         <div>
-                            <label>URL Фото (превью)</label>
-                            <input type="text" class="iad-m-img" value="${(m.imageUrl || '').replace(/"/g, '&quot;')}">
+                            <label>Загрузить Фото (превью)</label>
+                            <img class="preview-img iad-m-preview" src="${m.imageUrl || ''}" style="${m.imageUrl ? 'display:block;' : 'display:none;'}">
+                            <input type="file" class="iad-m-file" accept="image/*">
+                            <input type="hidden" class="iad-m-img" value="${(m.imageUrl || '').replace(/"/g, '&quot;')}">
                         </div>
                     </div>
                 `;
@@ -1463,8 +1478,10 @@
                         <input type="text" class="iad-m-url" placeholder="https://...">
                     </div>
                     <div>
-                        <label>URL Фото (превью)</label>
-                        <input type="text" class="iad-m-img" placeholder="https://... или /uploads/...">
+                        <label>Загрузить Фото (превью)</label>
+                        <img class="preview-img iad-m-preview" src="" style="display:none;">
+                        <input type="file" class="iad-m-file" accept="image/*">
+                        <input type="hidden" class="iad-m-img" value="">
                     </div>
                 </div>
             `;
@@ -1516,7 +1533,48 @@
             return Array.from(inputs).map(inp => inp.value.trim()).filter(val => val !== '');
         }
 
+        async function uploadFileHelper(fileInput) {
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                const formData = new FormData();
+                formData.append('image', fileInput.files[0]);
+                try {
+                    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.success) {
+                            return data.url;
+                        }
+                    }
+                } catch(e) {}
+            }
+            return null;
+        }
+
         async function saveIadMemo() {
+            const pFile = document.getElementById('iad_parking_file');
+            const pUrl = await uploadFileHelper(pFile);
+            if (pUrl) {
+                document.getElementById('iad_parking_image').value = pUrl;
+            }
+
+            const tutorCards = document.querySelectorAll('#iad_tutors_list .iad-punish-card');
+            for (let card of tutorCards) {
+                const fInp = card.querySelector('.iad-t-file');
+                const tUrl = await uploadFileHelper(fInp);
+                if (tUrl) {
+                    card.querySelector('.iad-t-url').value = tUrl;
+                }
+            }
+
+            const macroCards = document.querySelectorAll('#iad_macros_list .iad-punish-card');
+            for (let card of macroCards) {
+                const fInp = card.querySelector('.iad-m-file');
+                const mUrl = await uploadFileHelper(fInp);
+                if (mUrl) {
+                    card.querySelector('.iad-m-img').value = mUrl;
+                }
+            }
+
             const newData = {
                 header: {
                     title: document.getElementById('iad_title').value.trim(),
@@ -1550,8 +1608,7 @@
                 }
             });
 
-            const tutorCards = document.querySelectorAll('#iad_tutors_list .iad-punish-card');
-            tutorCards.forEach(card => {
+            for (let card of tutorCards) {
                 const title = card.querySelector('.iad-t-title').value.trim();
                 if (title) {
                     newData.tutorials.push({
@@ -1562,10 +1619,9 @@
                         mediaDesc: card.querySelector('.iad-t-desc').value.trim()
                     });
                 }
-            });
+            }
 
-            const macroCards = document.querySelectorAll('#iad_macros_list .iad-punish-card');
-            macroCards.forEach(card => {
+            for (let card of macroCards) {
                 const title = card.querySelector('.iad-m-title').value.trim();
                 if (title) {
                     newData.macros.push({
@@ -1575,7 +1631,7 @@
                         imageUrl: card.querySelector('.iad-m-img').value.trim()
                     });
                 }
-            });
+            }
 
             const legisCards = document.querySelectorAll('#iad_legis_list .iad-punish-card');
             legisCards.forEach(card => {
