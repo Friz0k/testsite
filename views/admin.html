@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frizworld Admin Panel</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥶</text></svg>">
     <style>
         :root {
             --bg-color: #09090b;
@@ -20,112 +19,679 @@
             --input-bg: #09090b;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; scrollbar-width: none; }
-        *::-webkit-scrollbar { display: none; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            scrollbar-width: none; 
+        }
 
-        body { background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        *::-webkit-scrollbar { 
+            display: none; 
+        }
 
-        .sidebar { width: 280px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; z-index: 100; }
-        .sidebar h2 { color: var(--accent-color); font-size: 20px; padding: 0 20px 20px 20px; border-bottom: 1px solid var(--border-color); text-align: center; margin-bottom: 10px; }
-        .nav-category { padding: 10px 20px 5px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; font-weight: bold; }
-        .nav-links { list-style: none; padding: 0 10px; flex-grow: 1; overflow-y: auto; }
-        .nav-links li { padding: 12px 15px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; color: var(--text-muted); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
-        .nav-links li:hover { background-color: rgba(109, 40, 217, 0.1); color: var(--text-main); }
-        .nav-links li.active { background-color: var(--accent-color); color: #ffffff; }
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
 
-        .logout-btn { margin: 10px 20px; padding: 10px; background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); border-radius: 8px; cursor: pointer; font-size: 14px; text-align: center; transition: all 0.2s; }
-        .logout-btn:hover { background: var(--danger-color); color: #fff; }
+        .sidebar { 
+            width: 280px; 
+            background-color: var(--sidebar-bg); 
+            border-right: 1px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px 0; 
+            z-index: 100; 
+        }
 
-        .content-area { flex-grow: 1; padding: 30px 40px; overflow-y: auto; }
-        .tab-content { display: none; max-width: 1250px; margin: 0 auto; animation: fadeIn 0.2s ease; }
-        .tab-content.active { display: block; }
+        .sidebar h2 { 
+            color: var(--accent-color); 
+            font-size: 20px; 
+            padding: 0 20px 20px 20px; 
+            border-bottom: 1px solid var(--border-color); 
+            text-align: center; 
+            margin-bottom: 10px; 
+        }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-category { 
+            padding: 10px 20px 5px; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            color: var(--text-muted); 
+            letter-spacing: 1px; 
+            font-weight: bold; 
+        }
 
-        .admin-section { background-color: var(--panel-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); margin-bottom: 20px; }
-        h3 { margin-bottom: 20px; font-size: 22px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; color: var(--text-main); }
-        h4 { margin: 25px 0 15px; color: var(--accent-color); font-size: 18px; }
+        .nav-links { 
+            list-style: none; 
+            padding: 0 10px; 
+            flex-grow: 1; 
+            overflow-y: auto; 
+        }
 
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .full-width { grid-column: 1 / -1; }
+        .nav-links li { 
+            padding: 12px 15px; 
+            margin-bottom: 5px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            color: var(--text-muted); 
+            font-size: 14px; 
+            font-weight: 500; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            transition: all 0.2s; 
+        }
 
-        label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; }
-        input[type="text"], input[type="number"], input[type="file"], select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; background-color: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-color); }
+        .nav-links li:hover { 
+            background-color: rgba(109, 40, 217, 0.1); 
+            color: var(--text-main); 
+        }
 
-        textarea#codeEditor { height: 400px; font-family: monospace; color: #c084fc; background-color: #050507; white-space: pre; }
+        .nav-links li.active { 
+            background-color: var(--accent-color); 
+            color: #ffffff; 
+        }
 
-        button { background-color: var(--accent-color); color: #fff; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
-        button:hover { background-color: var(--accent-hover); }
-        .btn-success { background-color: var(--success-color); }
-        .btn-success:hover { background-color: #16a34a; }
-        .btn-danger { background-color: var(--danger-color); }
-        .btn-danger:hover { background-color: #dc2626; }
-        .btn-sm { padding: 8px 15px; font-size: 12px; margin-top: 0; }
+        .logout-btn { 
+            margin: 10px 20px; 
+            padding: 10px; 
+            background: transparent; 
+            border: 1px solid var(--danger-color); 
+            color: var(--danger-color); 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            text-align: center; 
+            transition: all 0.2s; 
+        }
 
-        .btn-group { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
-        .preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px; object-fit: cover; }
+        .logout-btn:hover { 
+            background: var(--danger-color); 
+            color: #fff; 
+        }
 
-        .subsystem-tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
-        .subsystem-btn { background: #27272a; color: var(--text-muted); border: 1px solid #3f3f46; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        .subsystem-btn:hover { color: #fff; border-color: var(--accent-color); }
-        .subsystem-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
-        .subsystem-content { display: none; }
-        .subsystem-content.active { display: block; }
+        .content-area { 
+            flex-grow: 1; 
+            padding: 30px 40px; 
+            overflow-y: auto; 
+        }
 
-        .q-card { background: #1f1f23; padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #3f3f46; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; color: var(--text-main); font-size: 16px; border-bottom: 1px solid #3f3f46; padding-bottom: 12px; }
+        .tab-content { 
+            display: none; 
+            max-width: 1250px; 
+            margin: 0 auto; 
+            animation: fadeIn 0.2s ease; 
+        }
+
+        .tab-content.active { 
+            display: block; 
+        }
+
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(5px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .admin-section { 
+            background-color: var(--panel-bg); 
+            padding: 30px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-color); 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); 
+            margin-bottom: 20px; 
+        }
+
+        h3 { 
+            margin-bottom: 20px; 
+            font-size: 22px; 
+            border-bottom: 1px solid var(--border-color); 
+            padding-bottom: 12px; 
+            color: var(--text-main); 
+        }
+
+        h4 { 
+            margin: 25px 0 15px; 
+            color: var(--accent-color); 
+            font-size: 18px; 
+        }
+
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+        }
+
+        .full-width { 
+            grid-column: 1 / -1; 
+        }
+
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            color: var(--text-muted); 
+            font-size: 12px; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+        }
+
+        input[type="text"], input[type="number"], input[type="file"], select, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 15px; 
+            background-color: var(--input-bg); 
+            color: var(--text-main); 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            font-size: 14px; 
+        }
+
+        input:focus, select:focus, textarea:focus { 
+            outline: none; 
+            border-color: var(--accent-color); 
+        }
+
+        textarea#codeEditor { 
+            height: 400px; 
+            font-family: monospace; 
+            color: #c084fc; 
+            background-color: #050507; 
+            white-space: pre; 
+        }
+
+        button { 
+            background-color: var(--accent-color); 
+            color: #fff; 
+            padding: 12px 25px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: background 0.2s; 
+        }
+
+        button:hover { 
+            background-color: var(--accent-hover); 
+        }
+
+        .btn-success { 
+            background-color: var(--success-color); 
+        }
+
+        .btn-success:hover { 
+            background-color: #16a34a; 
+        }
+
+        .btn-danger { 
+            background-color: var(--danger-color); 
+        }
+
+        .btn-danger:hover { 
+            background-color: #dc2626; 
+        }
+
+        .btn-sm { 
+            padding: 8px 15px; 
+            font-size: 12px; 
+            margin-top: 0; 
+        }
+
+        .btn-group { 
+            display: flex; 
+            gap: 15px; 
+            margin-top: 10px; 
+            flex-wrap: wrap; 
+        }
+
+        .preview-img { 
+            max-width: 100%; 
+            max-height: 200px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color); 
+            margin-bottom: 15px; 
+            object-fit: cover; 
+        }
+
+        .subsystem-tabs { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 25px; 
+            border-bottom: 2px solid var(--border-color); 
+            padding-bottom: 10px; 
+        }
+
+        .subsystem-btn { 
+            background: #27272a; 
+            color: var(--text-muted); 
+            border: 1px solid #3f3f46; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.2s; 
+        }
+
+        .subsystem-btn:hover { 
+            color: #fff; 
+            border-color: var(--accent-color); 
+        }
+
+        .subsystem-btn.active { 
+            background: var(--accent-color); 
+            color: #fff; 
+            border-color: var(--accent-color); 
+        }
+
+        .subsystem-content { 
+            display: none; 
+        }
+
+        .subsystem-content.active { 
+            display: block; 
+        }
+
+        .q-card { 
+            background: #1f1f23; 
+            padding: 25px; 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            border: 1px solid #3f3f46; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+        }
+
+        .q-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+            font-weight: bold; 
+            color: var(--text-main); 
+            font-size: 16px; 
+            border-bottom: 1px solid #3f3f46; 
+            padding-bottom: 12px; 
+        }
         
-        .q-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0 20px 0; background: #121214; padding: 15px; border-radius: 8px; border: 1px solid #27272a; align-items: end; }
-        .q-settings > div { display: flex; flex-direction: column; }
-        .q-settings label { margin-bottom: 6px; }
-        .q-settings select, .q-settings input { margin-bottom: 0; }
+        .q-settings { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 15px; 
+            margin: 15px 0 20px 0; 
+            background: #121214; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #27272a; 
+            align-items: end; 
+        }
+
+        .q-settings > div { 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        .q-settings label { 
+            margin-bottom: 6px; 
+        }
+
+        .q-settings select, .q-settings input { 
+            margin-bottom: 0; 
+        }
         
-        .q-opt { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; background: #121214; padding: 10px 15px; border-radius: 8px; border: 1px solid #27272a; }
-        .q-opt input[type="text"] { margin-bottom: 0; flex-grow: 1; }
-        .q-opt input[type="radio"], .q-opt input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent-color); margin-bottom: 0; }
+        .q-opt { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            margin-bottom: 10px; 
+            background: #121214; 
+            padding: 10px 15px; 
+            border-radius: 8px; 
+            border: 1px solid #27272a; 
+        }
 
-        .rank-badge-group { display: flex; gap: 10px; align-items: center; height: 42px; }
-        .rank-badge { padding: 8px 14px; border-radius: 6px; background: #09090b; border: 1px solid #3f3f46; color: var(--text-muted); cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s; user-select: none; }
-        .rank-badge.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+        .q-opt input[type="text"] { 
+            margin-bottom: 0; 
+            flex-grow: 1; 
+        }
 
-        .token-card { background: #18181b; border: 1px solid var(--border-color); padding: 20px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .token-info h4 { margin: 0 0 5px 0; color: var(--text-main); font-size: 16px; }
-        .token-string { font-family: monospace; background: #09090b; padding: 8px 12px; border-radius: 6px; border: 1px solid #3f3f46; color: #a855f7; font-size: 13px; display: inline-block; margin-top: 5px; user-select: all; word-break: break-all; }
-        .badge-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-        .badge { font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; background: #27272a; color: #a1a1aa; border: 1px solid #3f3f46; }
-        .badge.system { background: rgba(124, 58, 237, 0.2); color: #c084fc; border-color: var(--accent-color); }
-        .badge.perm { background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: var(--success-color); }
-        .checkbox-group { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; background: #09090b; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .checkbox-group label { display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; text-transform: none; font-size: 13px; color: var(--text-main); }
-        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; margin-bottom: 0; accent-color: var(--accent-color); }
+        .q-opt input[type="radio"], .q-opt input[type="checkbox"] { 
+            width: 20px; 
+            height: 20px; 
+            flex-shrink: 0; 
+            cursor: pointer; 
+            accent-color: var(--accent-color); 
+            margin-bottom: 0; 
+        }
 
-        .ip-card { background: #121214; border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; margin-bottom: 15px; }
-        .ip-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #27272a; padding-bottom: 12px; margin-bottom: 12px; }
-        .ip-title { font-family: monospace; font-size: 18px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
-        .ip-device { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; word-break: break-all; }
+        .rank-badge-group { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            height: 42px; 
+        }
+
+        .rank-badge { 
+            padding: 8px 14px; 
+            border-radius: 6px; 
+            background: #09090b; 
+            border: 1px solid #3f3f46; 
+            color: var(--text-muted); 
+            cursor: pointer; 
+            font-size: 13px; 
+            font-weight: bold; 
+            transition: all 0.2s; 
+            user-select: none; 
+        }
+
+        .rank-badge.active { 
+            background: var(--accent-color); 
+            color: #fff; 
+            border-color: var(--accent-color); 
+        }
+
+        .token-card { 
+            background: #18181b; 
+            border: 1px solid var(--border-color); 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin-bottom: 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 15px; 
+        }
+
+        .token-info h4 { 
+            margin: 0 0 5px 0; 
+            color: var(--text-main); 
+            font-size: 16px; 
+        }
+
+        .token-string { 
+            font-family: monospace; 
+            background: #09090b; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            border: 1px solid #3f3f46; 
+            color: #a855f7; 
+            font-size: 13px; 
+            display: inline-block; 
+            margin-top: 5px; 
+            user-select: all; 
+            word-break: break-all; 
+        }
+
+        .badge-list { 
+            display: flex; 
+            gap: 6px; 
+            flex-wrap: wrap; 
+            margin-top: 8px; 
+        }
+
+        .badge { 
+            font-size: 11px; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            background: #27272a; 
+            color: #a1a1aa; 
+            border: 1px solid #3f3f46; 
+        }
+
+        .badge.system { 
+            background: rgba(124, 58, 237, 0.2); 
+            color: #c084fc; 
+            border-color: var(--accent-color); 
+        }
+
+        .badge.perm { 
+            background: rgba(34, 197, 94, 0.2); 
+            color: #4ade80; 
+            border-color: var(--success-color); 
+        }
+
+        .checkbox-group { 
+            display: flex; 
+            gap: 15px; 
+            flex-wrap: wrap; 
+            margin-bottom: 15px; 
+            background: #09090b; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color); 
+        }
+
+        .checkbox-group label { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            margin-bottom: 0; 
+            cursor: pointer; 
+            text-transform: none; 
+            font-size: 13px; 
+            color: var(--text-main); 
+        }
+
+        .checkbox-group input[type="checkbox"] { 
+            width: 18px; 
+            height: 18px; 
+            margin-bottom: 0; 
+            accent-color: var(--accent-color); 
+        }
+
+        .ip-card { 
+            background: #121214; 
+            border: 1px solid var(--border-color); 
+            border-radius: 10px; 
+            padding: 20px; 
+            margin-bottom: 15px; 
+        }
+
+        .ip-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            border-bottom: 1px solid #27272a; 
+            padding-bottom: 12px; 
+            margin-bottom: 12px; 
+        }
+
+        .ip-title { 
+            font-family: monospace; 
+            font-size: 18px; 
+            font-weight: bold; 
+            color: #38bdf8; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+
+        .ip-device { 
+            font-size: 12px; 
+            color: var(--text-muted); 
+            margin-bottom: 10px; 
+            word-break: break-all; 
+        }
         
-        .timeline { max-height: 300px; overflow-y: auto; background: #050507; padding: 12px; border-radius: 8px; border: 1px solid #27272a; margin-top: 10px; }
-        .timeline-item { border-bottom: 1px solid #18181b; padding: 8px 0; font-size: 13px; }
-        .timeline-item:last-child { border-bottom: none; }
-        .timeline-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .timeline-time { color: #71717a; font-size: 11px; }
-        .timeline-url { font-family: monospace; color: #c084fc; font-weight: bold; }
-        .timeline-data { background: #18181b; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 11px; color: #22c55e; margin-top: 5px; white-space: pre-wrap; word-break: break-all; }
+        .timeline { 
+            max-height: 300px; 
+            overflow-y: auto; 
+            background: #050507; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid #27272a; 
+            margin-top: 10px; 
+        }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-body { background: #18181b; border: 1px solid var(--border-color); border-radius: 12px; width: 90%; max-width: 900px; max-height: 85vh; overflow-y: auto; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        .timeline-item { 
+            border-bottom: 1px solid #18181b; 
+            padding: 8px 0; 
+            font-size: 13px; 
+        }
 
-        .backup-card { background: #121214; border: 1px solid var(--border-color); padding: 15px 20px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .timeline-item:last-child { 
+            border-bottom: none; 
+        }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: #121214; border: 1px solid #27272a; padding: 20px; border-radius: 10px; text-align: center; }
-        .stat-number { font-size: 28px; font-weight: bold; margin-top: 5px; font-family: monospace; }
-        .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
-        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; font-family: monospace; }
-        .status-success { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
-        .status-warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
-        .status-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+        .timeline-head { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            flex-wrap: wrap; 
+        }
+
+        .timeline-time { 
+            color: #71717a; 
+            font-size: 11px; 
+        }
+
+        .timeline-url { 
+            font-family: monospace; 
+            color: #c084fc; 
+            font-weight: bold; 
+        }
+
+        .timeline-data { 
+            background: #18181b; 
+            padding: 8px; 
+            border-radius: 6px; 
+            font-family: monospace; 
+            font-size: 11px; 
+            color: #22c55e; 
+            margin-top: 5px; 
+            white-space: pre-wrap; 
+            word-break: break-all; 
+        }
+
+        .modal-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            background: rgba(0,0,0,0.85); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000; 
+        }
+
+        .modal-body { 
+            background: #18181b; 
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; 
+            width: 90%; 
+            max-width: 900px; 
+            max-height: 85vh; 
+            overflow-y: auto; 
+            padding: 30px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
+        }
+
+        .backup-card { 
+            background: #121214; 
+            border: 1px solid var(--border-color); 
+            padding: 15px 20px; 
+            border-radius: 8px; 
+            margin-bottom: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 15px; 
+        }
+
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 15px; 
+            margin-bottom: 25px; 
+        }
+
+        .stat-card { 
+            background: #121214; 
+            border: 1px solid #27272a; 
+            padding: 20px; 
+            border-radius: 10px; 
+            text-align: center; 
+        }
+
+        .stat-number { 
+            font-size: 28px; 
+            font-weight: bold; 
+            margin-top: 5px; 
+            font-family: monospace; 
+        }
+
+        .stat-label { 
+            font-size: 12px; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            font-weight: 600; 
+        }
+
+        .status-badge { 
+            display: inline-block; 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            font-family: monospace; 
+        }
+
+        .status-success { 
+            background: rgba(34, 197, 94, 0.2); 
+            color: #4ade80; 
+            border: 1px solid #22c55e; 
+        }
+
+        .status-warning { 
+            background: rgba(245, 158, 11, 0.2); 
+            color: #fbbf24; 
+            border: 1px solid #f59e0b; 
+        }
+
+        .status-danger { 
+            background: rgba(239, 68, 68, 0.2); 
+            color: #f87171; 
+            border: 1px solid #ef4444; 
+        }
+
+        .iad-list-container { 
+            background: #121214; 
+            border: 1px solid #27272a; 
+            border-radius: 8px; 
+            padding: 15px; 
+            margin-bottom: 20px; 
+        }
+
+        .iad-list-item { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 10px; 
+            align-items: flex-start; 
+        }
+
+        .iad-list-item input, .iad-list-item textarea { 
+            margin-bottom: 0; 
+            flex-grow: 1; 
+        }
+
+        .iad-punish-card { 
+            background: #09090b; 
+            border: 1px solid #3f3f46; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 10px; 
+            position: relative; 
+        }
     </style>
 </head>
 <body>
@@ -136,6 +702,7 @@
         <div class="nav-category" id="siteNavCat">Сайт</div>
         <ul class="nav-links" id="siteNavLinks">
             <li class="active" onclick="switchTab('projects', this)">📦 Проекты</li>
+            <li onclick="switchTab('iad_memo', this)">📋 Редактор Памятки IAD</li>
             <li onclick="switchTab('illustration', this)">🎨 Арт на главной</li>
             <li onclick="switchTab('sessions', this)">🌐 Карточки IP и Устройств</li>
             <li onclick="switchTab('backups', this)">💾 Бэкапы и Восстановление</li>
@@ -155,6 +722,94 @@
 
     <div class="content-area">
         
+        <div id="iad_memo" class="tab-content">
+            <div class="admin-section">
+                <h3>Редактор интерактивной памятки IAD</h3>
+                <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 14px;">Здесь вы можете изменять текст, вопросы и правила, которые выводятся на странице памятки. Все изменения применяются моментально после сохранения.</p>
+
+                <div class="subsystem-tabs" id="iad-tabs">
+                    <button type="button" class="subsystem-btn active" onclick="switchIadTab('iad-main', this)">Основное</button>
+                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-rules', this)">Правила и Задачи</button>
+                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-punish', this)">Взыскания</button>
+                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-others', this)">Прочее</button>
+                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-tutorials', this)">Туториалы и Медиа</button>
+                </div>
+
+                <div id="iad-main" class="iad-content-pane" style="display: block;">
+                    <div class="form-grid">
+                        <div>
+                            <label>Главный заголовок</label>
+                            <input type="text" id="iad_title" placeholder="Памятка IAD">
+                        </div>
+                        <div>
+                            <label>Подзаголовок</label>
+                            <input type="text" id="iad_subtitle" placeholder="ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ.">
+                        </div>
+                        <div class="full-width">
+                            <label>Что такое IAD? (Описание)</label>
+                            <textarea id="iad_whatis" rows="4"></textarea>
+                        </div>
+                        <div class="full-width">
+                            <label>Чем заниматься в отделе? (Деятельность)</label>
+                            <textarea id="iad_activities" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="iad-rules" class="iad-content-pane" style="display: none;">
+                    <h4>Задачи отдела</h4>
+                    <div class="iad-list-container" id="iad_tasks_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_tasks_list')">➕ Добавить задачу</button>
+
+                    <h4 style="margin-top: 30px;">Требования к сотруднику</h4>
+                    <div class="iad-list-container" id="iad_reqs_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_reqs_list', true)">➕ Добавить требование</button>
+
+                    <h4 style="margin-top: 30px;">Права сотрудников</h4>
+                    <div class="iad-list-container" id="iad_rights_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_rights_list')">➕ Добавить право</button>
+                </div>
+
+                <div id="iad-punish" class="iad-content-pane" style="display: none;">
+                    <h4>Как выдать дисциплинарное взыскание (Пошагово)</h4>
+                    <div class="iad-list-container" id="iad_howissue_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_howissue_list')">➕ Добавить шаг</button>
+
+                    <h4 style="margin-top: 30px;">Виды дисциплинарных взысканий</h4>
+                    <div class="iad-list-container" id="iad_punishments_list" style="background: transparent; border: none; padding: 0;"></div>
+                    <button class="btn-sm btn-success" onclick="addIadPunishment()">➕ Добавить вид взыскания</button>
+
+                    <h4 style="margin-top: 30px;">Кому нельзя выдавать взыскания (Отделы)</h4>
+                    <div class="iad-list-container" id="iad_forbidden_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_forbidden_list')">➕ Добавить отдел</button>
+                </div>
+
+                <div id="iad-others" class="iad-content-pane" style="display: none;">
+                    <h4>Частые нарушения (Статья | Наказание)</h4>
+                    <div class="iad-list-container" id="iad_violations_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_violations_list')">➕ Добавить нарушение</button>
+
+                    <h4 style="margin-top: 30px;">Вопросы для переаттестации</h4>
+                    <div class="iad-list-container" id="iad_recert_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_recert_list')">➕ Добавить вопрос</button>
+
+                    <h4 style="margin-top: 30px;">Правила парковки</h4>
+                    <div class="iad-list-container" id="iad_parking_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_parking_list')">➕ Добавить правило</button>
+                </div>
+
+                <div id="iad-tutorials" class="iad-content-pane" style="display: none;">
+                    <h4>Обучающие материалы (Туториалы и медиа)</h4>
+                    <div class="iad-list-container" id="iad_tutors_list" style="background: transparent; border: none; padding: 0;"></div>
+                    <button class="btn-sm btn-success" onclick="addIadTutor()">➕ Добавить карточку туториала</button>
+                </div>
+
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn-success" onclick="saveIadMemo()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ПАМЯТКУ</button>
+                </div>
+            </div>
+        </div>
+
         <div id="projects" class="tab-content active">
             <div class="admin-section">
                 <h3>Карточки проектов</h3>
@@ -360,7 +1015,6 @@
         <div id="discord_monitor" class="tab-content">
             <div class="admin-section">
                 <h3>Мониторинг отправок в Discord и статус систем</h3>
-                
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-label">Успешно (200/204/202)</div>
@@ -486,50 +1140,375 @@
 
     <script>
         function switchTab(tabId, element) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-links li').forEach(el => {
+                el.classList.remove('active');
+            });
             document.getElementById(tabId).classList.add('active');
-            if (element) element.classList.add('active');
-            if (tabId === 'sessions') loadSessionsUI();
-            if (tabId === 'backups') loadBackupsUI();
-            if (tabId === 'bans') loadBansUI();
-            if (tabId === 'faction_manager' && !currentFaction) loadFactionUI();
-            if (tabId === 'discord_monitor') loadDiscordMonitorUI();
-            if (tabId === 'tokens_manager') loadTokensUI();
+            
+            if (element) {
+                element.classList.add('active');
+            }
+            
+            if (tabId === 'sessions') {
+                loadSessionsUI();
+            }
+            if (tabId === 'backups') {
+                loadBackupsUI();
+            }
+            if (tabId === 'bans') {
+                loadBansUI();
+            }
+            if (tabId === 'faction_manager' && !currentFaction) {
+                loadFactionUI();
+            }
+            if (tabId === 'discord_monitor') {
+                loadDiscordMonitorUI();
+            }
+            if (tabId === 'tokens_manager') {
+                loadTokensUI();
+            }
+            if (tabId === 'iad_memo') {
+                loadIadMemoUI();
+            }
         }
 
         async function apiCall(url, options = {}) {
             try {
                 const res = await fetch(url, options);
-                if (res.status === 403) { alert('Сессия истекла или недостаточно прав.'); return null; }
-                if (res.status === 401) { window.location.href = '/login'; return null; }
-                if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+                if (res.status === 403) { 
+                    alert('Сессия истекла или недостаточно прав.'); 
+                    return null; 
+                }
+                if (res.status === 401) { 
+                    window.location.href = '/login'; 
+                    return null; 
+                }
+                if (!res.ok) {
+                    throw new Error(`Ошибка ${res.status}`);
+                }
                 return await res.json();
             } catch (err) {
-                console.error(err); alert('Сбой запроса: ' + err.message); return null;
+                console.error(err); 
+                alert('Сбой запроса: ' + err.message); 
+                return null;
             }
         }
 
-        let allProjects = []; let currentProjImageUrl = '';
+        let iadDataCache = {};
+
+        function switchIadTab(paneId, btnEl) {
+            document.querySelectorAll('.iad-content-pane').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('#iad-tabs .subsystem-btn').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(paneId).style.display = 'block';
+            btnEl.classList.add('active');
+        }
+
+        async function loadIadMemoUI() {
+            const res = await apiCall('/api/file?path=iad_data.json');
+            if (res && res.content) {
+                try {
+                    iadDataCache = JSON.parse(res.content);
+                } catch(e) {
+                    alert('Файл iad_data.json поврежден, загружаем дефолтный шаблон.');
+                    iadDataCache = getIadDefault();
+                }
+            } else {
+                iadDataCache = getIadDefault();
+            }
+            renderIadEditor();
+        }
+
+        function getIadDefault() {
+            return {
+                header: { 
+                    title: "Памятка IAD", 
+                    subtitle: "ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ." 
+                },
+                info: { 
+                    what_is_iad: "" 
+                },
+                rights: [], 
+                tasks: [], 
+                requirements: [], 
+                how_to_issue: [], 
+                punishments: [],
+                forbidden_departments: [], 
+                activities: "", 
+                parking: [], 
+                violations: [], 
+                recertification: [], 
+                tutorials: []
+            };
+        }
+
+        function renderIadEditor() {
+            document.getElementById('iad_title').value = iadDataCache.header?.title || '';
+            document.getElementById('iad_subtitle').value = iadDataCache.header?.subtitle || '';
+            document.getElementById('iad_whatis').value = iadDataCache.info?.what_is_iad || '';
+            document.getElementById('iad_activities').value = iadDataCache.activities || '';
+
+            renderIadList('iad_tasks_list', iadDataCache.tasks || []);
+            renderIadList('iad_reqs_list', iadDataCache.requirements || [], true);
+            renderIadList('iad_rights_list', iadDataCache.rights || []);
+            renderIadList('iad_howissue_list', iadDataCache.how_to_issue || []);
+            renderIadList('iad_forbidden_list', iadDataCache.forbidden_departments || []);
+            renderIadList('iad_violations_list', iadDataCache.violations || []);
+            renderIadList('iad_recert_list', iadDataCache.recertification || []);
+            renderIadList('iad_parking_list', iadDataCache.parking || []);
+
+            renderIadPunishments();
+            renderIadTutorials();
+        }
+
+        function renderIadList(containerId, arr, isTextarea = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            arr.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'iad-list-item';
+                if (isTextarea) {
+                    div.innerHTML = `
+                        <textarea rows="2" class="iad-val-input">${item}</textarea>
+                        <button class="btn-danger btn-sm" onclick="this.parentElement.remove()">❌</button>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <input type="text" value="${item.replace(/"/g, '&quot;')}" class="iad-val-input">
+                        <button class="btn-danger btn-sm" onclick="this.parentElement.remove()">❌</button>
+                    `;
+                }
+                container.appendChild(div);
+            });
+        }
+
+        function addIadItem(containerId, isTextarea = false) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = 'iad-list-item';
+            if (isTextarea) {
+                div.innerHTML = `
+                    <textarea rows="2" class="iad-val-input" placeholder="Введите текст..."></textarea>
+                    <button class="btn-danger btn-sm" onclick="this.parentElement.remove()">❌</button>
+                `;
+            } else {
+                div.innerHTML = `
+                    <input type="text" class="iad-val-input" placeholder="Введите пункт...">
+                    <button class="btn-danger btn-sm" onclick="this.parentElement.remove()">❌</button>
+                `;
+            }
+            container.appendChild(div);
+        }
+
+        function renderIadPunishments() {
+            const container = document.getElementById('iad_punishments_list');
+            container.innerHTML = '';
+            const arr = iadDataCache.punishments || [];
+            arr.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'iad-punish-card';
+                div.innerHTML = `
+                    <button class="btn-danger btn-sm" style="position: absolute; top: 15px; right: 15px;" onclick="this.parentElement.remove()">Удалить</button>
+                    <label>Название взыскания</label>
+                    <input type="text" class="iad-p-title" value="${p.title.replace(/"/g, '&quot;')}">
+                    <label>Описание / Условия / Штраф</label>
+                    <textarea rows="2" class="iad-p-desc">${p.desc}</textarea>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addIadPunishment() {
+            const container = document.getElementById('iad_punishments_list');
+            const div = document.createElement('div');
+            div.className = 'iad-punish-card';
+            div.innerHTML = `
+                <button class="btn-danger btn-sm" style="position: absolute; top: 15px; right: 15px;" onclick="this.parentElement.remove()">Удалить</button>
+                <label>Название взыскания</label>
+                <input type="text" class="iad-p-title" placeholder="Например: Устный выговор">
+                <label>Описание / Условия / Штраф</label>
+                <textarea rows="2" class="iad-p-desc" placeholder="Условия оплаты и сроки..."></textarea>
+            `;
+            container.appendChild(div);
+        }
+
+        function renderIadTutorials() {
+            const container = document.getElementById('iad_tutors_list');
+            container.innerHTML = '';
+            const arr = iadDataCache.tutorials || [];
+            arr.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'iad-punish-card';
+                div.innerHTML = `
+                    <button class="btn-danger btn-sm" style="position: absolute; top: 15px; right: 15px;" onclick="this.parentElement.remove()">Удалить</button>
+                    <label>Заголовок туториала</label>
+                    <input type="text" class="iad-t-title" value="${(t.title || '').replace(/"/g, '&quot;')}">
+                    <label>Текстовое пояснение</label>
+                    <textarea rows="2" class="iad-t-text">${t.text || ''}</textarea>
+                    <div class="form-grid" style="margin-top:10px;">
+                        <div>
+                            <label>Тип медиа</label>
+                            <select class="iad-t-type">
+                                <option value="none" ${t.mediaType === 'none' ? 'selected' : ''}>Без медиа</option>
+                                <option value="image" ${t.mediaType === 'image' ? 'selected' : ''}>Фото/Картинка</option>
+                                <option value="video" ${t.mediaType === 'video' ? 'selected' : ''}>Видео</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>URL (Ссылка или путь)</label>
+                            <input type="text" class="iad-t-url" value="${(t.mediaUrl || '').replace(/"/g, '&quot;')}">
+                        </div>
+                    </div>
+                    <label>Пояснение к фото/видео (показывается при открытии)</label>
+                    <input type="text" class="iad-t-desc" value="${(t.mediaDesc || '').replace(/"/g, '&quot;')}">
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addIadTutor() {
+            const container = document.getElementById('iad_tutors_list');
+            const div = document.createElement('div');
+            div.className = 'iad-punish-card';
+            div.innerHTML = `
+                <button class="btn-danger btn-sm" style="position: absolute; top: 15px; right: 15px;" onclick="this.parentElement.remove()">Удалить</button>
+                <label>Заголовок туториала</label>
+                <input type="text" class="iad-t-title" placeholder="Название...">
+                <label>Текстовое пояснение</label>
+                <textarea rows="2" class="iad-t-text" placeholder="Текст туториала..."></textarea>
+                <div class="form-grid" style="margin-top:10px;">
+                    <div>
+                        <label>Тип медиа</label>
+                        <select class="iad-t-type">
+                            <option value="none">Без медиа</option>
+                            <option value="image">Фото/Картинка</option>
+                            <option value="video">Видео</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>URL (Ссылка или путь /uploads/media_...)</label>
+                        <input type="text" class="iad-t-url" placeholder="https://... или /uploads/...">
+                    </div>
+                </div>
+                <label>Пояснение к фото/видео (показывается при открытии)</label>
+                <input type="text" class="iad-t-desc" placeholder="Что происходит на медиа?">
+            `;
+            container.appendChild(div);
+        }
+
+        function getIadListValues(containerId) {
+            const inputs = document.getElementById(containerId).querySelectorAll('.iad-val-input');
+            return Array.from(inputs).map(inp => inp.value.trim()).filter(val => val !== '');
+        }
+
+        async function saveIadMemo() {
+            const newData = {
+                header: {
+                    title: document.getElementById('iad_title').value.trim(),
+                    subtitle: document.getElementById('iad_subtitle').value.trim()
+                },
+                info: { 
+                    what_is_iad: document.getElementById('iad_whatis').value.trim() 
+                },
+                activities: document.getElementById('iad_activities').value.trim(),
+                tasks: getIadListValues('iad_tasks_list'),
+                requirements: getIadListValues('iad_reqs_list'),
+                rights: getIadListValues('iad_rights_list'),
+                how_to_issue: getIadListValues('iad_howissue_list'),
+                forbidden_departments: getIadListValues('iad_forbidden_list'),
+                violations: getIadListValues('iad_violations_list'),
+                recertification: getIadListValues('iad_recert_list'),
+                parking: getIadListValues('iad_parking_list'),
+                punishments: [],
+                tutorials: []
+            };
+
+            const punishCards = document.querySelectorAll('#iad_punishments_list .iad-punish-card');
+            punishCards.forEach(card => {
+                const title = card.querySelector('.iad-p-title').value.trim();
+                const desc = card.querySelector('.iad-p-desc').value.trim();
+                if (title) {
+                    newData.punishments.push({ title, desc });
+                }
+            });
+
+            const tutorCards = document.querySelectorAll('#iad_tutors_list .iad-punish-card');
+            tutorCards.forEach(card => {
+                const title = card.querySelector('.iad-t-title').value.trim();
+                if (title) {
+                    newData.tutorials.push({
+                        title: title,
+                        text: card.querySelector('.iad-t-text').value.trim(),
+                        mediaType: card.querySelector('.iad-t-type').value,
+                        mediaUrl: card.querySelector('.iad-t-url').value.trim(),
+                        mediaDesc: card.querySelector('.iad-t-desc').value.trim()
+                    });
+                }
+            });
+
+            const res = await apiCall('/api/file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    filePath: 'iad_data.json', 
+                    content: JSON.stringify(newData, null, 2) 
+                })
+            });
+
+            if (res && res.success) {
+                alert('Памятка успешно сохранена и обновлена на сайте!');
+            }
+        }
+
+        let allProjects = []; 
+        let currentProjImageUrl = '';
+        
         async function loadProjects() {
             const data = await apiCall('/api/projects');
-            if (!data) return;
+            if (!data) {
+                return;
+            }
             allProjects = data;
             const select = document.getElementById('projectSelect');
             select.innerHTML = '<option value="">➕ Создать новый проект</option>';
-            allProjects.forEach((p, index) => { select.innerHTML += `<option value="${index}">${p.title || 'Проект ' + (index + 1)}</option>`; });
+            allProjects.forEach((p, index) => { 
+                select.innerHTML += `<option value="${index}">${p.title || 'Проект ' + (index + 1)}</option>`; 
+            });
             selectProject();
         }
+        
         function selectProject() {
             const idx = document.getElementById('projectSelect').value;
             const img = document.getElementById('projImgPreview');
             if (idx === "") {
-                document.getElementById('projTitle').value = ''; document.getElementById('projPath').value = ''; document.getElementById('projShortDesc').value = ''; document.getElementById('projFullDesc').value = ''; currentProjImageUrl = '';
-                img.style.display = 'none'; document.getElementById('deleteBtn').style.display = 'none';
+                document.getElementById('projTitle').value = ''; 
+                document.getElementById('projPath').value = ''; 
+                document.getElementById('projShortDesc').value = ''; 
+                document.getElementById('projFullDesc').value = ''; 
+                currentProjImageUrl = '';
+                img.style.display = 'none'; 
+                document.getElementById('deleteBtn').style.display = 'none';
             } else {
                 const p = allProjects[idx];
-                document.getElementById('projTitle').value = p.title || ''; document.getElementById('projPath').value = p.path || ''; document.getElementById('projShortDesc').value = p.shortDesc || ''; document.getElementById('projFullDesc').value = p.fullDesc || ''; currentProjImageUrl = p.imageUrl || '';
-                if (currentProjImageUrl) { img.src = currentProjImageUrl; img.style.display = 'block'; } else { img.style.display = 'none'; }
+                document.getElementById('projTitle').value = p.title || ''; 
+                document.getElementById('projPath').value = p.path || ''; 
+                document.getElementById('projShortDesc').value = p.shortDesc || ''; 
+                document.getElementById('projFullDesc').value = p.fullDesc || ''; 
+                currentProjImageUrl = p.imageUrl || '';
+                
+                if (currentProjImageUrl) { 
+                    img.src = currentProjImageUrl; 
+                    img.style.display = 'block'; 
+                } else { 
+                    img.style.display = 'none'; 
+                }
+                
                 document.getElementById('deleteBtn').style.display = 'inline-block';
             }
         }
@@ -541,7 +1520,9 @@
                 formData.append('image', fileInput.files[0]);
                 try {
                     const res = await fetch('/api/upload', { method: 'POST', body: formData });
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}`);
+                    }
                     const data = await res.json();
                     if (data && data.success) { 
                         currentProjImageUrl = data.url; 
@@ -550,40 +1531,81 @@
                         alert('Ошибка загрузки картинки проекта');
                     }
                 } catch(e) {
-                    alert('Сбой при загрузке картинки проекта: ' + e.message + '. Вероятно файл слишком большой (лимит сервера Nginx).');
+                    alert('Сбой при загрузке картинки проекта: ' + e.message);
                 }
-            } else saveProjectData();
+            } else {
+                saveProjectData();
+            }
         }
 
         async function saveProjectData() {
             const idx = document.getElementById('projectSelect').value;
-            const projData = { title: document.getElementById('projTitle').value, path: document.getElementById('projPath').value, shortDesc: document.getElementById('projShortDesc').value, fullDesc: document.getElementById('projFullDesc').value, imageUrl: currentProjImageUrl };
-            if (idx === "") allProjects.push(projData); else allProjects[idx] = projData;
-            const data = await apiCall('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(allProjects) });
-            if (data && data.success) { alert('Проект сохранен!'); loadProjects(); }
+            const projData = { 
+                title: document.getElementById('projTitle').value, 
+                path: document.getElementById('projPath').value, 
+                shortDesc: document.getElementById('projShortDesc').value, 
+                fullDesc: document.getElementById('projFullDesc').value, 
+                imageUrl: currentProjImageUrl 
+            };
+            
+            if (idx === "") {
+                allProjects.push(projData); 
+            } else {
+                allProjects[idx] = projData;
+            }
+            
+            const data = await apiCall('/api/projects', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(allProjects) 
+            });
+            
+            if (data && data.success) { 
+                alert('Проект сохранен!'); 
+                loadProjects(); 
+            }
         }
+        
         async function deleteProject() {
             const idx = document.getElementById('projectSelect').value;
-            if (idx === "" || !confirm('Точно удалить проект?')) return;
+            if (idx === "" || !confirm('Точно удалить проект?')) {
+                return;
+            }
             allProjects.splice(idx, 1);
-            const data = await apiCall('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(allProjects) });
-            if (data && data.success) { document.getElementById('projectSelect').value = ""; loadProjects(); }
+            const data = await apiCall('/api/projects', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(allProjects) 
+            });
+            
+            if (data && data.success) { 
+                document.getElementById('projectSelect').value = ""; 
+                loadProjects(); 
+            }
         }
 
         async function uploadIllustration() {
             const fileInput = document.getElementById('illustrationFile');
-            if (fileInput.files.length === 0) return alert('Выберите файл!');
+            if (fileInput.files.length === 0) {
+                return alert('Выберите файл!');
+            }
             
             const formData = new FormData();
             formData.append('image', fileInput.files[0]);
 
             try {
                 const res = await fetch('/api/upload', { method: 'POST', body: formData });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
                 const upRes = await res.json();
                 if (upRes && upRes.success) {
                     globalConfig.illustrationUrl = upRes.url;
-                    await apiCall('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(globalConfig) });
+                    await apiCall('/api/settings', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(globalConfig) 
+                    });
                     document.getElementById('currentIllustration').src = upRes.url; 
                     document.getElementById('currentIllustration').style.display = 'block'; 
                     alert('Арт обновлен!');
@@ -591,20 +1613,20 @@
                     alert('Ошибка загрузки арта');
                 }
             } catch(e) {
-                alert('Сбой при загрузке: ' + e.message + '. Вероятно файл слишком большой (лимит сервера Nginx).');
+                alert('Сбой при загрузке: ' + e.message);
             }
         }
 
-        let rawSessions = {};
-        let rawNotes = {};
+        let rawSessions = {}; 
+        let rawNotes = {}; 
         let activeModalIp = null;
-
+        
         async function loadSessionsUI() {
             const res = await apiCall('/api/user-sessions');
-            if (res && res.success) {
-                rawSessions = res.sessions || {};
-                rawNotes = res.notes || {};
-                renderUserSessions();
+            if (res && res.success) { 
+                rawSessions = res.sessions || {}; 
+                rawNotes = res.notes || {}; 
+                renderUserSessions(); 
             }
         }
 
@@ -624,26 +1646,26 @@
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted);">Сессии пользователей не найдены или скрыты фильтром.</p>';
+                container.innerHTML = '<p style="color:var(--text-muted);">Сессии пользователей не найдены.</p>'; 
                 return;
             }
 
             filtered.forEach(s => {
                 const note = rawNotes[s.ip] || '';
                 const botBadge = s.isBot 
-                    ? `<span style="background:rgba(239, 68, 68, 0.2); color:#ef4444; border:1px solid #ef4444; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:10px;">🤖 БОТ (${s.botReason || 'Автодетект'})</span>` 
-                    : `<span style="background:rgba(34, 197, 94, 0.2); color:#22c55e; border:1px solid #22c55e; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:10px;">👤 Человек</span>`;
-
-                const card = document.createElement('div');
-                card.className = 'ip-card';
+                    ? `<span style="background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:10px;">🤖 БОТ (${s.botReason||'Автодетект'})</span>` 
+                    : `<span style="background:rgba(34,197,94,0.2); color:#22c55e; border:1px solid #22c55e; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:10px;">👤 Человек</span>`;
+                
+                const card = document.createElement('div'); 
+                card.className = 'ip-card'; 
                 card.style.borderColor = s.isBot ? '#7f1d1d' : 'var(--border-color)';
                 
                 card.innerHTML = `
                     <div class="ip-header">
                         <div class="ip-title">🌐 ${s.ip} ${botBadge}</div>
                         <div>
-                            <button class="btn-success btn-sm" onclick="openIpModal('${s.ip}')">🔍 Посмотреть логи выполнения</button>
-                            <button class="btn-danger btn-sm" onclick="quickBan('${s.ip}')">🚫 Забанить IP</button>
+                            <button class="btn-success btn-sm" onclick="openIpModal('${s.ip}')">🔍 Логи</button>
+                            <button class="btn-danger btn-sm" onclick="quickBan('${s.ip}')">🚫 Бан</button>
                         </div>
                     </div>
                     <div class="ip-device"><strong>Устройство:</strong> ${s.userAgent}</div>
@@ -659,87 +1681,101 @@
         }
 
         function openIpModal(ip) {
-            activeModalIp = ip;
-            const s = rawSessions[ip];
-            if (!s) return;
-
+            activeModalIp = ip; 
+            const s = rawSessions[ip]; 
+            if (!s) {
+                return;
+            }
+            
             document.getElementById('modalIpTitle').innerText = `Карточка пользователя [IP: ${ip}]`;
             document.getElementById('modalIpNote').value = rawNotes[ip] || '';
-
-            const timeline = document.getElementById('modalTimeline');
+            const timeline = document.getElementById('modalTimeline'); 
             timeline.innerHTML = '';
-
+            
             (s.history || []).forEach(item => {
                 const dataStr = item.data ? JSON.stringify(item.data, null, 2) : '';
-                const el = document.createElement('div');
+                const el = document.createElement('div'); 
                 el.className = 'timeline-item';
                 el.innerHTML = `
                     <div class="timeline-head">
                         <span class="timeline-time">[${item.time}]</span>
-                        <span style="font-weight:bold; color:${item.method === 'POST' ? '#f59e0b' : '#38bdf8'}">${item.method}</span>
+                        <span style="font-weight:bold; color:${item.method==='POST'?'#f59e0b':'#38bdf8'}">${item.method}</span>
                         <span class="timeline-url">${item.url}</span>
-                        <span style="color:${item.status < 400 ? '#22c55e' : '#ef4444'}">(${item.status})</span>
+                        <span style="color:${item.status<400?'#22c55e':'#ef4444'}">(${item.status})</span>
                     </div>
                     ${dataStr ? `<div class="timeline-data">${dataStr}</div>` : ''}
                 `;
                 timeline.appendChild(el);
             });
-
+            
             document.getElementById('ipModal').style.display = 'flex';
         }
 
-        function closeIpModal() {
-            document.getElementById('ipModal').style.display = 'none';
+        function closeIpModal() { 
+            document.getElementById('ipModal').style.display = 'none'; 
         }
-
+        
         async function saveIpNoteFromModal() {
-            if (!activeModalIp) return;
+            if (!activeModalIp) {
+                return;
+            }
             const note = document.getElementById('modalIpNote').value.trim();
-            const res = await apiCall('/api/ip-notes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ip: activeModalIp, note })
+            const res = await apiCall('/api/ip-notes', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ ip: activeModalIp, note }) 
             });
-            if (res && res.success) {
-                rawNotes = res.notes || {};
-                alert('Заметка сохранена!');
-                renderUserSessions();
+            
+            if (res && res.success) { 
+                rawNotes = res.notes || {}; 
+                alert('Заметка сохранена!'); 
+                renderUserSessions(); 
             }
         }
 
         let rawDiscordLogs = [];
+        
         async function loadDiscordMonitorUI() {
-            const res = await apiCall('/api/discord-monitor');
-            if (!res || !res.success) return;
-
+            const res = await apiCall('/api/discord-monitor'); 
+            if (!res || !res.success) {
+                return;
+            }
+            
             document.getElementById('statSuccessCount').innerText = res.health.successCount || 0;
             document.getElementById('statRateLimitCount').innerText = res.health.rateLimitCount || 0;
             document.getElementById('statErrorCount').innerText = res.health.errorCount || 0;
             document.getElementById('statRamUsage').innerText = (res.health.rssMb || 0) + ' MB';
-
-            rawDiscordLogs = res.logs || [];
+            rawDiscordLogs = res.logs || []; 
             renderDiscordLogs();
         }
 
         function renderDiscordLogs() {
-            const container = document.getElementById('discordLogsContainer');
+            const container = document.getElementById('discordLogsContainer'); 
             container.innerHTML = '';
-
-            if (rawDiscordLogs.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted);">Записи об отправоках вебхуков отсутствуют.</p>';
-                return;
+            
+            if (rawDiscordLogs.length === 0) { 
+                container.innerHTML = '<p style="color:var(--text-muted);">Записи отсутствуют.</p>'; 
+                return; 
             }
-
+            
             rawDiscordLogs.forEach(l => {
-                let badgeClass = 'status-success';
+                let badgeClass = 'status-success'; 
                 let statusText = l.status;
-                if (l.status === 204 || l.status === 200) statusText += ' OK';
-                else if (l.status === 202) statusText += ' Accepted';
-                else if (l.status === 429) { badgeClass = 'status-warning'; statusText += ' Rate Limit'; }
-                else { badgeClass = 'status-danger'; statusText += ' Error'; }
-
-                const el = document.createElement('div');
-                el.className = 'backup-card';
+                
+                if (l.status === 204 || l.status === 200) {
+                    statusText += ' OK'; 
+                } else if (l.status === 202) {
+                    statusText += ' Accepted'; 
+                } else if (l.status === 429) { 
+                    badgeClass = 'status-warning'; 
+                    statusText += ' Rate Limit'; 
+                } else { 
+                    badgeClass = 'status-danger'; 
+                    statusText += ' Error'; 
+                }
+                
+                const el = document.createElement('div'); 
+                el.className = 'backup-card'; 
                 el.style.borderColor = l.status === 429 ? '#f59e0b' : (l.status >= 400 ? '#ef4444' : 'var(--border-color)');
                 el.innerHTML = `
                     <div>
@@ -751,44 +1787,46 @@
                         <div style="font-family:monospace; color:#a855f7; font-size:13px; word-break:break-all;">${l.url}</div>
                         ${l.error ? `<div style="color:#f87171; font-size:12px; margin-top:4px;">Сбой: ${l.error}</div>` : ''}
                     </div>
-                    <button class="btn-sm" style="background:#27272a; color:#fff;" onclick="openDiscordModal('${l.id}')">📋 Детали и база</button>
+                    <button class="btn-sm" style="background:#27272a; color:#fff;" onclick="openDiscordModal('${l.id}')">📋 Детали</button>
                 `;
                 container.appendChild(el);
             });
         }
 
         function openDiscordModal(id) {
-            const l = rawDiscordLogs.find(item => item.id === id);
-            if (!l) return;
-
+            const l = rawDiscordLogs.find(item => item.id === id); 
+            if (!l) {
+                return;
+            }
             document.getElementById('modalDiscordTitle').innerText = `Отправка [Статус: ${l.status}] - ${l.time}`;
             document.getElementById('modalDiscordPayload').innerText = l.payload ? JSON.stringify(l.payload, null, 2) : 'Пустой запрос';
-            
             let respText = l.response ? JSON.stringify(l.response, null, 2) : (l.error ? String(l.error) : 'Нет ответа от сервера');
             document.getElementById('modalDiscordResponse').innerText = respText;
-
             document.getElementById('discordModal').style.display = 'flex';
         }
-
-        function closeDiscordModal() {
-            document.getElementById('discordModal').style.display = 'none';
+        
+        function closeDiscordModal() { 
+            document.getElementById('discordModal').style.display = 'none'; 
         }
-
+        
         async function sendTestWebhook() {
-            const urlInput = document.getElementById('testWebhookUrlInput').value.trim();
-            const payloadInput = document.getElementById('testWebhookPayloadInput').value.trim();
+            const urlInput = document.getElementById('testWebhookUrlInput').value.trim(); 
+            const payloadInput = document.getElementById('testWebhookPayloadInput').value.trim(); 
             const resultBox = document.getElementById('testWebhookResultBox');
-            if (!urlInput) return alert('Введите URL вебхука');
-
-            resultBox.style.display = 'block';
-            resultBox.innerHTML = '<span style="color:#38bdf8;">⏳ Отправка запроса в Discord...</span>';
-
-            const res = await apiCall('/api/discord-monitor/test', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ webhookUrl: urlInput, payloadText: payloadInput })
+            
+            if (!urlInput) {
+                return alert('Введите URL вебхука');
+            }
+            
+            resultBox.style.display = 'block'; 
+            resultBox.innerHTML = '<span style="color:#38bdf8;">⏳ Отправка запроса...</span>';
+            
+            const res = await apiCall('/api/discord-monitor/test', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ webhookUrl: urlInput, payloadText: payloadInput }) 
             });
-
+            
             if (res && res.success) {
                 let badgeClass = res.status < 400 ? 'status-success' : (res.status === 429 ? 'status-warning' : 'status-danger');
                 resultBox.innerHTML = `
@@ -796,29 +1834,34 @@
                         <div style="margin-bottom:8px;">
                             <span class="status-badge ${badgeClass}">HTTP ${res.status} ${res.statusText || ''}</span>
                         </div>
-                        <div style="font-family:monospace; font-size:12px; color:#fbbf24;">Ответ Discord: ${res.responseBody ? JSON.stringify(res.responseBody) : 'Успешно (без текста)'}</div>
+                        <div style="font-family:monospace; font-size:12px; color:#fbbf24;">Ответ: ${res.responseBody ? JSON.stringify(res.responseBody) : 'Успешно'}</div>
                     </div>
                 `;
                 loadDiscordMonitorUI();
-            } else if (res && res.error) {
-                resultBox.innerHTML = `<div style="color:#ef4444;">❌ Ошибка: ${res.error}</div>`;
+            } else if (res && res.error) { 
+                resultBox.innerHTML = `<div style="color:#ef4444;">❌ Ошибка: ${res.error}</div>`; 
             }
         }
-
+        
         async function clearDiscordLogs() {
-            if (!confirm('Очистить весь журнал отслеживания Discord?')) return;
+            if (!confirm('Очистить весь журнал отслеживания Discord?')) {
+                return;
+            }
             const res = await apiCall('/api/discord-monitor/clear', { method: 'DELETE' });
-            if (res && res.success) loadDiscordMonitorUI();
+            if (res && res.success) {
+                loadDiscordMonitorUI();
+            }
         }
 
         async function loadBackupsUI() {
-            const res = await apiCall('/api/backups');
+            const res = await apiCall('/api/backups'); 
             const container = document.getElementById('backupsListContainer');
-            if (!res || !res.backups || res.backups.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted);">Резервные копии отсутствуют.</p>';
-                return;
+            
+            if (!res || !res.backups || res.backups.length === 0) { 
+                container.innerHTML = '<p style="color:var(--text-muted);">Резервные копии отсутствуют.</p>'; 
+                return; 
             }
-
+            
             container.innerHTML = res.backups.map(b => `
                 <div class="backup-card">
                     <div>
@@ -826,59 +1869,66 @@
                         <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Дата создания: ${b.date}</div>
                     </div>
                     <div>
-                        <button class="btn-success btn-sm" onclick="restoreBackup('${b.name}')">↺ Восстановить версию</button>
+                        <button class="btn-success btn-sm" onclick="restoreBackup('${b.name}')">↺ Восстановить</button>
                         <a href="/api/backups/download/${encodeURIComponent(b.name)}" class="btn-sm" style="background:#27272a; color:#fff; text-decoration:none; display:inline-block; border-radius:6px; padding:8px 15px;">📥 Скачать</a>
                     </div>
                 </div>
             `).join('');
         }
-
-        async function createNewBackup() {
-            const res = await apiCall('/api/backups/create', { method: 'POST' });
-            if (res && res.success) {
-                alert(`Бэкап ${res.name} успешно создан!`);
-                loadBackupsUI();
-            }
+        
+        async function createNewBackup() { 
+            const res = await apiCall('/api/backups/create', { method: 'POST' }); 
+            if (res && res.success) { 
+                alert(`Бэкап создан!`); 
+                loadBackupsUI(); 
+            } 
         }
-
+        
         async function restoreBackup(name) {
-            if (!confirm(`ВНИМАНИЕ! Восстановить базу данных и файлы из точки [${name}]? Текущие не сохраненные данные будут заменены.`)) return;
-            const res = await apiCall('/api/backups/restore', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
+            if (!confirm(`ВНИМАНИЕ! Восстановить базу из [${name}]? Текущие данные будут заменены.`)) {
+                return;
+            }
+            const res = await apiCall('/api/backups/restore', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ name }) 
             });
-            if (res && res.success) {
-                alert('Система успешно восстановлена из резервной копии!');
-                location.reload();
+            if (res && res.success) { 
+                alert('Система успешно восстановлена!'); 
+                location.reload(); 
             }
         }
-
+        
         async function uploadBackupFile() {
-            const fileInput = document.getElementById('uploadBackupFileInput');
-            if (fileInput.files.length === 0) return alert('Выберите файл!');
-            const formData = new FormData();
+            const fileInput = document.getElementById('uploadBackupFileInput'); 
+            if (fileInput.files.length === 0) {
+                return alert('Выберите файл!');
+            }
+            
+            const formData = new FormData(); 
             formData.append('backupFile', fileInput.files[0]);
-
-            try {
-                const res = await fetch('/api/backups/upload', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (data && data.success) {
-                    alert('Файл бэкапа загружен на сервер!');
-                    loadBackupsUI();
-                }
-            } catch (e) {
-                alert('Ошибка загрузки бэкапа');
+            
+            try { 
+                const res = await fetch('/api/backups/upload', { method: 'POST', body: formData }); 
+                const data = await res.json(); 
+                if (data && data.success) { 
+                    alert('Бэкап загружен!'); 
+                    loadBackupsUI(); 
+                } 
+            } catch (e) { 
+                alert('Ошибка загрузки'); 
             }
         }
 
         async function loadBansUI() {
-            const res = await apiCall('/api/bans');
+            const res = await apiCall('/api/bans'); 
             const container = document.getElementById('bannedListContainer');
-            if (!res || !res.banned || res.banned.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted);">Черный список пуст.</p>';
-                return;
+            
+            if (!res || !res.banned || res.banned.length === 0) { 
+                container.innerHTML = '<p style="color:var(--text-muted);">Черный список пуст.</p>'; 
+                return; 
             }
+            
             container.innerHTML = res.banned.map(item => `
                 <div class="backup-card" style="border-color:var(--danger-color);">
                     <div>
@@ -889,77 +1939,133 @@
                 </div>
             `).join('');
         }
-
+        
         async function manualBanIp() {
-            const ip = document.getElementById('banIpInput').value.trim();
-            const reason = document.getElementById('banReasonInput').value.trim();
-            if (!ip) return alert('Введите IP!');
-            const res = await apiCall('/api/bans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip, reason }) });
+            const ip = document.getElementById('banIpInput').value.trim(); 
+            const reason = document.getElementById('banReasonInput').value.trim(); 
+            
+            if (!ip) {
+                return alert('Введите IP!');
+            }
+            
+            const res = await apiCall('/api/bans', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ ip, reason }) 
+            });
+            
+            if (res && res.success) { 
+                document.getElementById('banIpInput').value = ''; 
+                document.getElementById('banReasonInput').value = ''; 
+                loadBansUI(); 
+            }
+        }
+        
+        async function quickBan(ip) { 
+            if (!confirm(`Заблокировать IP: ${ip}?`)) {
+                return;
+            }
+            const res = await apiCall('/api/bans', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ ip, reason: 'Быстрая блокировка' }) 
+            }); 
             if (res && res.success) {
-                document.getElementById('banIpInput').value = '';
-                document.getElementById('banReasonInput').value = '';
-                loadBansUI();
+                alert(`IP забанен!`); 
+            }
+        }
+        
+        async function unbanIp(ip) { 
+            if (!confirm(`Разблокировать IP: ${ip}?`)) {
+                return;
+            }
+            const res = await apiCall(`/api/bans/${encodeURIComponent(ip)}`, { method: 'DELETE' }); 
+            if (res && res.success) {
+                loadBansUI(); 
             }
         }
 
-        async function quickBan(ip) {
-            if (!confirm(`Заблокировать IP: ${ip}?`)) return;
-            const res = await apiCall('/api/bans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip, reason: 'Быстрая блокировка' }) });
-            if (res && res.success) alert(`IP ${ip} забанен!`);
+        async function loadFileList() { 
+            const files = await apiCall('/api/list-files'); 
+            if (!files) {
+                return;
+            }
+            const select = document.getElementById('fileSelect'); 
+            select.innerHTML = '<option value="">-- Выберите файл --</option>'; 
+            files.forEach(f => { 
+                select.innerHTML += `<option value="${f}">${f}</option>`; 
+            }); 
         }
-
-        async function unbanIp(ip) {
-            if (!confirm(`Разблокировать IP: ${ip}?`)) return;
-            const res = await apiCall(`/api/bans/${encodeURIComponent(ip)}`, { method: 'DELETE' });
-            if (res && res.success) loadBansUI();
+        
+        async function loadFileCode() { 
+            const file = document.getElementById('fileSelect').value; 
+            if (!file) { 
+                document.getElementById('codeEditor').value = ''; 
+                return; 
+            } 
+            const data = await apiCall('/api/file?path=' + encodeURIComponent(file)); 
+            if (data) {
+                document.getElementById('codeEditor').value = data.content || ''; 
+            }
         }
-
-        async function loadFileList() { const files = await apiCall('/api/list-files'); if (!files) return; const select = document.getElementById('fileSelect'); select.innerHTML = '<option value="">-- Выберите файл --</option>'; files.forEach(f => { select.innerHTML += `<option value="${f}">${f}</option>`; }); }
-        async function loadFileCode() { const file = document.getElementById('fileSelect').value; if (!file) { document.getElementById('codeEditor').value = ''; return; } const data = await apiCall('/api/file?path=' + encodeURIComponent(file)); if (data) document.getElementById('codeEditor').value = data.content || ''; }
+        
         async function saveFileCode() {
-            const file = document.getElementById('fileSelect').value; const content = document.getElementById('codeEditor').value; if (!file) return alert('Файл не выбран!');
-            const data = await apiCall('/api/file', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filePath: file, content: content }) });
-            if (data && data.success) alert('Код сохранен!');
+            const file = document.getElementById('fileSelect').value; 
+            const content = document.getElementById('codeEditor').value; 
+            
+            if (!file) {
+                return alert('Файл не выбран!');
+            }
+            
+            const data = await apiCall('/api/file', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ filePath: file, content: content }) 
+            });
+            
+            if (data && data.success) {
+                alert('Код сохранен!');
+            }
         }
 
-        let globalConfig = {};
-        let currentFaction = '';
-        let unifiedQuestions = [];
+        let globalConfig = {}; 
+        let currentFaction = ''; 
+        let unifiedQuestions = []; 
         let userAuth = null;
-
+        
         const factionSchemas = {
             fib: { 
                 subsystems: [
-                    { id: 'subsystem-general', name: '🕵️ Улики CID' },
+                    { id: 'subsystem-general', name: '🕵️ Улики CID' }, 
                     { id: 'subsystem-testing', name: '📝 Переаттестация FIB' }
-                ],
+                ], 
                 webhooks: { main: "Переаттестация FIB", cid_evidence: "Улики CID" }, 
                 roles: { ping: "Пинг FIB", cid_evidence: "Пинг CID" }, 
                 hasTest: true 
             },
             lssd: { 
                 subsystems: [
-                    { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' },
+                    { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' }, 
                     { id: 'subsystem-testing', name: '📝 Тестирование кадетов/SA' }
-                ],
+                ], 
                 webhooks: { report: "Отчеты", promotion: "Повышения", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, 
                 roles: { iid: "Роли IID", sa: "Роли SA" }, 
                 hasTest: true 
             },
             lspd: { 
                 subsystems: [
-                    { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' },
+                    { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' }, 
                     { id: 'subsystem-testing', name: '📝 Тестирование и аттестация' }
-                ],
+                ], 
                 webhooks: { application: "Заявления", badge: "Жетоны", cadet: "Отчеты кадетов", test: "Тесты" }, 
                 roles: { application: "Заявления", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, 
                 hasTest: true 
             },
             gov: { 
                 subsystems: [
-                    { id: 'subsystem-general', name: '⚖️ Основные настройки' },
+                    { id: 'subsystem-general', name: '⚖️ Основные настройки' }, 
                     { id: 'subsystem-testing', name: '📝 Тестирование адвокатов' }
-                ],
+                ], 
                 webhooks: { test: "Тест адвокатов" }, 
                 roles: { test: "Пинги" }, 
                 hasTest: true 
@@ -967,7 +2073,7 @@
             ems: { 
                 subsystems: [
                     { id: 'subsystem-general', name: '🚑 Отчетность EMS' }
-                ],
+                ], 
                 webhooks: { main: "Основной вебхук отчетов", medical: "Регистрация медикаментов" }, 
                 roles: { main: "Пинг руководства EMS" }, 
                 hasTest: false 
@@ -975,7 +2081,7 @@
             deadly: { 
                 subsystems: [
                     { id: 'subsystem-general', name: '💀 Настройки семьи' }
-                ],
+                ], 
                 webhooks: { application: "Заявки в семью" }, 
                 roles: { ping: "Пинги" }, 
                 hasTest: false 
@@ -983,16 +2089,22 @@
         };
 
         function switchSubsystem(targetId, btnEl) {
-            document.querySelectorAll('.subsystem-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.subsystem-btn').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.subsystem-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('#subsystem-nav .subsystem-btn').forEach(el => {
+                el.classList.remove('active');
+            });
             document.getElementById(targetId).classList.add('active');
             btnEl.classList.add('active');
         }
 
         async function initAdmin() {
-            userAuth = await apiCall('/api/me');
-            if (!userAuth) return;
-
+            userAuth = await apiCall('/api/me'); 
+            if (!userAuth) {
+                return;
+            }
+            
             if (!userAuth.isSuperAdmin) {
                 document.querySelectorAll('#siteNavLinks li').forEach(li => {
                     const attr = li.getAttribute('onclick');
@@ -1003,202 +2115,266 @@
                         li.style.display = 'none';
                     }
                 });
-
+                
                 document.querySelectorAll('#systemsNavLinks li').forEach(li => {
                     const attr = li.getAttribute('onclick');
-                    if (attr && attr.includes('tokens_manager')) li.style.display = 'none';
+                    if (attr && attr.includes('tokens_manager')) {
+                        li.style.display = 'none';
+                    }
                     if (attr && attr.includes('discord_monitor') && !userAuth.permissions.includes('settings') && !userAuth.permissions.includes('all')) {
                         li.style.display = 'none';
                     }
                 });
-
+                
                 const selector = document.getElementById('factionSelector');
-                Array.from(selector.options).forEach(opt => {
-                    if (!userAuth.systems.includes(opt.value) && !userAuth.systems.includes('all')) opt.remove();
+                Array.from(selector.options).forEach(opt => { 
+                    if (!userAuth.systems.includes(opt.value) && !userAuth.systems.includes('all')) {
+                        opt.remove();
+                    }
                 });
-
+                
                 const anySiteVisible = Array.from(document.querySelectorAll('#siteNavLinks li')).some(li => li.style.display !== 'none');
-                if (!anySiteVisible) document.getElementById('siteNavCat').style.display = 'none';
-
-                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
-
+                if (!anySiteVisible) {
+                    document.getElementById('siteNavCat').style.display = 'none';
+                }
+                
+                document.querySelectorAll('.tab-content').forEach(el => {
+                    el.classList.remove('active');
+                });
+                document.querySelectorAll('.nav-links li').forEach(el => {
+                    el.classList.remove('active');
+                });
+                
                 const factionBtn = Array.from(document.querySelectorAll('#systemsNavLinks li')).find(li => li.getAttribute('onclick')?.includes('faction_manager'));
-                if (factionBtn) switchTab('faction_manager', factionBtn);
-                else {
-                    const codeBtn = Array.from(document.querySelectorAll('#siteNavLinks li')).find(li => li.style.display !== 'none');
-                    if (codeBtn) switchTab('code', codeBtn);
+                if (factionBtn) {
+                    switchTab('faction_manager', factionBtn);
+                } else { 
+                    const codeBtn = Array.from(document.querySelectorAll('#siteNavLinks li')).find(li => li.style.display !== 'none'); 
+                    if (codeBtn) {
+                        switchTab('code', codeBtn); 
+                    }
                 }
             }
 
             const data = await apiCall('/api/settings');
-            if (data) {
-                globalConfig = data;
-                if (data.illustrationUrl) {
-                    const ill = document.getElementById('currentIllustration');
-                    if (ill) { ill.src = data.illustrationUrl; ill.style.display = 'block'; }
-                }
-                loadFactionUI();
+            if (data) { 
+                globalConfig = data; 
+                if (data.illustrationUrl) { 
+                    const ill = document.getElementById('currentIllustration'); 
+                    if (ill) { 
+                        ill.src = data.illustrationUrl; 
+                        ill.style.display = 'block'; 
+                    } 
+                } 
+                loadFactionUI(); 
             }
 
-            if (userAuth.isSuperAdmin) {
-                loadProjects();
-                loadFileList();
-                loadSessionsUI();
-            } else if (userAuth.permissions.includes('files') || userAuth.permissions.includes('all')) {
-                loadFileList();
+            if (userAuth.isSuperAdmin) { 
+                loadProjects(); 
+                loadFileList(); 
+                loadSessionsUI(); 
+            } else if (userAuth.permissions.includes('files') || userAuth.permissions.includes('all')) { 
+                loadFileList(); 
             }
         }
 
         function loadFactionUI() {
-            const selector = document.getElementById('factionSelector');
-            if (!selector || !selector.value) return;
+            const selector = document.getElementById('factionSelector'); 
+            if (!selector || !selector.value) {
+                return;
+            }
+            
             currentFaction = selector.value;
-            const schema = factionSchemas[currentFaction];
-            if (!schema) return;
+            const schema = factionSchemas[currentFaction]; 
+            
+            if (!schema) {
+                return;
+            }
+            
             const config = globalConfig[currentFaction] || { webhooks: {}, roles: {} };
 
             const nav = document.getElementById('subsystem-nav');
             if (schema.subsystems && schema.subsystems.length > 1) {
-                nav.style.display = 'flex';
+                nav.style.display = 'flex'; 
                 nav.innerHTML = schema.subsystems.map((sub, idx) => `
                     <button type="button" class="subsystem-btn ${idx === 0 ? 'active' : ''}" onclick="switchSubsystem('${sub.id}', this)">${sub.name}</button>
                 `).join('');
-                document.querySelectorAll('.subsystem-content').forEach((el, idx) => {
-                    if (idx === 0) el.classList.add('active');
-                    else el.classList.remove('active');
+                document.querySelectorAll('.subsystem-content').forEach((el, idx) => { 
+                    if (idx === 0) {
+                        el.classList.add('active'); 
+                    } else {
+                        el.classList.remove('active'); 
+                    }
                 });
-            } else {
-                nav.style.display = 'none';
-                document.getElementById('subsystem-general').classList.add('active');
-                document.getElementById('subsystem-testing').classList.remove('active');
+            } else { 
+                nav.style.display = 'none'; 
+                document.getElementById('subsystem-general').classList.add('active'); 
+                document.getElementById('subsystem-testing').classList.remove('active'); 
             }
 
-            let whHtml = '<h4>Вебхуки</h4><div class="form-grid">';
-            for (let [key, label] of Object.entries(schema.webhooks || {})) {
-                whHtml += `<div><label>${label}</label><input type="text" id="wh_${key}" value="${config.webhooks?.[key] || ''}"></div>`;
-            }
-            whHtml += '</div>';
+            let whHtml = '<h4>Вебхуки</h4><div class="form-grid">'; 
+            for (let [key, label] of Object.entries(schema.webhooks || {})) { 
+                whHtml += `
+                    <div>
+                        <label>${label}</label>
+                        <input type="text" id="wh_${key}" value="${config.webhooks?.[key] || ''}">
+                    </div>
+                `; 
+            } 
+            whHtml += '</div>'; 
             document.getElementById('faction-webhooks').innerHTML = whHtml;
-
-            let rlHtml = '<h4>Роли</h4><div class="form-grid">';
-            for (let [key, label] of Object.entries(schema.roles || {})) {
-                rlHtml += `<div><label>${label}</label><input type="text" id="rl_${key}" value="${config.roles?.[key] || ''}"></div>`;
-            }
-            rlHtml += '</div>';
+            
+            let rlHtml = '<h4>Роли</h4><div class="form-grid">'; 
+            for (let [key, label] of Object.entries(schema.roles || {})) { 
+                rlHtml += `
+                    <div>
+                        <label>${label}</label>
+                        <input type="text" id="rl_${key}" value="${config.roles?.[key] || ''}">
+                    </div>
+                `; 
+            } 
+            rlHtml += '</div>'; 
             document.getElementById('faction-roles').innerHTML = rlHtml;
 
-            const fibSettingsBox = document.getElementById('fib-specific-settings');
+            const fibSettingsBox = document.getElementById('fib-specific-settings'); 
             const stdSettingsBox = document.getElementById('standard-test-settings');
-
+            
             if (schema.hasTest) {
                 let rawQuestions = [];
                 if (currentFaction === 'fib') {
-                    fibSettingsBox.style.display = 'block';
+                    fibSettingsBox.style.display = 'block'; 
                     stdSettingsBox.style.display = 'none';
+                    
                     document.getElementById('fib-timer-rank5').value = config.testSettings?.durationMinutesRank5 || config.testSettings?.durationMinutesRank3 || 5;
                     document.getElementById('fib-timer-rank7').value = config.testSettings?.durationMinutesRank7 || 10;
                     document.getElementById('fib-score-rank5').value = config.testSettings?.passingScoreRank5 || config.testSettings?.passingScoreRank3 || 6;
                     document.getElementById('fib-score-rank7').value = config.testSettings?.passingScoreRank7 || 15;
                     document.getElementById('fib-count-rank5').value = config.testSettings?.questionCountRank5 || 10;
                     document.getElementById('fib-count-rank7').value = config.testSettings?.questionCountRank7 || 20;
+                    
                     rawQuestions = config.testSettings?.questions || [];
                 } else {
-                    fibSettingsBox.style.display = 'none';
+                    fibSettingsBox.style.display = 'none'; 
                     stdSettingsBox.style.display = 'block';
-                    let passingScore = 0;
+                    
+                    let passingScore = 0; 
                     let durationMinutes = 15;
-                    if (currentFaction === 'lssd') {
-                        passingScore = config.testPassingScore || 0;
-                        durationMinutes = config.testDurationMinutes || 15;
-                        rawQuestions = config.testQuestions || [];
-                    } else if (currentFaction === 'lspd') {
-                        passingScore = config.testPassingScore || 0;
-                        durationMinutes = config.testDurationMinutes || 15;
-                        rawQuestions = config.testQuestions || [];
-                    } else if (currentFaction === 'gov') {
-                        passingScore = config.testSettings?.passingScore || 0;
-                        durationMinutes = config.testSettings?.durationMinutes || 15;
-                        rawQuestions = config.testSettings?.questions || [];
+                    
+                    if (currentFaction === 'lssd' || currentFaction === 'lspd') { 
+                        passingScore = config.testPassingScore || 0; 
+                        durationMinutes = config.testDurationMinutes || 15; 
+                        rawQuestions = config.testQuestions || []; 
+                    } else if (currentFaction === 'gov') { 
+                        passingScore = config.testSettings?.passingScore || 0; 
+                        durationMinutes = config.testSettings?.durationMinutes || 15; 
+                        rawQuestions = config.testSettings?.questions || []; 
                     }
-                    document.getElementById('test-passing-score').value = passingScore;
+                    
+                    document.getElementById('test-passing-score').value = passingScore; 
                     document.getElementById('test-duration-minutes').value = durationMinutes;
                 }
-
+                
                 unifiedQuestions = rawQuestions.map(q => {
-                    let uq = { text: '', options: [], type: 'single', points: 1, isBonus: false, ranks: [5, 7] };
-                    if (currentFaction === 'fib') {
-                        uq.text = q.text || q.question || '';
-                        uq.type = q.type || 'single';
-                        const rawRanks = q.ranks || [5, 7];
-                        uq.ranks = [...new Set(rawRanks.map(r => r === 3 ? 5 : r))].sort();
-                        const corrects = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correctAnswer ? [q.correctAnswer] : []);
-                        uq.options = (q.options || []).map(o => ({ text: o, isCorrect: corrects.includes(o) }));
-                    } else if (currentFaction === 'lssd') {
-                        uq.text = q.question || '';
-                        uq.type = q.type || 'single';
-                        const correctIndices = Array.isArray(q.correctIndices) ? q.correctIndices : (q.correctIndex !== undefined ? [q.correctIndex] : []);
-                        uq.options = (q.options || []).map((o, i) => ({ text: o, isCorrect: correctIndices.includes(i) }));
-                    } else if (currentFaction === 'lspd') {
-                        uq.text = q.question || '';
-                        const corrects = Array.isArray(q.correct) ? q.correct : [];
-                        uq.options = (q.options || []).map(o => ({ text: o, isCorrect: corrects.includes(o) }));
-                        uq.type = q.type || (corrects.length > 1 ? 'multiple' : 'single');
-                    } else if (currentFaction === 'gov') {
-                        uq.text = q.question || '';
-                        uq.type = q.type || 'single';
-                        uq.points = q.points || 1;
-                        uq.isBonus = q.isBonus || false;
-                        uq.options = (q.options || []).map(o => ({ text: o.text || '', isCorrect: !!o.correct }));
+                    let uq = { 
+                        text: '', 
+                        options: [], 
+                        type: 'single', 
+                        points: 1, 
+                        isBonus: false, 
+                        ranks: [5, 7] 
+                    };
+                    
+                    if (currentFaction === 'fib') { 
+                        uq.text = q.text || q.question || ''; 
+                        uq.type = q.type || 'single'; 
+                        const rawRanks = q.ranks || [5, 7]; 
+                        uq.ranks = [...new Set(rawRanks.map(r => r === 3 ? 5 : r))].sort(); 
+                        const corrects = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correctAnswer ? [q.correctAnswer] : []); 
+                        uq.options = (q.options || []).map(o => ({ 
+                            text: o, 
+                            isCorrect: corrects.includes(o) 
+                        })); 
+                    } else if (currentFaction === 'lssd') { 
+                        uq.text = q.question || ''; 
+                        uq.type = q.type || 'single'; 
+                        const correctIndices = Array.isArray(q.correctIndices) ? q.correctIndices : (q.correctIndex !== undefined ? [q.correctIndex] : []); 
+                        uq.options = (q.options || []).map((o, i) => ({ 
+                            text: o, 
+                            isCorrect: correctIndices.includes(i) 
+                        })); 
+                    } else if (currentFaction === 'lspd') { 
+                        uq.text = q.question || ''; 
+                        const corrects = Array.isArray(q.correct) ? q.correct : []; 
+                        uq.options = (q.options || []).map(o => ({ 
+                            text: o, 
+                            isCorrect: corrects.includes(o) 
+                        })); 
+                        uq.type = q.type || (corrects.length > 1 ? 'multiple' : 'single'); 
+                    } else if (currentFaction === 'gov') { 
+                        uq.text = q.question || ''; 
+                        uq.type = q.type || 'single'; 
+                        uq.points = q.points || 1; 
+                        uq.isBonus = q.isBonus || false; 
+                        uq.options = (q.options || []).map(o => ({ 
+                            text: o.text || '', 
+                            isCorrect: !!o.correct 
+                        })); 
                     }
                     return uq;
                 });
                 renderQuestions();
-            } else {
-                fibSettingsBox.style.display = 'none';
-                stdSettingsBox.style.display = 'none';
-                document.getElementById('questions-list').innerHTML = '';
+            } else { 
+                fibSettingsBox.style.display = 'none'; 
+                stdSettingsBox.style.display = 'none'; 
+                document.getElementById('questions-list').innerHTML = ''; 
             }
         }
 
-        function toggleRankSelection(qIdx, rankVal) {
-            syncDOMToState();
-            const uq = unifiedQuestions[qIdx];
-            if (!uq.ranks) uq.ranks = [5, 7];
-            const i = uq.ranks.indexOf(rankVal);
-            if (i > -1) { if (uq.ranks.length > 1) uq.ranks.splice(i, 1); } 
-            else uq.ranks.push(rankVal);
-            uq.ranks.sort();
-            renderQuestions();
+        function toggleRankSelection(qIdx, rankVal) { 
+            syncDOMToState(); 
+            const uq = unifiedQuestions[qIdx]; 
+            if (!uq.ranks) {
+                uq.ranks = [5, 7]; 
+            }
+            const i = uq.ranks.indexOf(rankVal); 
+            if (i > -1) { 
+                if (uq.ranks.length > 1) {
+                    uq.ranks.splice(i, 1); 
+                }
+            } else {
+                uq.ranks.push(rankVal); 
+            }
+            uq.ranks.sort(); 
+            renderQuestions(); 
         }
 
         function renderQuestions() {
-            const list = document.getElementById('questions-list');
+            const list = document.getElementById('questions-list'); 
             list.innerHTML = '';
             
             unifiedQuestions.forEach((q, qIndex) => {
-                let html = `<div class="q-card">
-                    <div class="q-header">
-                        <span>Вопрос #${qIndex + 1}</span>
-                        <button class="btn-danger btn-sm" onclick="removeQuestion(${qIndex})">🗑 Удалить вопрос</button>
-                    </div>
-                    
-                    <label>Текст вопроса:</label>
-                    <input type="text" class="q-text" value="${(q.text || '').replace(/"/g, '&quot;')}" placeholder="Введите вопрос...">
-                    
-                    <div class="q-settings">
-                        <div>
-                            <label>Тип ответа:</label>
-                            <select class="q-type" onchange="syncDOMToState(); renderQuestions();">
-                                <option value="single" ${q.type==='single'?'selected':''}>Один правильный вариант</option>
-                                <option value="multiple" ${q.type==='multiple'?'selected':''}>Несколько вариантов</option>
-                                ${currentFaction === 'gov' ? `<option value="text" ${q.type==='text'?'selected':''}>Развернутый текст</option>` : ''}
-                            </select>
-                        </div>`;
-
-                if (currentFaction === 'fib') {
-                    const r5 = q.ranks && (q.ranks.includes(5) || q.ranks.includes(3));
-                    const r7 = q.ranks && q.ranks.includes(7);
+                let html = `
+                    <div class="q-card">
+                        <div class="q-header">
+                            <span>Вопрос #${qIndex + 1}</span>
+                            <button class="btn-danger btn-sm" onclick="removeQuestion(${qIndex})">🗑 Удалить вопрос</button>
+                        </div>
+                        <label>Текст вопроса:</label>
+                        <input type="text" class="q-text" value="${(q.text || '').replace(/"/g, '&quot;')}" placeholder="Введите вопрос...">
+                        <div class="q-settings">
+                            <div>
+                                <label>Тип ответа:</label>
+                                <select class="q-type" onchange="syncDOMToState(); renderQuestions();">
+                                    <option value="single" ${q.type==='single'?'selected':''}>Один правильный вариант</option>
+                                    <option value="multiple" ${q.type==='multiple'?'selected':''}>Несколько вариантов</option>
+                                    ${currentFaction === 'gov' ? `<option value="text" ${q.type==='text'?'selected':''}>Развернутый текст</option>` : ''}
+                                </select>
+                            </div>
+                `;
+                
+                if (currentFaction === 'fib') { 
+                    const r5 = q.ranks && (q.ranks.includes(5) || q.ranks.includes(3)); 
+                    const r7 = q.ranks && q.ranks.includes(7); 
                     html += `
                         <div>
                             <label>Доступ по рангам:</label>
@@ -1206,10 +2382,11 @@
                                 <div class="rank-badge ${r5 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 5)">5 РАНГ</div>
                                 <div class="rank-badge ${r7 ? 'active' : ''}" onclick="toggleRankSelection(${qIndex}, 7)">7 РАНГ</div>
                             </div>
-                        </div>`;
+                        </div>
+                    `; 
                 }
-
-                if (currentFaction === 'gov') {
+                
+                if (currentFaction === 'gov') { 
                     html += `
                         <div>
                             <label>Баллы за вопрос:</label>
@@ -1219,29 +2396,33 @@
                             <label style="margin-bottom: 0; display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                 <input type="checkbox" class="q-bonus" ${q.isBonus?'checked':''} style="width:18px; height:18px; margin:0;"> Бонусный вопрос
                             </label>
-                        </div>`;
+                        </div>
+                    `; 
                 }
-
+                
                 html += `</div>`;
-
-                if (q.type !== 'text') {
-                    html += `<div class="q-options-container" style="margin-top:15px;">
-                                <label style="margin-bottom: 8px;">Варианты ответа (отметьте галочкой правильные):</label>`;
-                    
-                    q.options.forEach((opt, oIndex) => {
-                        const inputType = q.type === 'multiple' ? 'checkbox' : 'radio';
-                        html += `<div class="q-opt">
-                            <input type="${inputType}" name="correct_${qIndex}" class="opt-correct" ${opt.isCorrect ? 'checked' : ''} title="Правильный ответ">
-                            <input type="text" class="opt-text" value="${(opt.text || '').replace(/"/g, '&quot;')}" placeholder="Вариант ${oIndex + 1}">
-                            <button class="btn-danger btn-sm" onclick="removeOpt(${qIndex}, ${oIndex})" style="padding: 10px 14px;">❌</button>
-                        </div>`;
-                    });
-                    
-                    html += `<button class="btn-success btn-sm" onclick="addOpt(${qIndex})" style="margin-top: 5px;">+ Добавить вариант</button>`;
-                    html += `</div>`;
+                
+                if (q.type !== 'text') { 
+                    html += `
+                        <div class="q-options-container" style="margin-top:15px;">
+                            <label style="margin-bottom: 8px;">Варианты ответа (отметьте галочкой правильные):</label>
+                    `; 
+                    q.options.forEach((opt, oIndex) => { 
+                        const inputType = q.type === 'multiple' ? 'checkbox' : 'radio'; 
+                        html += `
+                            <div class="q-opt">
+                                <input type="${inputType}" name="correct_${qIndex}" class="opt-correct" ${opt.isCorrect ? 'checked' : ''} title="Правильный ответ">
+                                <input type="text" class="opt-text" value="${(opt.text || '').replace(/"/g, '&quot;')}" placeholder="Вариант ${oIndex + 1}">
+                                <button class="btn-danger btn-sm" onclick="removeOpt(${qIndex}, ${oIndex})" style="padding: 10px 14px;">❌</button>
+                            </div>
+                        `; 
+                    }); 
+                    html += `
+                            <button class="btn-success btn-sm" onclick="addOpt(${qIndex})" style="margin-top: 5px;">+ Добавить вариант</button>
+                        </div>
+                    `; 
                 }
-
-                html += `</div>`;
+                html += `</div>`; 
                 list.insertAdjacentHTML('beforeend', html);
             });
         }
@@ -1249,142 +2430,250 @@
         function syncDOMToState() {
             const qCards = document.querySelectorAll('.q-card');
             unifiedQuestions = Array.from(qCards).map((card, qIndex) => {
-                const oldQ = unifiedQuestions[qIndex] || {};
-                const q = { options: [], ranks: oldQ.ranks || [5, 7] };
-                q.text = card.querySelector('.q-text').value;
+                const oldQ = unifiedQuestions[qIndex] || {}; 
+                const q = { 
+                    options: [], 
+                    ranks: oldQ.ranks || [5, 7] 
+                };
+                
+                q.text = card.querySelector('.q-text').value; 
                 q.type = card.querySelector('.q-type').value;
-                if (currentFaction === 'gov') {
-                    q.points = parseInt(card.querySelector('.q-points')?.value) || 1;
-                    q.isBonus = card.querySelector('.q-bonus')?.checked || false;
+                
+                if (currentFaction === 'gov') { 
+                    q.points = parseInt(card.querySelector('.q-points')?.value) || 1; 
+                    q.isBonus = card.querySelector('.q-bonus')?.checked || false; 
                 }
-                if (q.type !== 'text') {
-                    card.querySelectorAll('.q-opt').forEach(optDiv => {
-                        q.options.push({ text: optDiv.querySelector('.opt-text').value, isCorrect: optDiv.querySelector('.opt-correct').checked });
-                    });
-                }
+                
+                if (q.type !== 'text') { 
+                    card.querySelectorAll('.q-opt').forEach(optDiv => { 
+                        q.options.push({ 
+                            text: optDiv.querySelector('.opt-text').value, 
+                            isCorrect: optDiv.querySelector('.opt-correct').checked 
+                        }); 
+                    }); 
+                } 
                 return q;
             });
         }
-
-        function addQuestion() {
-            syncDOMToState();
-            unifiedQuestions.push({ text: '', type: 'single', points: 1, isBonus: false, ranks: [5, 7], options: [{text: '', isCorrect: false}, {text: '', isCorrect: false}] });
-            renderQuestions();
+        
+        function addQuestion() { 
+            syncDOMToState(); 
+            unifiedQuestions.push({ 
+                text: '', 
+                type: 'single', 
+                points: 1, 
+                isBonus: false, 
+                ranks: [5, 7], 
+                options: [
+                    {text: '', isCorrect: false}, 
+                    {text: '', isCorrect: false}
+                ] 
+            }); 
+            renderQuestions(); 
         }
-
-        function removeQuestion(idx) {
-            if(!confirm('Удалить этот вопрос?')) return;
-            syncDOMToState();
-            unifiedQuestions.splice(idx, 1);
-            renderQuestions();
+        
+        function removeQuestion(idx) { 
+            if(!confirm('Удалить этот вопрос?')) {
+                return;
+            }
+            syncDOMToState(); 
+            unifiedQuestions.splice(idx, 1); 
+            renderQuestions(); 
         }
-
-        function addOpt(qIdx) { syncDOMToState(); unifiedQuestions[qIdx].options.push({ text: '', isCorrect: false }); renderQuestions(); }
-        function removeOpt(qIdx, oIdx) { syncDOMToState(); unifiedQuestions[qIdx].options.splice(oIdx, 1); renderQuestions(); }
+        
+        function addOpt(qIdx) { 
+            syncDOMToState(); 
+            unifiedQuestions[qIdx].options.push({ text: '', isCorrect: false }); 
+            renderQuestions(); 
+        }
+        
+        function removeOpt(qIdx, oIdx) { 
+            syncDOMToState(); 
+            unifiedQuestions[qIdx].options.splice(oIdx, 1); 
+            renderQuestions(); 
+        }
 
         async function saveFactionSettings() {
-            const schema = factionSchemas[currentFaction];
-            if (!globalConfig[currentFaction]) globalConfig[currentFaction] = { webhooks: {}, roles: {} };
-            const config = globalConfig[currentFaction];
-            if (!config.webhooks) config.webhooks = {};
-            if (!config.roles) config.roles = {};
-
-            for (let key of Object.keys(schema.webhooks || {})) {
-                const el = document.getElementById(`wh_${key}`);
-                if (el) config.webhooks[key] = el.value.trim();
+            const schema = factionSchemas[currentFaction]; 
+            if (!globalConfig[currentFaction]) {
+                globalConfig[currentFaction] = { webhooks: {}, roles: {} }; 
             }
-            for (let key of Object.keys(schema.roles || {})) {
-                const el = document.getElementById(`rl_${key}`);
-                if (el) config.roles[key] = el.value.trim();
+            
+            const config = globalConfig[currentFaction]; 
+            if (!config.webhooks) {
+                config.webhooks = {}; 
             }
-
+            if (!config.roles) {
+                config.roles = {};
+            }
+            
+            for (let key of Object.keys(schema.webhooks || {})) { 
+                const el = document.getElementById(`wh_${key}`); 
+                if (el) {
+                    config.webhooks[key] = el.value.trim(); 
+                }
+            }
+            
+            for (let key of Object.keys(schema.roles || {})) { 
+                const el = document.getElementById(`rl_${key}`); 
+                if (el) {
+                    config.roles[key] = el.value.trim(); 
+                }
+            }
+            
             if (schema.hasTest) {
                 syncDOMToState();
                 const processedQuestions = unifiedQuestions.map((uq, idx) => {
                     const correctOpts = uq.options.filter(o => o.isCorrect).map(o => o.text);
-                    if (currentFaction === 'fib') {
-                        return { id: idx + 1, text: uq.text, type: uq.type, ranks: uq.ranks || [5, 7], options: uq.options.map(o => o.text), correctAnswers: correctOpts, correctAnswer: correctOpts[0] || '' };
-                    } else if (currentFaction === 'lssd') {
-                        const correctIndices = uq.options.map((o, i) => o.isCorrect ? i : -1).filter(i => i !== -1);
-                        return { id: idx + 1, question: uq.text, type: uq.type, options: uq.options.map(o => o.text), correctIndices: correctIndices, correctIndex: correctIndices[0] || 0 };
-                    } else if (currentFaction === 'lspd') {
-                        return { id: idx + 1, question: uq.text, type: uq.type, options: uq.options.map(o => o.text), correct: correctOpts };
-                    } else if (currentFaction === 'gov') {
-                        return { id: idx + 1, question: uq.text, type: uq.type, points: uq.points, isBonus: uq.isBonus, options: uq.type === 'text' ? [] : uq.options.map(o => ({ text: o.text, correct: o.isCorrect })) };
+                    if (currentFaction === 'fib') { 
+                        return { 
+                            id: idx + 1, 
+                            text: uq.text, 
+                            type: uq.type, 
+                            ranks: uq.ranks || [5, 7], 
+                            options: uq.options.map(o => o.text), 
+                            correctAnswers: correctOpts, 
+                            correctAnswer: correctOpts[0] || '' 
+                        }; 
+                    } else if (currentFaction === 'lssd') { 
+                        const correctIndices = uq.options.map((o, i) => o.isCorrect ? i : -1).filter(i => i !== -1); 
+                        return { 
+                            id: idx + 1, 
+                            question: uq.text, 
+                            type: uq.type, 
+                            options: uq.options.map(o => o.text), 
+                            correctIndices: correctIndices, 
+                            correctIndex: correctIndices[0] || 0 
+                        }; 
+                    } else if (currentFaction === 'lspd') { 
+                        return { 
+                            id: idx + 1, 
+                            question: uq.text, 
+                            type: uq.type, 
+                            options: uq.options.map(o => o.text), 
+                            correct: correctOpts 
+                        }; 
+                    } else if (currentFaction === 'gov') { 
+                        return { 
+                            id: idx + 1, 
+                            question: uq.text, 
+                            type: uq.type, 
+                            points: uq.points, 
+                            isBonus: uq.isBonus, 
+                            options: uq.type === 'text' ? [] : uq.options.map(o => ({ text: o.text, correct: o.isCorrect })) 
+                        }; 
                     }
                 });
-
-                if (currentFaction === 'fib') {
-                    if (!config.testSettings) config.testSettings = {};
-                    config.testSettings.durationMinutesRank5 = parseInt(document.getElementById('fib-timer-rank5').value) || 5;
-                    config.testSettings.durationMinutesRank7 = parseInt(document.getElementById('fib-timer-rank7').value) || 10;
-                    config.testSettings.passingScoreRank5 = parseInt(document.getElementById('fib-score-rank5').value) || 6;
-                    config.testSettings.passingScoreRank7 = parseInt(document.getElementById('fib-score-rank7').value) || 15;
-                    config.testSettings.questionCountRank5 = parseInt(document.getElementById('fib-count-rank5').value) || 10;
-                    config.testSettings.questionCountRank7 = parseInt(document.getElementById('fib-count-rank7').value) || 20;
-                    delete config.testSettings.durationMinutesRank3;
-                    delete config.testSettings.passingScoreRank3;
-                    config.testSettings.questions = processedQuestions;
-                } else if (currentFaction === 'lssd' || currentFaction === 'lspd') {
-                    config.testPassingScore = parseInt(document.getElementById('test-passing-score').value) || 0;
-                    config.testDurationMinutes = parseInt(document.getElementById('test-duration-minutes').value) || 15;
-                    config.testQuestions = processedQuestions;
-                } else if (currentFaction === 'gov') {
-                    if (!config.testSettings) config.testSettings = {};
-                    config.testSettings.passingScore = parseInt(document.getElementById('test-passing-score').value) || 0;
-                    config.testSettings.durationMinutes = parseInt(document.getElementById('test-duration-minutes').value) || 15;
-                    config.testSettings.questions = processedQuestions;
+                
+                if (currentFaction === 'fib') { 
+                    if (!config.testSettings) {
+                        config.testSettings = {}; 
+                    }
+                    config.testSettings.durationMinutesRank5 = parseInt(document.getElementById('fib-timer-rank5').value) || 5; 
+                    config.testSettings.durationMinutesRank7 = parseInt(document.getElementById('fib-timer-rank7').value) || 10; 
+                    config.testSettings.passingScoreRank5 = parseInt(document.getElementById('fib-score-rank5').value) || 6; 
+                    config.testSettings.passingScoreRank7 = parseInt(document.getElementById('fib-score-rank7').value) || 15; 
+                    config.testSettings.questionCountRank5 = parseInt(document.getElementById('fib-count-rank5').value) || 10; 
+                    config.testSettings.questionCountRank7 = parseInt(document.getElementById('fib-count-rank7').value) || 20; 
+                    delete config.testSettings.durationMinutesRank3; 
+                    delete config.testSettings.passingScoreRank3; 
+                    config.testSettings.questions = processedQuestions; 
+                } else if (currentFaction === 'lssd' || currentFaction === 'lspd') { 
+                    config.testPassingScore = parseInt(document.getElementById('test-passing-score').value) || 0; 
+                    config.testDurationMinutes = parseInt(document.getElementById('test-duration-minutes').value) || 15; 
+                    config.testQuestions = processedQuestions; 
+                } else if (currentFaction === 'gov') { 
+                    if (!config.testSettings) {
+                        config.testSettings = {}; 
+                    }
+                    config.testSettings.passingScore = parseInt(document.getElementById('test-passing-score').value) || 0; 
+                    config.testSettings.durationMinutes = parseInt(document.getElementById('test-duration-minutes').value) || 15; 
+                    config.testSettings.questions = processedQuestions; 
                 }
             }
-
-            const res = await apiCall('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(globalConfig) });
-            if (res && res.success) { alert(`Настройки фракции ${currentFaction.toUpperCase()} успешно сохранены!`); loadFactionUI(); }
-        }
-
-        async function loadTokensUI() {
-            const data = await apiCall('/api/tokens');
-            const container = document.getElementById('tokens-list-container');
-            if (!data || !data.tokens) { container.innerHTML = '<p style="color:var(--text-muted);">Не удалось загрузить список токенов.</p>'; return; }
-            if (data.tokens.length === 0) { container.innerHTML = '<p style="color:var(--text-muted);">Активные токены отсутствуют.</p>'; return; }
-
-            container.innerHTML = data.tokens.map(t => {
-                const sysBadges = (t.systems || []).map(s => `<span class="badge system">${s.toUpperCase()}</span>`).join('');
-                const permBadges = (t.permissions || []).map(p => `<span class="badge perm">${p === 'settings' ? 'НАСТРОЙКИ' : 'ФАЙЛЫ'}</span>`).join('');
-                return `
-                <div class="token-card">
-                    <div class="token-info">
-                        <h4>${t.name}</h4>
-                        <div class="token-string">${t.token}</div>
-                        <div class="badge-list">${sysBadges} ${permBadges}</div>
-                    </div>
-                    <button type="button" class="btn-danger btn-sm" onclick="deleteToken('${t.id}')">🗑 Удалить токен</button>
-                </div>`;
-            }).join('');
-        }
-
-        async function createToken() {
-            const name = document.getElementById('newTokenName').value.trim();
-            const sysInputs = document.querySelectorAll('.tok-sys:checked');
-            const permInputs = document.querySelectorAll('.tok-perm:checked');
-            if (!name) return alert('Введите название токена!');
-            if (sysInputs.length === 0) return alert('Выберите хотя бы одну систему!');
-
-            const systems = Array.from(sysInputs).map(el => el.value);
-            const permissions = Array.from(permInputs).map(el => el.value);
-            const res = await apiCall('/api/tokens/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, systems, permissions }) });
-            if (res && res.success) {
-                alert('Токен успешно создан!');
-                document.getElementById('newTokenName').value = '';
-                document.querySelectorAll('.tok-sys, .tok-perm').forEach(el => el.checked = false);
-                document.querySelector('.tok-perm[value="settings"]').checked = true;
-                loadTokensUI();
+            
+            const res = await apiCall('/api/settings', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(globalConfig) 
+            });
+            
+            if (res && res.success) { 
+                alert(`Настройки сохранены!`); 
+                loadFactionUI(); 
             }
         }
 
-        async function deleteToken(id) {
-            if (!confirm('Удалить данный токен доступ к системе?')) return;
-            const res = await apiCall(`/api/tokens/${id}`, { method: 'DELETE' });
-            if (res && res.success) loadTokensUI();
+        async function loadTokensUI() { 
+            const data = await apiCall('/api/tokens'); 
+            const container = document.getElementById('tokens-list-container'); 
+            
+            if (!data || !data.tokens) { 
+                container.innerHTML = '<p style="color:var(--text-muted);">Ошибка загрузки.</p>'; 
+                return; 
+            } 
+            
+            if (data.tokens.length === 0) { 
+                container.innerHTML = '<p style="color:var(--text-muted);">Активные токены отсутствуют.</p>'; 
+                return; 
+            } 
+            
+            container.innerHTML = data.tokens.map(t => { 
+                const sysBadges = (t.systems || []).map(s => `<span class="badge system">${s.toUpperCase()}</span>`).join(''); 
+                const permBadges = (t.permissions || []).map(p => `<span class="badge perm">${p === 'settings' ? 'НАСТРОЙКИ' : 'ФАЙЛЫ'}</span>`).join(''); 
+                
+                return `
+                    <div class="token-card">
+                        <div class="token-info">
+                            <h4>${t.name}</h4>
+                            <div class="token-string">${t.token}</div>
+                            <div class="badge-list">${sysBadges} ${permBadges}</div>
+                        </div>
+                        <button type="button" class="btn-danger btn-sm" onclick="deleteToken('${t.id}')">🗑 Удалить</button>
+                    </div>
+                `; 
+            }).join(''); 
+        }
+        
+        async function createToken() { 
+            const name = document.getElementById('newTokenName').value.trim(); 
+            const sysInputs = document.querySelectorAll('.tok-sys:checked'); 
+            const permInputs = document.querySelectorAll('.tok-perm:checked'); 
+            
+            if (!name) {
+                return alert('Введите название!');
+            }
+            
+            if (sysInputs.length === 0) {
+                return alert('Выберите систему!');
+            }
+            
+            const systems = Array.from(sysInputs).map(el => el.value); 
+            const permissions = Array.from(permInputs).map(el => el.value); 
+            
+            const res = await apiCall('/api/tokens/create', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ name, systems, permissions }) 
+            }); 
+            
+            if (res && res.success) { 
+                alert('Токен создан!'); 
+                document.getElementById('newTokenName').value = ''; 
+                document.querySelectorAll('.tok-sys, .tok-perm').forEach(el => el.checked = false); 
+                document.querySelector('.tok-perm[value="settings"]').checked = true; 
+                loadTokensUI(); 
+            } 
+        }
+        
+        async function deleteToken(id) { 
+            if (!confirm('Удалить токен?')) {
+                return;
+            }
+            const res = await apiCall(`/api/tokens/${id}`, { method: 'DELETE' }); 
+            if (res && res.success) {
+                loadTokensUI(); 
+            }
         }
 
         initAdmin();
