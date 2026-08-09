@@ -315,6 +315,8 @@
         .tutorial-info {
             padding: 15px;
             flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .tutorial-info h3 {
@@ -327,6 +329,88 @@
             color: var(--text-muted);
             font-size: 13px;
             line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .tutorial-btn {
+            display: inline-block;
+            background: var(--primary-red);
+            color: #fff;
+            text-decoration: none;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 12px;
+            transition: background 0.3s;
+        }
+
+        .tutorial-btn:hover {
+            background: var(--dark-red);
+        }
+
+        .legis-item {
+            background: #151515;
+            border-left: 3px solid var(--primary-red);
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .legis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .legis-title {
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .legis-btn {
+            background: #27272a;
+            color: #fff;
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            border: 1px solid #3f3f46;
+            transition: all 0.2s;
+        }
+
+        .legis-btn:hover {
+            background: var(--primary-red);
+            border-color: var(--primary-red);
+        }
+
+        .legis-desc {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .parking-img-box {
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .parking-img-box:hover {
+            transform: scale(1.02);
+            border-color: var(--primary-red);
+        }
+
+        .parking-img-box img {
+            width: 100%;
+            display: block;
         }
 
         .media-modal {
@@ -421,20 +505,9 @@
                 title: "Памятка IAD", 
                 subtitle: "ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ." 
             },
-            info: { 
-                what_is_iad: "" 
-            }, 
-            rights: [], 
-            tasks: [], 
-            requirements: [], 
-            how_to_issue: [], 
-            punishments: [],
-            forbidden_departments: [], 
-            activities: "", 
-            parking: [], 
-            violations: [], 
-            recertification: [], 
-            tutorials: []
+            info: { what_is_iad: "" }, rights: [], tasks: [], requirements: [], how_to_issue: [], punishments: [],
+            forbidden_departments: [], activities: "", parking: [], parking_image: "", violations: [], recertification: [], 
+            tutorials: [], macros: [], legislation: []
         };
 
         async function loadData() {
@@ -546,6 +619,13 @@
                         </ul>
                     `;
                 }
+                if (data.parking_image && data.parking_image.trim() !== '') {
+                    html += `
+                        <div class="parking-img-box" onclick="openMediaModal('image', '${data.parking_image}', 'Зоны парковки LSPD')">
+                            <img src="${data.parking_image}" alt="Парковка">
+                        </div>
+                    `;
+                }
                 html += `</div>`;
             }
 
@@ -567,6 +647,25 @@
                 `;
             }
 
+            if (data.legislation && data.legislation.length > 0) {
+                html += `
+                    <div class="card">
+                        <h2><i class="fas fa-balance-scale-right"></i> Законодательная база</h2>
+                        <div class="scrollable-list">
+                            ${data.legislation.map(l => `
+                                <div class="legis-item">
+                                    <div class="legis-header">
+                                        <span class="legis-title">${l.title}</span>
+                                        ${l.url ? `<a href="${l.url}" target="_blank" class="legis-btn">Читать</a>` : ''}
+                                    </div>
+                                    ${l.desc ? `<div class="legis-desc">${l.desc}</div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
             if (data.recertification && data.recertification.length > 0) {
                 html += `
                     <div class="card">
@@ -580,10 +679,35 @@
                 `;
             }
 
-            if (data.tutorials && data.tutorials.length > 0) {
-                html += `
-                    <div class="card card-full-width">
-                        <h2><i class="fas fa-graduation-cap"></i> Обучающие материалы и Медиа</h2>
+            if ((data.tutorials && data.tutorials.length > 0) || (data.macros && data.macros.length > 0)) {
+                html += `<div class="card card-full-width">`;
+                
+                if (data.macros && data.macros.length > 0) {
+                    html += `
+                        <h2><i class="fas fa-keyboard"></i> Макросы и Биндеры</h2>
+                        <div class="tutorials-grid" style="margin-bottom: 40px;">
+                            ${data.macros.map(m => `
+                                <div class="tutorial-card">
+                                    ${m.imageUrl ? `
+                                        <div class="tutorial-media-preview" onclick="openMediaModal('image', '${m.imageUrl}', '${m.title}')">
+                                            <img src="${m.imageUrl}" alt="Превью макроса">
+                                            <i class="fas fa-search-plus tutorial-play-icon" style="font-size: 30px;"></i>
+                                        </div>
+                                    ` : ''}
+                                    <div class="tutorial-info">
+                                        <h3>${m.title}</h3>
+                                        <p>${m.desc}</p>
+                                        ${m.url ? `<a href="${m.url}" target="_blank" class="tutorial-btn"><i class="fas fa-download"></i> Скачать / Открыть</a>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                if (data.tutorials && data.tutorials.length > 0) {
+                    html += `
+                        <h2><i class="fas fa-graduation-cap"></i> Обучающие материалы</h2>
                         <div class="tutorials-grid">
                             ${data.tutorials.map(t => {
                                 let mediaPreview = '';
@@ -619,8 +743,10 @@
                                 `;
                             }).join('')}
                         </div>
-                    </div>
-                `;
+                    `;
+                }
+                
+                html += `</div>`;
             }
 
             grid.innerHTML = html;
