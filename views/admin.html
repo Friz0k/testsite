@@ -263,6 +263,7 @@
             margin-bottom: 25px; 
             border-bottom: 2px solid var(--border-color); 
             padding-bottom: 10px; 
+            flex-wrap: wrap;
         }
 
         .subsystem-btn { 
@@ -731,8 +732,10 @@
                     <button type="button" class="subsystem-btn active" onclick="switchIadTab('iad-main', this)">Основное</button>
                     <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-rules', this)">Правила и Задачи</button>
                     <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-punish', this)">Взыскания</button>
-                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-others', this)">Прочее</button>
+                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-others', this)">Прочее и Парковка</button>
+                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-legis', this)">Законодательство</button>
                     <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-tutorials', this)">Туториалы и Медиа</button>
+                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-macros', this)">Макросы</button>
                 </div>
 
                 <div id="iad-main" class="iad-content-pane" style="display: block;">
@@ -796,12 +799,29 @@
                     <h4 style="margin-top: 30px;">Правила парковки</h4>
                     <div class="iad-list-container" id="iad_parking_list"></div>
                     <button class="btn-sm" onclick="addIadItem('iad_parking_list')">➕ Добавить правило</button>
+                    
+                    <div style="margin-top: 15px;">
+                        <label>Фотография / Схема парковки (URL ссылки)</label>
+                        <input type="text" id="iad_parking_image" placeholder="https://... или /uploads/...">
+                    </div>
+                </div>
+
+                <div id="iad-legis" class="iad-content-pane" style="display: none;">
+                    <h4>Законодательная база</h4>
+                    <div class="iad-list-container" id="iad_legis_list" style="background: transparent; border: none; padding: 0;"></div>
+                    <button class="btn-sm btn-success" onclick="addIadLegislation()">➕ Добавить ссылку на закон</button>
                 </div>
 
                 <div id="iad-tutorials" class="iad-content-pane" style="display: none;">
                     <h4>Обучающие материалы (Туториалы и медиа)</h4>
                     <div class="iad-list-container" id="iad_tutors_list" style="background: transparent; border: none; padding: 0;"></div>
                     <button class="btn-sm btn-success" onclick="addIadTutor()">➕ Добавить карточку туториала</button>
+                </div>
+
+                <div id="iad-macros" class="iad-content-pane" style="display: none;">
+                    <h4>Макросы и Биндеры</h4>
+                    <div class="iad-list-container" id="iad_macros_list" style="background: transparent; border: none; padding: 0;"></div>
+                    <button class="btn-sm btn-success" onclick="addIadMacro()">➕ Добавить карточку макроса</button>
                 </div>
 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
@@ -1242,9 +1262,12 @@
                 forbidden_departments: [], 
                 activities: "", 
                 parking: [], 
+                parking_image: "",
                 violations: [], 
                 recertification: [], 
-                tutorials: []
+                tutorials: [],
+                macros: [],
+                legislation: []
             };
         }
 
@@ -1253,6 +1276,7 @@
             document.getElementById('iad_subtitle').value = iadDataCache.header?.subtitle || '';
             document.getElementById('iad_whatis').value = iadDataCache.info?.what_is_iad || '';
             document.getElementById('iad_activities').value = iadDataCache.activities || '';
+            document.getElementById('iad_parking_image').value = iadDataCache.parking_image || '';
 
             renderIadList('iad_tasks_list', iadDataCache.tasks || []);
             renderIadList('iad_reqs_list', iadDataCache.requirements || [], true);
@@ -1265,6 +1289,8 @@
 
             renderIadPunishments();
             renderIadTutorials();
+            renderIadMacros();
+            renderIadLegislation();
         }
 
         function renderIadList(containerId, arr, isTextarea = false) {
@@ -1402,6 +1428,98 @@
             container.appendChild(div);
         }
 
+        function renderIadMacros() {
+            const container = document.getElementById('iad_macros_list');
+            container.innerHTML = '';
+            const arr = iadDataCache.macros || [];
+            arr.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'iad-punish-card';
+                div.innerHTML = `
+                    <button class="btn-danger btn-sm" style="position: absolute; top: 15px; right: 15px;" onclick="this.parentElement.remove()">Удалить</button>
+                    <label>Название макроса</label>
+                    <input type="text" class="iad-m-title" value="${(m.title || '').replace(/"/g, '&quot;')}">
+                    <label>Описание (что делает)</label>
+                    <textarea rows="2" class="iad-m-desc">${m.desc || ''}</textarea>
+                    <div class="form-grid" style="margin-top:10px;">
+                        <div>
+                            <label>URL Ссылки для скачивания</label>
+                            <input type="text" class="iad-m-url" value="${(m.url || '').replace(/"/g, '&quot;')}">
+                        </div>
+                        <div>
+                            <label>URL Фото (превью)</label>
+                            <input type="text" class="iad-m-img" value="${(m.imageUrl || '').replace(/"/g, '&quot;')}">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addIadMacro() {
+            const container = document.getElementById('iad_macros_list');
+            const div = document.createElement('div');
+            div.className = 'iad-punish-card';
+            div.innerHTML = `
+                <button class="btn-danger btn-sm" style="position: absolute; top: 15px; right: 15px;" onclick="this.parentElement.remove()">Удалить</button>
+                <label>Название макроса</label>
+                <input type="text" class="iad-m-title" placeholder="Макрос на наручники...">
+                <label>Описание (что делает)</label>
+                <textarea rows="2" class="iad-m-desc" placeholder="Автоматически отыгрывает..."></textarea>
+                <div class="form-grid" style="margin-top:10px;">
+                    <div>
+                        <label>URL Ссылки для скачивания</label>
+                        <input type="text" class="iad-m-url" placeholder="https://...">
+                    </div>
+                    <div>
+                        <label>URL Фото (превью)</label>
+                        <input type="text" class="iad-m-img" placeholder="https://... или /uploads/...">
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function renderIadLegislation() {
+            const container = document.getElementById('iad_legis_list');
+            container.innerHTML = '';
+            const arr = iadDataCache.legislation || [];
+            arr.forEach(l => {
+                const div = document.createElement('div');
+                div.className = 'iad-punish-card';
+                div.innerHTML = `
+                    <button class="btn-danger btn-sm" style="position: absolute; top: 15px; right: 15px;" onclick="this.parentElement.remove()">Удалить</button>
+                    <label>Название закона / кодекса</label>
+                    <input type="text" class="iad-l-title" value="${(l.title || '').replace(/"/g, '&quot;')}">
+                    <label>Краткое пояснение (что и как)</label>
+                    <textarea rows="2" class="iad-l-desc">${l.desc || ''}</textarea>
+                    <div style="margin-top:10px;">
+                        <label>Ссылка на базу (Форум и т.д.)</label>
+                        <input type="text" class="iad-l-url" value="${(l.url || '').replace(/"/g, '&quot;')}">
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addIadLegislation() {
+            const container = document.getElementById('iad_legis_list');
+            const div = document.createElement('div');
+            div.className = 'iad-punish-card';
+            div.innerHTML = `
+                <button class="btn-danger btn-sm" style="position: absolute; top: 15px; right: 15px;" onclick="this.parentElement.remove()">Удалить</button>
+                <label>Название закона / кодекса</label>
+                <input type="text" class="iad-l-title" placeholder="Процессуальный кодекс...">
+                <label>Краткое пояснение (что и как)</label>
+                <textarea rows="2" class="iad-l-desc" placeholder="Регламентирует процесс задержания..."></textarea>
+                <div style="margin-top:10px;">
+                        <label>Ссылка на базу (Форум и т.д.)</label>
+                        <input type="text" class="iad-l-url" placeholder="https://forum.gta5rp.com/...">
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
         function getIadListValues(containerId) {
             const inputs = document.getElementById(containerId).querySelectorAll('.iad-val-input');
             return Array.from(inputs).map(inp => inp.value.trim()).filter(val => val !== '');
@@ -1425,8 +1543,11 @@
                 violations: getIadListValues('iad_violations_list'),
                 recertification: getIadListValues('iad_recert_list'),
                 parking: getIadListValues('iad_parking_list'),
+                parking_image: document.getElementById('iad_parking_image').value.trim(),
                 punishments: [],
-                tutorials: []
+                tutorials: [],
+                macros: [],
+                legislation: []
             };
 
             const punishCards = document.querySelectorAll('#iad_punishments_list .iad-punish-card');
@@ -1448,6 +1569,31 @@
                         mediaType: card.querySelector('.iad-t-type').value,
                         mediaUrl: card.querySelector('.iad-t-url').value.trim(),
                         mediaDesc: card.querySelector('.iad-t-desc').value.trim()
+                    });
+                }
+            });
+
+            const macroCards = document.querySelectorAll('#iad_macros_list .iad-punish-card');
+            macroCards.forEach(card => {
+                const title = card.querySelector('.iad-m-title').value.trim();
+                if (title) {
+                    newData.macros.push({
+                        title: title,
+                        desc: card.querySelector('.iad-m-desc').value.trim(),
+                        url: card.querySelector('.iad-m-url').value.trim(),
+                        imageUrl: card.querySelector('.iad-m-img').value.trim()
+                    });
+                }
+            });
+
+            const legisCards = document.querySelectorAll('#iad_legis_list .iad-punish-card');
+            legisCards.forEach(card => {
+                const title = card.querySelector('.iad-l-title').value.trim();
+                if (title) {
+                    newData.legislation.push({
+                        title: title,
+                        desc: card.querySelector('.iad-l-desc').value.trim(),
+                        url: card.querySelector('.iad-l-url').value.trim()
                     });
                 }
             });
