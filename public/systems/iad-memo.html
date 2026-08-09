@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Памятка IAD | LSPD</title>
+    <!-- // Иконки -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #070709;
+            --card-bg: #110e11;
+            --primary-red: #dc2626;
+            --dark-red: #7f1d1d;
+            --border-color: #3f1515;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --glow: rgba(220, 38, 38, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-red) var(--card-bg);
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--card-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--dark-red); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-red); }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            background-image: radial-gradient(circle at top center, rgba(127, 29, 29, 0.15) 0%, transparent 60%);
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        /* ## Заголовок ## */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 2px solid var(--border-color);
+            background: linear-gradient(180deg, rgba(20, 10, 10, 0.9) 0%, transparent 100%);
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .logo-icon {
+            font-size: 50px;
+            color: var(--primary-red);
+            filter: drop-shadow(0 0 10px var(--glow));
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #fff, #ff9999);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--primary-red);
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-size: 14px;
+        }
+
+        /* ## Сетка кластера ## */
+        .cluster-container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        /* ## Карточки ## */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 3px;
+            background: var(--primary-red);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--dark-red);
+            box-shadow: 0 10px 25px var(--glow);
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card h2 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--primary-red);
+            font-size: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .card h2 i {
+            font-size: 24px;
+        }
+
+        .content-text {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .list-items {
+            list-style: none;
+        }
+
+        .list-items li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 12px;
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .list-items li::before {
+            content: '►';
+            position: absolute;
+            left: 0;
+            top: 2px;
+            color: var(--primary-red);
+            font-size: 10px;
+        }
+
+        .punishment-item {
+            background: rgba(220, 38, 38, 0.05);
+            border-left: 3px solid var(--primary-red);
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .punishment-item h4 {
+            color: #fff;
+            margin-bottom: 5px;
+            font-size: 15px;
+        }
+
+        .punishment-item p {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .forbidden-badge {
+            display: inline-block;
+            background: rgba(220, 38, 38, 0.15);
+            border: 1px solid var(--primary-red);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* ## Блок со скроллом для длинных списков (нарушения/вопросы) ## */
+        .scrollable-list {
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-top: 10px;
+        }
+
+        .violation-tag {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .violation-code {
+            color: var(--primary-red);
+            font-weight: bold;
+        }
+
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: #fcd34d;
+            font-size: 13px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        @media (max-width: 768px) {
+            .cluster-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <i class="fas fa-balance-scale logo-icon"></i>
+            <div>
+                <h1 id="memoTitle">IAD</h1>
+            </div>
+        </div>
+        <div class="subtitle" id="memoSubtitle">Загрузка данных...</div>
+    </header>
+
+    <div class="cluster-container" id="clusterGrid">
+        <!-- Контент генерируется через JS -->
+    </div>
+
+    <script>
+        // ## Встроенный JSON (Fallback), если API недоступно ##
+        const defaultData = {
+            header: {
+                title: "Памятка IAD",
+                subtitle: "ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ."
+            },
+            info: {
+                what_is_iad: "IAD - это следственный отдел LSPD, специальное подразделение, которое следит за тем, чтобы сотрудники полиции сами не нарушали закон и внутренние правила. Если кто-то из полицейских ведёт себя неправильно, нарушает дисциплину или на него поступает жалоба, этот отдел проводит проверку. Его задача — следить за порядком и честностью внутри департамента. Руководство данного отдела осуществляет руководящий состав IAD (Начальник, Зам. Начальник), а также Шеф LSPD и один из его заместителей, назначенный куратором отдела."
+            },
+            rights: [
+                "Направлять любого сотрудника на внеплановую переаттестацию при наличии обоснованной причины.",
+                "Производить запрос через канал “дисциплинарные взыскания” на выдачу наказания сотруднику.",
+                "При подозрении на наркозависимость требовать от сотрудника пройти медицинское освидетельствование в EMS."
+            ],
+            tasks: [
+                "Предотвращение правонарушений среди сотрудников LSPD.",
+                "Организация переаттестации для сотрудников LSPD.",
+                "Оказание помощи другим отделам (за исключением DB — только по согласованию с его руководством)."
+            ],
+            requirements: [
+                "Вежливое общение - неважно где вы, с кем общаетесь и на какую тему, вежливость превыше всего.",
+                "Прежде чем принимать какие - либо решения, пользуйтесь принципом адекватности.",
+                "Соблюдайте Этический Кодекс. Вам разрешены “мелкие” нарушения, НО категорически запрещается нарушение верхней одежды."
+            ],
+            how_to_issue: [
+                "Фиксируете правонарушение (лучше всего видеозаписью, однако допустим и скриншот).",
+                "Отписываете в канал по форме.",
+                "Ждете одобрения, либо в случае проблем - вопросы от руководства в личные сообщения."
+            ],
+            punishments: [
+                { title: "Предупреждение", desc: "Устное предупреждение сотрудника о прекращении правонарушения." },
+                { title: "Устный выговор", desc: "Санкция для не критично нарушивших устав LSPD. Штраф: 10.000$ (48 часов)." },
+                { title: "Строгий выговор", desc: "За критичные нарушения. Штраф: 20.000$ (24 часа). При получении 3х - увольнение." },
+                { title: "Переаттестация", desc: "Срок прохождения - от 24 до 72 часов. При не сдаче - увольнение." }
+            ],
+            forbidden_departments: ["DETECTIVE BUREAU (DB)", "INTERNAL AFFAIRS DEPARTMENT (IAD)", "POLICE ACADEMY (PA) (1-2 ранги)"],
+            activities: "Вы можете заниматься всей деятельностью LSPD. Однако к вашей деятельности добавляются полномочия и обязанности связанные с непосредственным контролем состава. Вы можете вместо СО поехать по общественным местам в поисках прогульщика.",
+            parking: [
+                "Зелёная зона - Шеф LSPD и его заместители.",
+                "Красная зона - Запретная зона для парковки транспортного средства любого отдела."
+            ],
+            violations: [
+                "22.2. Игнорировать, обсуждать или оспаривать приказы | Строгий выговор",
+                "22.3. Обманывать, вводить в заблуждение руководство | Строгий выговор/Увольнение",
+                "22.4. Нарушать дисциплину строя | Предупреждение/Устный/Строгий",
+                "22.8. Использовать служебную технику в личных целях | Строгий выговор",
+                "22.12. Парковать личный транспорт на служебной парковке | Устный/Строгий",
+                "22.18. Прогуливать рабочий день, бездельничать | Устный/Строгий",
+                "22.25. Наличие статей, запрещающих работу в гос.структуре | Увольнение"
+            ],
+            recertification: [
+                "Что такое задержание, арест, в чем их разница?",
+                "Что такое процессуальный кодекс?",
+                "Какие виды юрисдикций вы знаете?",
+                "Что относится к гос тайне?",
+                "Основания для освобождения?",
+                "Какое наказание установлено за нарушение этического кодекса?"
+            ]
+        };
+
+        // ## Загрузка данных через API админки ##
+        async function loadData() {
+            try {
+                // Попытка взять файл из системы файлов сервера
+                const res = await fetch('/api/file?path=iad_data.json');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.content) {
+                        return JSON.parse(data.content);
+                    }
+                }
+            } catch (err) {
+                console.warn('API не ответило, загружаем локальные данные.');
+            }
+            return defaultData;
+        }
+
+        // ## Рендеринг страницы ##
+        async function renderMemo() {
+            const data = await loadData();
+            const grid = document.getElementById('clusterGrid');
+
+            document.getElementById('memoTitle').innerText = data.header.title;
+            document.getElementById('memoSubtitle').innerText = data.header.subtitle;
+
+            // 1. Что такое IAD
+            let html = `
+                <div class="card">
+                    <h2><i class="fas fa-shield-alt"></i> Что такое IAD?</h2>
+                    <div class="content-text">${data.info.what_is_iad}</div>
+                </div>
+            `;
+
+            // 2. Задачи
+            html += `
+                <div class="card">
+                    <h2><i class="fas fa-crosshairs"></i> Задачи отдела</h2>
+                    <ul class="list-items">
+                        ${data.tasks.map(t => `<li>${t}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+
+            // 3. Требования
+            html += `
+                <div class="card">
+                    <h2><i class="fas fa-user-tie"></i> Требования к сотруднику</h2>
+                    <ul class="list-items">
+                        ${data.requirements.map(r => `<li>${r}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+
+            // 4. Права
+            html += `
+                <div class="card">
+                    <h2><i class="fas fa-gavel"></i> Права сотрудников IAD</h2>
+                    <ul class="list-items">
+                        ${data.rights.map(r => `<li>${r}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+
+            // 5. Взыскания (Виды)
+            html += `
+                <div class="card">
+                    <h2><i class="fas fa-clipboard-list"></i> Виды взысканий</h2>
+                    <div class="scrollable-list">
+                        ${data.punishments.map(p => `
+                            <div class="punishment-item">
+                                <h4>${p.title}</h4>
+                                <p>${p.desc}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            // 6. Как выдать
+            html += `
+                <div class="card">
+                    <h2><i class="fas fa-file-signature"></i> Как выдать взыскание</h2>
+                    <ul class="list-items">
+                        ${data.how_to_issue.map(h => `<li>${h}</li>`).join('')}
+                    </ul>
+                    <div class="warning-box">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div><b>Примечание:</b> Храните доказательства 72 часа. При их отсутствии вы подлежите ответственности.</div>
+                    </div>
+                </div>
+            `;
+
+            // 7. Кому нельзя выдавать & Парковка
+            html += `
+                <div class="card">
+                    <h2><i class="fas fa-ban"></i> Запрет на взыскания</h2>
+                    <div style="margin-bottom: 20px;">
+                        ${data.forbidden_departments.map(d => `<span class="forbidden-badge"><i class="fas fa-times"></i> ${d}</span>`).join('')}
+                    </div>
+                    
+                    <h2><i class="fas fa-parking"></i> Парковка LSPD</h2>
+                    <ul class="list-items">
+                        ${data.parking.map(p => `<li>${p}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+
+            // 8. Частые нарушения (скролл)
+            html += `
+                <div class="card">
+                    <h2><i class="fas fa-exclamation-circle"></i> Частые нарушения</h2>
+                    <div class="scrollable-list">
+                        ${data.violations.map(v => {
+                            const parts = v.split('|');
+                            return `
+                            <div class="violation-tag">
+                                <span style="flex-grow: 1; padding-right: 10px;">${parts[0].trim()}</span>
+                                <span class="violation-code">${parts[1] ? parts[1].trim() : ''}</span>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            // 9. Переаттестация
+            html += `
+                <div class="card">
+                    <h2><i class="fas fa-clipboard-question"></i> Вопросы переаттестации</h2>
+                    <div class="scrollable-list">
+                        <ul class="list-items">
+                            ${data.recertification.map(q => `<li>${q}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+
+            grid.innerHTML = html;
+        }
+
+        // Запуск
+        document.addEventListener('DOMContentLoaded', renderMemo);
+    </script>
+</body>
+</html>
