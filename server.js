@@ -378,7 +378,7 @@ const sanitizeInput = (req, res, next) => {
     
     const isExcluded = (key) => {
         const k = key.toLowerCase();
-        const allowedExact = ['content', 'path', 'reason', 'summary', 'desc', 'fullDesc', 'note', 'text'];
+        const allowedExact = ['content', 'path', 'reason', 'summary', 'desc', 'fullDesc', 'note', 'text', 'parking_image'];
         return allowedExact.includes(k) || k.includes('image') || k.includes('file') || k.includes('media') || k.includes('url');
     };
 
