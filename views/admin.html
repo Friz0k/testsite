@@ -266,7 +266,7 @@
             flex-wrap: wrap;
         }
 
-        .subsystem-btn { 
+        .subsystem-btn, .iad-tab-btn { 
             background: #27272a; 
             color: var(--text-muted); 
             border: 1px solid #3f3f46; 
@@ -277,12 +277,12 @@
             transition: all 0.2s; 
         }
 
-        .subsystem-btn:hover { 
+        .subsystem-btn:hover, .iad-tab-btn:hover { 
             color: #fff; 
             border-color: var(--accent-color); 
         }
 
-        .subsystem-btn.active { 
+        .subsystem-btn.active, .iad-tab-btn.active { 
             background: var(--accent-color); 
             color: #fff; 
             border-color: var(--accent-color); 
@@ -703,7 +703,6 @@
         <div class="nav-category" id="siteNavCat">Сайт</div>
         <ul class="nav-links" id="siteNavLinks">
             <li class="active" onclick="switchTab('projects', this)">📦 Проекты</li>
-            <li onclick="switchTab('iad_memo', this)">📋 Редактор Памятки IAD</li>
             <li onclick="switchTab('illustration', this)">🎨 Арт на главной</li>
             <li onclick="switchTab('sessions', this)">🌐 Карточки IP и Устройств</li>
             <li onclick="switchTab('backups', this)">💾 Бэкапы и Восстановление</li>
@@ -723,109 +722,181 @@
 
     <div class="content-area">
         
-        <div id="iad_memo" class="tab-content">
+        <div id="faction_manager" class="tab-content">
             <div class="admin-section">
-                <h3>Редактор интерактивной памятки IAD</h3>
-                <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 14px;">Здесь вы можете изменять текст, вопросы и правила, которые выводятся на странице памятки. Все изменения применяются моментально после сохранения.</p>
+                <h3>Модуль настройки фракций</h3>
+                <label>Выберите фракцию:</label>
+                <select id="factionSelector" onchange="loadFactionUI()" style="font-size: 16px; font-weight: bold; padding: 15px;">
+                    <option value="fib">🦅 FIB & CID</option>
+                    <option value="lssd">🤠 LSSD</option>
+                    <option value="lspd">🚓 LSPD</option>
+                    <option value="gov">⚖️ GOV</option>
+                    <option value="ems">🚑 EMS</option>
+                    <option value="deadly">💀 DEADLY</option>
+                </select>
 
-                <div class="subsystem-tabs" id="iad-tabs">
-                    <button type="button" class="subsystem-btn active" onclick="switchIadTab('iad-main', this)">Основное</button>
-                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-rules', this)">Правила и Задачи</button>
-                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-punish', this)">Взыскания</button>
-                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-others', this)">Прочее и Парковка</button>
-                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-legis', this)">Законодательство</button>
-                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-tutorials', this)">Туториалы и Медиа</button>
-                    <button type="button" class="subsystem-btn" onclick="switchIadTab('iad-macros', this)">Макросы</button>
+                <div id="subsystem-nav" class="subsystem-tabs" style="display: none;"></div>
+
+                <div id="subsystem-general" class="subsystem-content active">
+                    <div id="faction-webhooks"></div>
+                    <div id="faction-roles"></div>
                 </div>
 
-                <div id="iad-main" class="iad-content-pane" style="display: block;">
-                    <div class="form-grid">
-                        <div>
-                            <label>Главный заголовок</label>
-                            <input type="text" id="iad_title" placeholder="Памятка IAD">
-                        </div>
-                        <div>
-                            <label>Подзаголовок</label>
-                            <input type="text" id="iad_subtitle" placeholder="ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ.">
-                        </div>
-                        <div class="full-width">
-                            <label>Что такое IAD? (Описание)</label>
-                            <textarea id="iad_whatis" rows="4"></textarea>
-                        </div>
-                        <div class="full-width">
-                            <label>Чем заниматься в отделе? (Деятельность)</label>
-                            <textarea id="iad_activities" rows="4"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="iad-rules" class="iad-content-pane" style="display: none;">
-                    <h4>Задачи отдела</h4>
-                    <div class="iad-list-container" id="iad_tasks_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_tasks_list')">➕ Добавить задачу</button>
-
-                    <h4 style="margin-top: 30px;">Требования к сотруднику</h4>
-                    <div class="iad-list-container" id="iad_reqs_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_reqs_list', true)">➕ Добавить требование</button>
-
-                    <h4 style="margin-top: 30px;">Права сотрудников</h4>
-                    <div class="iad-list-container" id="iad_rights_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_rights_list')">➕ Добавить право</button>
-                </div>
-
-                <div id="iad-punish" class="iad-content-pane" style="display: none;">
-                    <h4>Как выдать дисциплинарное взыскание (Пошагово)</h4>
-                    <div class="iad-list-container" id="iad_howissue_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_howissue_list')">➕ Добавить шаг</button>
-
-                    <h4 style="margin-top: 30px;">Виды дисциплинарных взысканий</h4>
-                    <div class="iad-list-container" id="iad_punishments_list" style="background: transparent; border: none; padding: 0;"></div>
-                    <button class="btn-sm btn-success" onclick="addIadPunishment()">➕ Добавить вид взыскания</button>
-
-                    <h4 style="margin-top: 30px;">Кому нельзя выдавать взыскания (Отделы)</h4>
-                    <div class="iad-list-container" id="iad_forbidden_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_forbidden_list')">➕ Добавить отдел</button>
-                </div>
-
-                <div id="iad-others" class="iad-content-pane" style="display: none;">
-                    <h4>Частые нарушения (Статья | Наказание)</h4>
-                    <div class="iad-list-container" id="iad_violations_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_violations_list')">➕ Добавить нарушение</button>
-
-                    <h4 style="margin-top: 30px;">Вопросы для переаттестации</h4>
-                    <div class="iad-list-container" id="iad_recert_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_recert_list')">➕ Добавить вопрос</button>
-
-                    <h4 style="margin-top: 30px;">Правила парковки</h4>
-                    <div class="iad-list-container" id="iad_parking_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_parking_list')">➕ Добавить правило</button>
+                <div id="subsystem-testing" class="subsystem-content">
+                    <h4>Параметры тестирования</h4>
                     
-                    <div style="margin-top: 15px;">
-                        <label>Фотография / Схема парковки (URL ссылки)</label>
-                        <input type="text" id="iad_parking_image" placeholder="https://... или /uploads/...">
+                    <div id="fib-specific-settings" style="display: none; background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
+                        <h5 style="color: var(--accent-color); margin-bottom: 15px; font-size: 16px;">Переаттестация FIB</h5>
+                        <div class="form-grid">
+                            <div>
+                                <label>Время для 5 ранга (мин):</label>
+                                <input type="number" id="fib-timer-rank5" value="5" min="1" max="180">
+                            </div>
+                            <div>
+                                <label>Время для 7 ранга (мин):</label>
+                                <input type="number" id="fib-timer-rank7" value="10" min="1" max="180">
+                            </div>
+                            <div>
+                                <label>Проходной балл (5 ранг):</label>
+                                <input type="number" id="fib-score-rank5" value="6" min="1">
+                            </div>
+                            <div>
+                                <label>Проходной балл (7 ранг):</label>
+                                <input type="number" id="fib-score-rank7" value="15" min="1">
+                            </div>
+                            <div>
+                                <label>Кол-во вопросов (5 ранг):</label>
+                                <input type="number" id="fib-count-rank5" value="10" min="1">
+                            </div>
+                            <div>
+                                <label>Кол-во вопросов (7 ранг):</label>
+                                <input type="number" id="fib-count-rank7" value="20" min="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="standard-test-settings" style="display: none; background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
+                        <div class="form-grid">
+                            <div>
+                                <label>Время на тест (мин):</label>
+                                <input type="number" id="test-duration-minutes" value="15" min="1" max="180">
+                            </div>
+                            <div>
+                                <label>Проходной балл:</label>
+                                <input type="number" id="test-passing-score" value="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="questions-list" style="margin-top: 20px;"></div>
+                    
+                    <button type="button" class="btn-success" onclick="addQuestion()" style="margin-top: 15px;">➕ Добавить вопрос</button>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                        <button type="button" onclick="saveFactionSettings()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ВСЕ НАСТРОЙКИ</button>
                     </div>
                 </div>
 
-                <div id="iad-legis" class="iad-content-pane" style="display: none;">
-                    <h4>Законодательная база</h4>
-                    <div class="iad-list-container" id="iad_legis_list" style="background: transparent; border: none; padding: 0;"></div>
-                    <button class="btn-sm btn-success" onclick="addIadLegislation()">➕ Добавить ссылку на закон</button>
-                </div>
+                <div id="subsystem-iad" class="subsystem-content">
+                    <div class="subsystem-tabs" id="iad-tabs" style="margin-top: 15px;">
+                        <button type="button" class="iad-tab-btn active" onclick="switchIadTab('iad-main', this)">Основное</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-rules', this)">Правила и Задачи</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-punish', this)">Взыскания</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-others', this)">Прочее и Парковка</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-legis', this)">Законодательство</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-tutorials', this)">Туториалы и Медиа</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-macros', this)">Макросы</button>
+                    </div>
 
-                <div id="iad-tutorials" class="iad-content-pane" style="display: none;">
-                    <h4>Обучающие материалы (Туториалы и медиа)</h4>
-                    <div class="iad-list-container" id="iad_tutors_list" style="background: transparent; border: none; padding: 0;"></div>
-                    <button class="btn-sm btn-success" onclick="addIadTutor()">➕ Добавить карточку туториала</button>
-                </div>
+                    <div id="iad-main" class="iad-content-pane" style="display: block;">
+                        <div class="form-grid">
+                            <div>
+                                <label>Главный заголовок</label>
+                                <input type="text" id="iad_title" placeholder="Памятка IAD">
+                            </div>
+                            <div>
+                                <label>Подзаголовок</label>
+                                <input type="text" id="iad_subtitle" placeholder="ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ.">
+                            </div>
+                            <div class="full-width">
+                                <label>Что такое IAD? (Описание)</label>
+                                <textarea id="iad_whatis" rows="4"></textarea>
+                            </div>
+                            <div class="full-width">
+                                <label>Чем заниматься в отделе? (Деятельность)</label>
+                                <textarea id="iad_activities" rows="4"></textarea>
+                            </div>
+                        </div>
+                    </div>
 
-                <div id="iad-macros" class="iad-content-pane" style="display: none;">
-                    <h4>Макросы и Биндеры</h4>
-                    <div class="iad-list-container" id="iad_macros_list" style="background: transparent; border: none; padding: 0;"></div>
-                    <button class="btn-sm btn-success" onclick="addIadMacro()">➕ Добавить карточку макроса</button>
-                </div>
+                    <div id="iad-rules" class="iad-content-pane" style="display: none;">
+                        <h4>Задачи отдела</h4>
+                        <div class="iad-list-container" id="iad_tasks_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_tasks_list')">➕ Добавить задачу</button>
 
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                    <button type="button" class="btn-success" onclick="saveIadMemo()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ПАМЯТКУ</button>
+                        <h4 style="margin-top: 30px;">Требования к сотруднику</h4>
+                        <div class="iad-list-container" id="iad_reqs_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_reqs_list', true)">➕ Добавить требование</button>
+
+                        <h4 style="margin-top: 30px;">Права сотрудников</h4>
+                        <div class="iad-list-container" id="iad_rights_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_rights_list')">➕ Добавить право</button>
+                    </div>
+
+                    <div id="iad-punish" class="iad-content-pane" style="display: none;">
+                        <h4>Как выдать дисциплинарное взыскание (Пошагово)</h4>
+                        <div class="iad-list-container" id="iad_howissue_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_howissue_list')">➕ Добавить шаг</button>
+
+                        <h4 style="margin-top: 30px;">Виды дисциплинарных взысканий</h4>
+                        <div class="iad-list-container" id="iad_punishments_list" style="background: transparent; border: none; padding: 0;"></div>
+                        <button class="btn-sm btn-success" onclick="addIadPunishment()">➕ Добавить вид взыскания</button>
+
+                        <h4 style="margin-top: 30px;">Кому нельзя выдавать взыскания (Отделы)</h4>
+                        <div class="iad-list-container" id="iad_forbidden_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_forbidden_list')">➕ Добавить отдел</button>
+                    </div>
+
+                    <div id="iad-others" class="iad-content-pane" style="display: none;">
+                        <h4>Частые нарушения (Статья | Наказание)</h4>
+                        <div class="iad-list-container" id="iad_violations_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_violations_list')">➕ Добавить нарушение</button>
+
+                        <h4 style="margin-top: 30px;">Вопросы для переаттестации</h4>
+                        <div class="iad-list-container" id="iad_recert_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_recert_list')">➕ Добавить вопрос</button>
+
+                        <h4 style="margin-top: 30px;">Правила парковки</h4>
+                        <div class="iad-list-container" id="iad_parking_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_parking_list')">➕ Добавить правило</button>
+                        
+                        <div style="margin-top: 15px;">
+                            <label>Фотография / Схема парковки (URL ссылки)</label>
+                            <input type="text" id="iad_parking_image" placeholder="https://... или /uploads/...">
+                        </div>
+                    </div>
+
+                    <div id="iad-legis" class="iad-content-pane" style="display: none;">
+                        <h4>Законодательная база</h4>
+                        <div class="iad-list-container" id="iad_legis_list" style="background: transparent; border: none; padding: 0;"></div>
+                        <button class="btn-sm btn-success" onclick="addIadLegislation()">➕ Добавить ссылку на закон</button>
+                    </div>
+
+                    <div id="iad-tutorials" class="iad-content-pane" style="display: none;">
+                        <h4>Обучающие материалы (Туториалы и медиа)</h4>
+                        <div class="iad-list-container" id="iad_tutors_list" style="background: transparent; border: none; padding: 0;"></div>
+                        <button class="btn-sm btn-success" onclick="addIadTutor()">➕ Добавить карточку туториала</button>
+                    </div>
+
+                    <div id="iad-macros" class="iad-content-pane" style="display: none;">
+                        <h4>Макросы и Биндеры</h4>
+                        <div class="iad-list-container" id="iad_macros_list" style="background: transparent; border: none; padding: 0;"></div>
+                        <button class="btn-sm btn-success" onclick="addIadMacro()">➕ Добавить карточку макроса</button>
+                    </div>
+
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                        <button type="button" class="btn-success" onclick="saveIadMemo()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ПАМЯТКУ IAD</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -951,83 +1022,6 @@
                 <textarea id="codeEditor" spellcheck="false"></textarea>
                 <div class="btn-group">
                     <button type="button" class="btn-success" onclick="saveFileCode()">💾 Сохранить изменения</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="faction_manager" class="tab-content">
-            <div class="admin-section">
-                <h3>Модуль настройки фракций</h3>
-                <label>Выберите фракцию:</label>
-                <select id="factionSelector" onchange="loadFactionUI()" style="font-size: 16px; font-weight: bold; padding: 15px;">
-                    <option value="fib">🦅 FIB & CID</option>
-                    <option value="lssd">🤠 LSSD</option>
-                    <option value="lspd">🚓 LSPD</option>
-                    <option value="gov">⚖️ GOV</option>
-                    <option value="ems">🚑 EMS</option>
-                    <option value="deadly">💀 DEADLY</option>
-                </select>
-
-                <div id="subsystem-nav" class="subsystem-tabs" style="display: none;"></div>
-
-                <div id="subsystem-general" class="subsystem-content active">
-                    <div id="faction-webhooks"></div>
-                    <div id="faction-roles"></div>
-                </div>
-
-                <div id="subsystem-testing" class="subsystem-content">
-                    <h4>Параметры тестирования</h4>
-                    
-                    <div id="fib-specific-settings" style="display: none; background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
-                        <h5 style="color: var(--accent-color); margin-bottom: 15px; font-size: 16px;">Переаттестация FIB</h5>
-                        <div class="form-grid">
-                            <div>
-                                <label>Время для 5 ранга (мин):</label>
-                                <input type="number" id="fib-timer-rank5" value="5" min="1" max="180">
-                            </div>
-                            <div>
-                                <label>Время для 7 ранга (мин):</label>
-                                <input type="number" id="fib-timer-rank7" value="10" min="1" max="180">
-                            </div>
-                            <div>
-                                <label>Проходной балл (5 ранг):</label>
-                                <input type="number" id="fib-score-rank5" value="6" min="1">
-                            </div>
-                            <div>
-                                <label>Проходной балл (7 ранг):</label>
-                                <input type="number" id="fib-score-rank7" value="15" min="1">
-                            </div>
-                            <div>
-                                <label>Кол-во вопросов (5 ранг):</label>
-                                <input type="number" id="fib-count-rank5" value="10" min="1">
-                            </div>
-                            <div>
-                                <label>Кол-во вопросов (7 ранг):</label>
-                                <input type="number" id="fib-count-rank7" value="20" min="1">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="standard-test-settings" style="display: none; background: #18181b; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #3f3f46;">
-                        <div class="form-grid">
-                            <div>
-                                <label>Время на тест (мин):</label>
-                                <input type="number" id="test-duration-minutes" value="15" min="1" max="180">
-                            </div>
-                            <div>
-                                <label>Проходной балл:</label>
-                                <input type="number" id="test-passing-score" value="0" min="0">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="questions-list" style="margin-top: 20px;"></div>
-                    
-                    <button type="button" class="btn-success" onclick="addQuestion()" style="margin-top: 15px;">➕ Добавить вопрос</button>
-                </div>
-
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                    <button type="button" onclick="saveFactionSettings()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ВСЕ НАСТРОЙКИ</button>
                 </div>
             </div>
         </div>
@@ -1190,9 +1184,6 @@
             if (tabId === 'tokens_manager') {
                 loadTokensUI();
             }
-            if (tabId === 'iad_memo') {
-                loadIadMemoUI();
-            }
         }
 
         async function apiCall(url, options = {}) {
@@ -1223,7 +1214,7 @@
             document.querySelectorAll('.iad-content-pane').forEach(el => {
                 el.style.display = 'none';
             });
-            document.querySelectorAll('#iad-tabs .subsystem-btn').forEach(el => {
+            document.querySelectorAll('.iad-tab-btn').forEach(el => {
                 el.classList.remove('active');
             });
             document.getElementById(paneId).style.display = 'block';
@@ -2201,7 +2192,8 @@
             lspd: { 
                 subsystems: [
                     { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' }, 
-                    { id: 'subsystem-testing', name: '📝 Тестирование и аттестация' }
+                    { id: 'subsystem-testing', name: '📝 Тестирование и аттестация' },
+                    { id: 'subsystem-iad', name: '📋 Памятка IAD' }
                 ], 
                 webhooks: { application: "Заявления", badge: "Жетоны", cadet: "Отчеты кадетов", test: "Тесты" }, 
                 roles: { application: "Заявления", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, 
@@ -2315,6 +2307,10 @@
                 loadFactionUI(); 
             }
 
+            if (userAuth.isSuperAdmin || (userAuth.systems && (userAuth.systems.includes('lspd') || userAuth.systems.includes('all')))) {
+                loadIadMemoUI();
+            }
+
             if (userAuth.isSuperAdmin) { 
                 loadProjects(); 
                 loadFileList(); 
@@ -2345,17 +2341,20 @@
                 nav.innerHTML = schema.subsystems.map((sub, idx) => `
                     <button type="button" class="subsystem-btn ${idx === 0 ? 'active' : ''}" onclick="switchSubsystem('${sub.id}', this)">${sub.name}</button>
                 `).join('');
-                document.querySelectorAll('.subsystem-content').forEach((el, idx) => { 
-                    if (idx === 0) {
-                        el.classList.add('active'); 
-                    } else {
-                        el.classList.remove('active'); 
-                    }
+                
+                document.querySelectorAll('.subsystem-content').forEach(el => {
+                    el.classList.remove('active');
                 });
+                const firstSubsystem = document.getElementById(schema.subsystems[0].id);
+                if (firstSubsystem) {
+                    firstSubsystem.classList.add('active');
+                }
             } else { 
                 nav.style.display = 'none'; 
+                document.querySelectorAll('.subsystem-content').forEach(el => {
+                    el.classList.remove('active');
+                });
                 document.getElementById('subsystem-general').classList.add('active'); 
-                document.getElementById('subsystem-testing').classList.remove('active'); 
             }
 
             let whHtml = '<h4>Вебхуки</h4><div class="form-grid">'; 
