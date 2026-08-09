@@ -285,10 +285,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 150 * 1024 * 1024 },
+    limits: { fileSize: 500 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) cb(null, true);
-        else cb(new Error('Разрешены только изображения'), false);
+        if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) cb(null, true);
+        else cb(new Error('Разрешены только изображения и видео'), false);
     }
 });
 
@@ -298,20 +298,17 @@ const backupStorage = multer.diskStorage({
 });
 const backupUpload = multer({ storage: backupStorage });
 
-app.use(express.json({ limit: '150mb' }));
-app.use(express.urlencoded({ extended: true, limit: '150mb' }));
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 app.use(cookieParser(process.env.COOKIE_SECRET || 'dev-insecure-secret-change-me'));
 
-// === ИСПРАВЛЕННЫЙ БЛОК САНИТАЙЗЕРА ===
-// Теперь он безопасно пропускает любые поля, в названии которых есть слово "image" или "file", 
-// предотвращая зависание сервера при попытке проверить огромные Base64 строки гифок
 const sanitizeInput = (req, res, next) => {
     const sqlRegex = /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND)\b)|(['"])/i;
     
     const isExcluded = (key) => {
         const k = key.toLowerCase();
-        const allowedExact = ['content', 'path', 'reason', 'summary', 'desc', 'fullDesc', 'note'];
-        return allowedExact.includes(k) || k.includes('image') || k.includes('file');
+        const allowedExact = ['content', 'path', 'reason', 'summary', 'desc', 'fullDesc', 'note', 'text'];
+        return allowedExact.includes(k) || k.includes('image') || k.includes('file') || k.includes('media') || k.includes('url');
     };
 
     const checkObj = (obj) => {
@@ -364,7 +361,7 @@ app.use((req, res, next) => {
         const copy = JSON.parse(JSON.stringify(data));
         const hiddenKeys = ['password', 'token', 'file', 'content'];
         for (let key in copy) {
-            if ((hiddenKeys.includes(key) || key.toLowerCase().includes('image')) && copy[key]) {
+            if ((hiddenKeys.includes(key) || key.toLowerCase().includes('image') || key.toLowerCase().includes('media')) && copy[key]) {
                 copy[key] = '[СКРЫТО]';
             }
             else if (typeof copy[key] === 'string' && copy[key].length > 200) copy[key] = copy[key].substring(0, 200) + '...';
