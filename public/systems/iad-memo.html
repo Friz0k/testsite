@@ -505,23 +505,9 @@
                 title: "Памятка IAD", 
                 subtitle: "ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ." 
             },
-            info: { 
-                what_is_iad: "" 
-            }, 
-            rights: [], 
-            tasks: [], 
-            requirements: [], 
-            how_to_issue: [], 
-            punishments: [],
-            forbidden_departments: [], 
-            activities: "", 
-            parking: [], 
-            parking_image: "",
-            violations: [], 
-            recertification: [], 
-            tutorials: [],
-            macros: [],
-            legislation: []
+            info: { what_is_iad: "" }, rights: [], tasks: [], requirements: [], how_to_issue: [], punishments: [],
+            forbidden_departments: [], activities: "", parking: [], parking_image: "", violations: [], recertification: [], 
+            tutorials: [], macros: [], legislation: []
         };
 
         async function loadData() {
@@ -645,7 +631,7 @@
 
             if (data.violations && data.violations.length > 0) {
                 html += `
-                    <div class="card">
+                    <div class="card card-full-width">
                         <h2><i class="fas fa-exclamation-circle"></i> Частые нарушения</h2>
                         <div class="scrollable-list">
                             ${data.violations.map(v => {
@@ -663,7 +649,7 @@
 
             if (data.legislation && data.legislation.length > 0) {
                 html += `
-                    <div class="card">
+                    <div class="card card-full-width">
                         <h2><i class="fas fa-balance-scale-right"></i> Законодательная база</h2>
                         <div class="scrollable-list">
                             ${data.legislation.map(l => `
@@ -701,18 +687,9 @@
                         <h2><i class="fas fa-keyboard"></i> Макросы и Биндеры</h2>
                         <div class="tutorials-grid" style="margin-bottom: 40px;">
                             ${data.macros.map(m => `
-                                <div class="tutorial-card">
-                                    ${m.imageUrl ? `
-                                        <div class="tutorial-media-preview" onclick="openMediaModal('image', '${m.imageUrl}', '${m.title}')">
-                                            <img src="${m.imageUrl}" alt="Превью макроса">
-                                            <i class="fas fa-search-plus tutorial-play-icon" style="font-size: 30px;"></i>
-                                        </div>
-                                    ` : ''}
-                                    <div class="tutorial-info">
-                                        <h3>${m.title}</h3>
-                                        <p>${m.desc}</p>
-                                        ${m.url ? `<a href="${m.url}" target="_blank" class="tutorial-btn"><i class="fas fa-download"></i> Скачать / Открыть</a>` : ''}
-                                    </div>
+                                <div class="tutorial-card" style="padding: 15px;">
+                                    <h3 style="color: #fff; font-size: 16px; margin-bottom: 8px;">${m.title}</h3>
+                                    <div style="background: #09090b; border: 1px solid #3f1515; padding: 12px; border-radius: 8px; color: #f3f4f6; font-family: monospace; font-size: 13px; white-space: pre-wrap; margin-bottom: 10px;">${m.text}</div>
                                 </div>
                             `).join('')}
                         </div>
@@ -774,8 +751,7 @@
             
             if (type === 'video') {
                 container.innerHTML = `
-                    <video controls autoplay style="width: 100%; border-radius: 8px; max-height: 70vh;">
-                        <source src="${url}" type="video/mp4">
+                    <video src="${url}" controls autoplay style="width: 100%; border-radius: 8px; max-height: 70vh;">
                         Ваш браузер не поддерживает видео.
                     </video>
                 `;
