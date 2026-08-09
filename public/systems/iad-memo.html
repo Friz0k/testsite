@@ -21,7 +21,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             scrollbar-width: thin;
             scrollbar-color: var(--primary-red) var(--card-bg);
         }
@@ -224,10 +224,29 @@
             overflow-y: auto;
             padding-right: 10px;
             margin-top: 10px;
+            max-height: 250px;
         }
 
         .scrollable-list-tall {
             flex-grow: 1;
+            max-height: none;
+        }
+
+        .violation-tag {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .violation-code {
+            color: var(--primary-red);
+            font-weight: bold;
         }
 
         .warning-box {
@@ -607,14 +626,14 @@
             if (data.violations && data.violations.length > 0) {
                 html += `
                     <div class="card card-tall">
-                        <h2><i class="fas fa-exclamation-circle"></i> Частые нарушения</h2>
+                        <h2><i class="fas fa-exclamation-circle"></i> Нарушения устава</h2>
                         <div class="scrollable-list scrollable-list-tall">
                             ${data.violations.map(v => {
                                 const parts = v.split('|');
                                 return `
-                                <div class="legis-item">
-                                    <div class="legis-title" style="font-size: 14px; font-weight: normal; line-height: 1.5; color: var(--text-main);">${parts[0].trim()}</div>
-                                    <div class="legis-desc" style="color: var(--primary-red); font-weight: bold; margin-top: 6px;">${parts[1] ? parts[1].trim() : ''}</div>
+                                <div class="violation-tag">
+                                    <span style="flex-grow: 1; padding-right: 10px;">${parts[0].trim()}</span>
+                                    <span class="violation-code">${parts[1] ? parts[1].trim() : ''}</span>
                                 </div>`;
                             }).join('')}
                         </div>
@@ -664,7 +683,7 @@
                             ${data.macros.map(m => `
                                 <div class="tutorial-card" style="padding: 15px;">
                                     <h3 style="color: #fff; font-size: 16px; margin-bottom: 8px;">${m.title}</h3>
-                                    <div style="background: #09090b; border: 1px solid #3f1515; padding: 12px; border-radius: 8px; color: #f3f4f6; font-family: monospace; font-size: 13px; white-space: pre-wrap;">${m.text}</div>
+                                    <div style="background: #09090b; border: 1px solid #3f1515; padding: 12px; border-radius: 8px; color: #f3f4f6; font-family: monospace; font-size: 13px; white-space: pre-wrap; margin-bottom: 10px;">${m.text}</div>
                                 </div>
                             `).join('')}
                         </div>
