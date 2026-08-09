@@ -871,10 +871,8 @@
                         <button class="btn-sm" onclick="addIadItem('iad_parking_list')">➕ Добавить правило</button>
                         
                         <div style="margin-top: 15px;">
-                            <label>Загрузить фото/схему парковки</label>
-                            <img id="iad_parking_preview" class="preview-img" src="" style="display:none;">
-                            <input type="file" id="iad_parking_file" accept="image/*">
-                            <input type="hidden" id="iad_parking_image" value="">
+                            <label>Фотография / Схема парковки (URL ссылки)</label>
+                            <input type="text" id="iad_parking_image" placeholder="https://... или /uploads/...">
                         </div>
                     </div>
 
@@ -1055,7 +1053,7 @@
                     <div class="form-grid">
                         <div class="full-width">
                             <label>URL Вебхука Discord</label>
-                            <input type="text" id="testWebhookUrlInput" placeholder="https://discord.com/api/webhooks/...">
+                            <input type="text" id="testWebhookUrlInput" placeholder="[https://discord.com/api/webhooks/](https://discord.com/api/webhooks/)...">
                         </div>
                         <div class="full-width">
                             <label>JSON База (Payload)</label>
@@ -1498,7 +1496,7 @@
                 <textarea rows="2" class="iad-l-desc" placeholder="Регламентирует процесс задержания..."></textarea>
                 <div style="margin-top:10px;">
                         <label>Ссылка на базу (Форум и т.д.)</label>
-                        <input type="text" class="iad-l-url" placeholder="https://forum.gta5rp.com/...">
+                        <input type="text" class="iad-l-url" placeholder="[https://forum.gta5rp.com/](https://forum.gta5rp.com/)...">
                 </div>
             `;
             container.appendChild(div);
