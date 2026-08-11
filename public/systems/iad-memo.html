@@ -124,6 +124,8 @@
             grid-row: span 2;
             height: 100%;
             min-height: 560px;
+            display: flex;
+            flex-direction: column;
         }
 
         .card::before {
@@ -236,8 +238,8 @@
             overflow-y: auto;
             padding-right: 10px;
             margin-top: 10px;
-            flex-grow: 1;
-            max-height: 460px;
+            flex: 1; 
+            min-height: 0; 
         }
 
         .violation-tag {
@@ -476,7 +478,11 @@
             .card-double-height {
                 grid-row: auto;
                 min-height: auto;
+                height: 500px; 
             }
+            header { padding: 20px 10px; }
+            h1 { font-size: 28px; }
+            .logo-icon { font-size: 35px; }
         }
     </style>
 </head>
