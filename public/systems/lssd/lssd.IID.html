@@ -373,7 +373,7 @@
     </div>
 </div>
 <script>
-    const DEFAULT_POINTS = {
+    var DEFAULT_POINTS = {
         'discipline_warning': { name: '📋 Выдача дисц. взыскания', points: 3, category: 'withEvidence' },
         'discipline_formation': { name: '📋 Выдача дисц. взысканий за строй', points: 10, category: 'withEvidence' },
         'formation_rollback': { name: '🔙 Откат строя', points: 3, category: 'withEvidence' },
@@ -405,7 +405,7 @@
         'butterfly_surrender': { name: '🦋 Сдача бабочки', points: 5, category: 'withEvidence' }
     };
 
-    const DEFAULT_RANKS = {
+    var DEFAULT_RANKS = {
         '3_to_4': {
             name: 'Сержант (3) → Специалист (4)',
             currentRank: 'Сержант (3)',
@@ -432,34 +432,47 @@
         }
     };
 
-    const DEFAULT_ACTIONS = Object.entries(DEFAULT_POINTS).map(([id, data]) => ({
-        id, name: data.name, points: data.points, category: data.category,
-        requiresEvidence: true,
-        evidenceType: 'ds_photo',
-        description: `${data.name} — ${data.points} баллов. Требуется доказательство.`
-    }));
+    var DEFAULT_ACTIONS = Object.keys(DEFAULT_POINTS).map(function(id) {
+        var data = DEFAULT_POINTS[id];
+        return {
+            id: id, name: data.name, points: data.points, category: data.category,
+            requiresEvidence: true,
+            evidenceType: 'ds_photo',
+            description: data.name + ' — ' + data.points + ' баллов. Требуется доказательство.'
+        };
+    });
 
-    let POINTS_SYSTEM = null, RANK_SYSTEM = null, ALL_ACTIONS = null;
+    var POINTS_SYSTEM = null, RANK_SYSTEM = null, ALL_ACTIONS = null;
     
-    async function fetchSystemData() {
-        try {
-            const res = await fetch('/lssd/config');
-            const data = await res.json();
-            
+    function fetchSystemData() {
+        fetch('/lssd/config', {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        }).then(function(res) {
+            return res.json();
+        }).then(function(data) {
             POINTS_SYSTEM = (data.points && Object.keys(data.points).length > 0) ? data.points : DEFAULT_POINTS;
             RANK_SYSTEM = (data.rank && Object.keys(data.rank).length > 0) ? data.rank : DEFAULT_RANKS;
             ALL_ACTIONS = (data.actions && data.actions.length > 0) ? data.actions : DEFAULT_ACTIONS;
 
-            document.getElementById('globalLoader')?.remove();
-            document.querySelector('.tiles').style.display = 'grid';
-        } catch (err) {
-            document.getElementById('globalLoader')?.remove();
+            var gl = document.getElementById('globalLoader');
+            if (gl) gl.remove();
+            var tc = document.querySelector('.tiles');
+            if (tc) tc.style.display = 'grid';
+        }).catch(function(err) {
+            var gl = document.getElementById('globalLoader');
+            if (gl) gl.remove();
             alert('Ошибка загрузки данных: ' + err.message);
-        }
+        });
     }
 
     window.addEventListener('load', function() {
-        const loaderDiv = document.createElement('div');
+        var loaderDiv = document.createElement('div');
         loaderDiv.id = 'globalLoader';
         loaderDiv.className = 'loading-overlay';
         loaderDiv.innerHTML = '<div class="loading-card"><div class="spinner"></div><p>Загрузка базы LSSD...</p></div>';
@@ -467,7 +480,7 @@
         fetchSystemData();
     });
 
-    function showSection(section) {
+    window.showSection = function(section) {
         document.getElementById('reportSection').classList.remove('active');
         document.getElementById('promotionSection').classList.remove('active');
         if(section === 'report') {
@@ -480,65 +493,64 @@
     }
 
     document.addEventListener('click', function(e) {
-        const tile = e.target.closest('.tile');
-        if(tile && tile.dataset.section) {
+        var tile = e.target.closest('.tile');
+        if(tile && tile.getAttribute('data-section')) {
             if(!POINTS_SYSTEM || !RANK_SYSTEM || !ALL_ACTIONS) {
                 alert('Синхронизация с базой данных, подождите пару секунд...');
                 return;
             }
-            showSection(tile.dataset.section);
+            showSection(tile.getAttribute('data-section'));
         }
     });
 
-    let reportActions = [], reportCounter = 0;
+    var reportActions = [], reportCounter = 0;
     
     function loadReportForm() {
         if(!RANK_SYSTEM) return;
-        const rankOptions = Object.values(RANK_SYSTEM).map(r => `<option value="${r.currentRank}">${r.currentRank}</option>`).join('');
-        const extraRanks = '<option value="Капитан (7)">Капитан (7)</option>';
-        const allRanks = rankOptions + extraRanks;
+        var rankKeys = Object.keys(RANK_SYSTEM);
+        var rankOptions = '';
+        for (var r = 0; r < rankKeys.length; r++) {
+            var rankObj = RANK_SYSTEM[rankKeys[r]];
+            rankOptions += '<option value="' + rankObj.currentRank + '">' + rankObj.currentRank + '</option>';
+        }
+        var extraRanks = '<option value="Капитан (7)">Капитан (7)</option>';
+        var allRanks = rankOptions + extraRanks;
         
-        document.getElementById('reportFormContainer').innerHTML = `
-            <div class="card">
-                <div class="section-title"><i class="fas fa-user-tie"></i> Данные сотрудника</div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                    <div class="form-group"><label>Никнейм</label><input id="repEmployee" placeholder="Например: Alexandr Cop"></div>
-                    <div class="form-group"><label>Звание</label><select id="repRank">${allRanks}</select></div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="section-title">
-                    <span><i class="fas fa-calendar-alt"></i> Период отчёта</span>
-                    <button class="btn-secondary" style="margin-left:auto; font-size: 0.9rem; padding: 8px 16px;" onclick="setWeekPeriod()">Текущая неделя</button>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                    <div class="form-group"><label>Начало</label><input type="date" id="repStart"></div>
-                    <div class="form-group"><label>Конец</label><input type="date" id="repEnd"></div>
-                </div>
-                <div id="repPeriodInfo" class="empty-state" style="margin-top:10px; padding: 15px;">Выберите даты</div>
-            </div>
-            <div class="card">
-                <div class="section-title">
-                    <span><i class="fas fa-camera"></i> Проделанная работа</span>
-                    <button class="btn-secondary" style="margin-left:auto;" onclick="addReportAction()"><i class="fas fa-plus"></i> Добавить</button>
-                </div>
-                <div id="repActions"><div class="empty-state">Вы пока не добавили ни одного действия</div></div>
-            </div>
-            
-            <div class="points-display">
-                <h3>Итого заработано:</h3>
-                <div id="repTotalPoints">0</div>
-                <div id="repActionsCount" style="margin-top: 5px; opacity: 0.9; font-weight: 500;"></div>
-            </div>
-            
-            <div class="buttons">
-                <button class="btn-primary" onclick="submitReport()"><i class="fas fa-paper-plane"></i> Отправить отчёт</button>
-                <button class="btn-secondary" onclick="resetReport()"><i class="fas fa-trash-alt"></i> Очистить форму</button>
-            </div>
-            
-            <div class="loading" id="repLoading"><div class="spinner"></div><p style="color:var(--primary); font-weight:600;">Отправка данных...</p></div>
-            <div class="result-message" id="repResult"></div>
-        `;
+        document.getElementById('reportFormContainer').innerHTML = '<div class="card">' +
+            '<div class="section-title"><i class="fas fa-user-tie"></i> Данные сотрудника</div>' +
+            '<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">' +
+            '<div class="form-group"><label>Никнейм</label><input id="repEmployee" placeholder="Например: Alexandr Cop"></div>' +
+            '<div class="form-group"><label>Звание</label><select id="repRank">' + allRanks + '</select></div>' +
+            '</div></div>' +
+            '<div class="card">' +
+            '<div class="section-title">' +
+            '<span><i class="fas fa-calendar-alt"></i> Период отчёта</span>' +
+            '<button class="btn-secondary" style="margin-left:auto; font-size: 0.9rem; padding: 8px 16px;" onclick="setWeekPeriod()">Текущая неделя</button>' +
+            '</div>' +
+            '<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">' +
+            '<div class="form-group"><label>Начало</label><input type="date" id="repStart"></div>' +
+            '<div class="form-group"><label>Конец</label><input type="date" id="repEnd"></div>' +
+            '</div>' +
+            '<div id="repPeriodInfo" class="empty-state" style="margin-top:10px; padding: 15px;">Выберите даты</div>' +
+            '</div>' +
+            '<div class="card">' +
+            '<div class="section-title">' +
+            '<span><i class="fas fa-camera"></i> Проделанная работа</span>' +
+            '<button class="btn-secondary" style="margin-left:auto;" onclick="addReportAction()"><i class="fas fa-plus"></i> Добавить</button>' +
+            '</div>' +
+            '<div id="repActions"><div class="empty-state">Вы пока не добавили ни одного действия</div></div>' +
+            '</div>' +
+            '<div class="points-display">' +
+            '<h3>Итого заработано:</h3>' +
+            '<div id="repTotalPoints">0</div>' +
+            '<div id="repActionsCount" style="margin-top: 5px; opacity: 0.9; font-weight: 500;"></div>' +
+            '</div>' +
+            '<div class="buttons">' +
+            '<button class="btn-primary" onclick="submitReport()"><i class="fas fa-paper-plane"></i> Отправить отчёт</button>' +
+            '<button class="btn-secondary" onclick="resetReport()"><i class="fas fa-trash-alt"></i> Очистить форму</button>' +
+            '</div>' +
+            '<div class="loading" id="repLoading"><div class="spinner"></div><p style="color:var(--primary); font-weight:600;">Отправка данных...</p></div>' +
+            '<div class="result-message" id="repResult"></div>';
         
         setWeekPeriod();
         document.getElementById('repStart').addEventListener('change', updateReportPeriod);
@@ -547,69 +559,85 @@
         updateReportTotal();
     }
 
-    function updateReportPeriod() {
-        const s = document.getElementById('repStart').value, e = document.getElementById('repEnd').value;
-        if(s && e) { const days = Math.ceil((new Date(e) - new Date(s)) / 86400000) + 1; document.getElementById('repPeriodInfo').innerHTML = `<b>${s}</b> &nbsp;→&nbsp; <b>${e}</b> &nbsp;&nbsp;(${days} дн.)`; }
+    window.updateReportPeriod = function() {
+        var s = document.getElementById('repStart').value;
+        var e = document.getElementById('repEnd').value;
+        if(s && e) { 
+            var days = Math.ceil((new Date(e) - new Date(s)) / 86400000) + 1; 
+            document.getElementById('repPeriodInfo').innerHTML = '<b>' + s + '</b> &nbsp;→&nbsp; <b>' + e + '</b> &nbsp;&nbsp;(' + days + ' дн.)'; 
+        }
     }
 
-    function setWeekPeriod() {
-        const today = new Date();
-        const mon = new Date(today);
-        mon.setDate(today.getDate() - ((today.getDay() || 7) - 1));
-        const sun = new Date(mon);
+    window.setWeekPeriod = function() {
+        var today = new Date();
+        var mon = new Date(today);
+        var curDay = today.getDay() || 7;
+        mon.setDate(today.getDate() - (curDay - 1));
+        var sun = new Date(mon);
         sun.setDate(mon.getDate() + 6);
         document.getElementById('repStart').value = mon.toISOString().slice(0,10);
         document.getElementById('repEnd').value = sun.toISOString().slice(0,10);
         updateReportPeriod();
     }
 
-    function addReportAction() {
-        const acts = ALL_ACTIONS.filter(a => a.category === 'withEvidence');
+    window.addReportAction = function() {
+        var acts = ALL_ACTIONS.filter(function(a) { return a.category === 'withEvidence'; });
         if(!acts.length) return;
-        const id = 'repAct_' + Date.now() + '_' + (++reportCounter);
-        const container = document.getElementById('repActions');
-        const empty = container.querySelector('.empty-state');
+        var id = 'repAct_' + Date.now() + '_' + (++reportCounter);
+        var container = document.getElementById('repActions');
+        var empty = container.querySelector('.empty-state');
         if(empty) empty.remove();
         
-        container.insertAdjacentHTML('beforeend', `
-            <div class="action-item" id="${id}">
-                <div class="action-header">
-                    <span class="action-number">${reportCounter}</span>
-                    <button class="remove-btn" onclick="document.getElementById('${id}').remove(); updateReportTotal();"><i class="fas fa-times"></i></button>
-                </div>
-                <div class="action-grid">
-                    <select class="rep-act-type" onchange="updateReportTotal()">
-                        ${acts.map(a => `<option value="${a.id}">${a.name} (${a.points} б.)</option>`).join('')}
-                    </select>
-                    <input type="number" class="rep-act-qty" value="1" min="1" placeholder="Кол-во" title="Множитель / Килограммы" oninput="updateReportTotal()">
-                    <input type="text" class="rep-act-points" readonly style="text-align:center; background:#EAE6DB; font-weight:bold; color:var(--primary);">
-                </div>
-                <textarea class="rep-act-evidence" placeholder="Вставьте ссылки на доказательства (Imgur, YouTube и т.д.)" rows="2"></textarea>
-            </div>
-        `);
+        var optionsHtml = '';
+        for (var j = 0; j < acts.length; j++) {
+            optionsHtml += '<option value="' + acts[j].id + '">' + acts[j].name + ' (' + acts[j].points + ' б.)</option>';
+        }
+
+        var html = '<div class="action-item" id="' + id + '">' +
+            '<div class="action-header">' +
+            '<span class="action-number">' + reportCounter + '</span>' +
+            '<button class="remove-btn" onclick="document.getElementById(\'' + id + '\').remove(); updateReportTotal();"><i class="fas fa-times"></i></button>' +
+            '</div>' +
+            '<div class="action-grid">' +
+            '<select class="rep-act-type" onchange="updateReportTotal()">' + optionsHtml + '</select>' +
+            '<input type="number" class="rep-act-qty" value="1" min="1" placeholder="Кол-во" title="Множитель / Килограммы" oninput="updateReportTotal()">' +
+            '<input type="text" class="rep-act-points" readonly style="text-align:center; background:#EAE6DB; font-weight:bold; color:var(--primary);">' +
+            '</div>' +
+            '<textarea class="rep-act-evidence" placeholder="Вставьте ссылки на доказательства (Imgur, YouTube и т.д.)" rows="2"></textarea>' +
+            '</div>';
+            
+        container.insertAdjacentHTML('beforeend', html);
         updateReportTotal();
     }
 
-    function updateReportTotal() {
-        let total = 0, actions = [];
-        document.querySelectorAll('#repActions .action-item').forEach(el => {
-            const sel = el.querySelector('.rep-act-type'), qty = Math.max(1, parseInt(el.querySelector('.rep-act-qty').value) || 1);
-            if(sel && sel.value) {
-                const act = ALL_ACTIONS.find(a => a.id === sel.value);
-                if(act) {
-                    let points = act.points * qty;
+    window.updateReportTotal = function() {
+        var total = 0, actions = [];
+        var items = document.querySelectorAll('#repActions .action-item');
+        for (var i = 0; i < items.length; i++) {
+            var el = items[i];
+            var sel = el.querySelector('.rep-act-type');
+            var qtyVal = parseInt(el.querySelector('.rep-act-qty').value);
+            var qty = isNaN(qtyVal) ? 1 : Math.max(1, qtyVal);
+            if (sel && sel.value) {
+                var act = null;
+                for (var k = 0; k < ALL_ACTIONS.length; k++) {
+                    if (ALL_ACTIONS[k].id === sel.value) { act = ALL_ACTIONS[k]; break; }
+                }
+                if (act) {
+                    var points = act.points * qty;
                     el.querySelector('.rep-act-points').value = points + ' б.';
                     total += points;
-                    actions.push({ id: act.id, name: act.name, points: points, quantity: qty, category: act.category, evidence: el.querySelector('.rep-act-evidence')?.value || '' });
+                    var ev = el.querySelector('.rep-act-evidence');
+                    actions.push({ id: act.id, name: act.name, points: points, quantity: qty, category: act.category, evidence: ev ? ev.value : '' });
                 }
             }
-        });
+        }
         document.getElementById('repTotalPoints').innerText = total + ' баллов';
-        document.getElementById('repActionsCount').innerHTML = `Всего действий: ${actions.length}`;
+        document.getElementById('repActionsCount').innerHTML = 'Всего действий: ' + actions.length;
         reportActions = actions;
     }
 
-    function resetReport() {
+    window.resetReport = function() {
         if(confirm('Вы уверены, что хотите полностью очистить форму?')) {
             document.getElementById('repEmployee').value = '';
             document.getElementById('repRank').selectedIndex = 0;
@@ -620,121 +648,126 @@
         }
     }
 
-    async function submitReport() {
-        const employee = document.getElementById('repEmployee').value.trim();
-        const rankName = document.getElementById('repRank').value;
-        const start = document.getElementById('repStart').value;
-        const end = document.getElementById('repEnd').value;
+    window.submitReport = function() {
+        var employee = document.getElementById('repEmployee').value.trim();
+        var rankName = document.getElementById('repRank').value;
+        var start = document.getElementById('repStart').value;
+        var end = document.getElementById('repEnd').value;
         
-        if(!employee || !rankName) return alert('Заполните данные сотрудника (Никнейм и Звание)');
-        if(!start || !end) return alert('Укажите период отчёта');
-        if(reportActions.length === 0) return alert('Добавьте хотя бы одно действие в отчёт');
-        for(const act of reportActions) if(!act.evidence?.trim()) return alert(`Для пункта "${act.name}" отсутствуют доказательства. Пожалуйста, прикрепите ссылки.`);
+        if(!employee || !rankName) { alert('Заполните данные сотрудника (Никнейм и Звание)'); return; }
+        if(!start || !end) { alert('Укажите период отчёта'); return; }
+        if(reportActions.length === 0) { alert('Добавьте хотя бы одно действие в отчёт'); return; }
         
-        const days = Math.ceil((new Date(end) - new Date(start)) / 86400000) + 1;
-        const loading = document.getElementById('repLoading'), resDiv = document.getElementById('repResult');
+        for (var i = 0; i < reportActions.length; i++) {
+            var a = reportActions[i];
+            if (!a.evidence || a.evidence.trim() === '') {
+                alert('Для пункта "' + a.name + '" отсутствуют доказательства. Пожалуйста, прикрепите ссылки.');
+                return;
+            }
+        }
+        
+        var days = Math.ceil((new Date(end) - new Date(start)) / 86400000) + 1;
+        var loading = document.getElementById('repLoading'), resDiv = document.getElementById('repResult');
         
         loading.style.display = 'block'; resDiv.style.display = 'none';
         
-        try {
-            const res = await fetch('/lssd/report', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ employee, rankName, startDate: start, endDate: end, periodDays: days, actions: reportActions })
-            });
-            const data = await res.json();
-            
+        fetch('/lssd/report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ employee: employee, rankName: rankName, startDate: start, endDate: end, periodDays: days, actions: reportActions })
+        }).then(function(res) {
+            return res.json();
+        }).then(function(data) {
             loading.style.display = 'none'; 
             resDiv.innerHTML = '<i class="fas fa-check-circle" style="font-size:24px; margin-bottom:10px; display:block;"></i>' + data.message; 
             resDiv.className = 'result-message ' + (data.success ? 'success' : 'error'); 
             resDiv.style.display = 'block'; 
-            if(data.success) setTimeout(() => resetReport(), 3000); 
-        } catch (err) {
+            if(data.success) setTimeout(function() { resetReport(); }, 3000); 
+        }).catch(function(err) {
             loading.style.display = 'none'; 
             resDiv.innerHTML = '<i class="fas fa-exclamation-triangle" style="font-size:24px; margin-bottom:10px; display:block;"></i>Ошибка: ' + err.message; 
             resDiv.className = 'result-message error'; 
             resDiv.style.display = 'block'; 
-        }
+        });
     }
 
-    let selectedRankId = null, promoActions = [], promoCounter = 0;
+    var selectedRankId = null, promoActions = [], promoCounter = 0;
     
-    function loadPromotionForm() {
+    window.loadPromotionForm = function() {
         if(!RANK_SYSTEM) return;
-        document.getElementById('promotionFormContainer').innerHTML = `
-            <div id="promoStep1">
-                <div class="card">
-                    <div class="section-title"><i class="fas fa-level-up-alt"></i> Выберите тип повышения</div>
-                    <div id="rankCards" class="rank-cards"></div>
-                </div>
-                <div class="card">
-                    <div class="section-title"><i class="fas fa-id-card"></i> Информация о сотруднике</div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                        <div class="form-group"><label>Никнейм</label><input id="promoEmp" placeholder="В игре"></div>
-                        <div class="form-group"><label>Discord</label><input id="promoDisc" placeholder="Ваш дискорд"></div>
-                    </div>
-                    <div id="promoMilSection" style="display:none; margin-top:10px; padding-top:15px; border-top:1px dashed #CCC;">
-                        <div class="form-group"><label style="color:var(--primary);"><i class="fas fa-address-card"></i> Ссылка на военный билет (обязательно)</label><input id="promoMil" placeholder="Ссылка на скриншот"></div>
-                    </div>
-                </div>
-                <button class="btn-primary" style="width:100%; justify-content:center;" onclick="goToPromoStep2()">Далее: Внести работу <i class="fas fa-arrow-right"></i></button>
-            </div>
-            
-            <div id="promoStep2" style="display:none;">
-                <div class="card">
-                    <div class="section-title">
-                        <span><i class="fas fa-camera"></i> Доказательства работы</span>
-                        <button class="btn-secondary" style="margin-left:auto;" onclick="addPromoAction()"><i class="fas fa-plus"></i> Добавить</button>
-                    </div>
-                    <div id="promoActions"><div class="empty-state">Вы пока не добавили ни одного действия</div></div>
-                </div>
-                
-                <div class="points-display">
-                    <h3>Прогресс для повышения:</h3>
-                    <div style="font-size: 2.5rem; font-weight: 700; margin-top: 10px; text-shadow: 1px 2px 4px rgba(0,0,0,0.1);">
-                        <span id="promoTotal">0</span> <span style="font-size:1.5rem; opacity:0.8;">/ <span id="promoRequired"></span> б.</span>
-                    </div>
-                </div>
-                
-                <div class="buttons">
-                    <button class="btn-primary" onclick="submitPromotion()"><i class="fas fa-paper-plane"></i> Отправить заявку</button>
-                    <button class="btn-secondary" onclick="goToPromoStep1()"><i class="fas fa-arrow-left"></i> Назад к данным</button>
-                </div>
-            </div>
-            
-            <div class="loading" id="promoLoading"><div class="spinner"></div><p style="color:var(--primary); font-weight:600;">Отправка данных...</p></div>
-            <div class="result-message" id="promoResult"></div>
-        `;
+        document.getElementById('promotionFormContainer').innerHTML = '<div id="promoStep1">' +
+            '<div class="card">' +
+            '<div class="section-title"><i class="fas fa-level-up-alt"></i> Выберите тип повышения</div>' +
+            '<div id="rankCards" class="rank-cards"></div>' +
+            '</div>' +
+            '<div class="card">' +
+            '<div class="section-title"><i class="fas fa-id-card"></i> Информация о сотруднике</div>' +
+            '<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">' +
+            '<div class="form-group"><label>Никнейм</label><input id="promoEmp" placeholder="В игре"></div>' +
+            '<div class="form-group"><label>Discord</label><input id="promoDisc" placeholder="Ваш дискорд"></div>' +
+            '</div>' +
+            '<div id="promoMilSection" style="display:none; margin-top:10px; padding-top:15px; border-top:1px dashed #CCC;">' +
+            '<div class="form-group"><label style="color:var(--primary);"><i class="fas fa-address-card"></i> Ссылка на военный билет (обязательно)</label><input id="promoMil" placeholder="Ссылка на скриншот"></div>' +
+            '</div>' +
+            '</div>' +
+            '<button class="btn-primary" style="width:100%; justify-content:center;" onclick="goToPromoStep2()">Далее: Внести работу <i class="fas fa-arrow-right"></i></button>' +
+            '</div>' +
+            '<div id="promoStep2" style="display:none;">' +
+            '<div class="card">' +
+            '<div class="section-title">' +
+            '<span><i class="fas fa-camera"></i> Доказательства работы</span>' +
+            '<button class="btn-secondary" style="margin-left:auto;" onclick="addPromoAction()"><i class="fas fa-plus"></i> Добавить</button>' +
+            '</div>' +
+            '<div id="promoActions"><div class="empty-state">Вы пока не добавили ни одного действия</div></div>' +
+            '</div>' +
+            '<div class="points-display">' +
+            '<h3>Прогресс для повышения:</h3>' +
+            '<div style="font-size: 2.5rem; font-weight: 700; margin-top: 10px; text-shadow: 1px 2px 4px rgba(0,0,0,0.1);">' +
+            '<span id="promoTotal">0</span> <span style="font-size:1.5rem; opacity:0.8;">/ <span id="promoRequired"></span> б.</span>' +
+            '</div>' +
+            '</div>' +
+            '<div class="buttons">' +
+            '<button class="btn-primary" onclick="submitPromotion()"><i class="fas fa-paper-plane"></i> Отправить заявку</button>' +
+            '<button class="btn-secondary" onclick="goToPromoStep1()"><i class="fas fa-arrow-left"></i> Назад к данным</button>' +
+            '</div>' +
+            '</div>' +
+            '<div class="loading" id="promoLoading"><div class="spinner"></div><p style="color:var(--primary); font-weight:600;">Отправка данных...</p></div>' +
+            '<div class="result-message" id="promoResult"></div>';
         
-        const cardsDiv = document.getElementById('rankCards');
-        const rankOrder = ['3_to_4', '4_to_5', '5_to_7'];
-        for(let id of rankOrder) { 
-            const r = RANK_SYSTEM[id]; 
-            if(r) cardsDiv.innerHTML += `
-                <div class="rank-card" data-rank-id="${id}" onclick="selectRank('${id}')">
-                    <div class="tile-icon" style="margin-bottom:10px;"><i class="fas fa-angle-double-up"></i></div>
-                    <div class="tile-title">${r.name}</div>
-                    <div class="tile-desc">Требования: <b>${r.description}</b></div>
-                </div>`; 
+        var cardsDiv = document.getElementById('rankCards');
+        var rankOrder = ['3_to_4', '4_to_5', '5_to_7'];
+        for(var i = 0; i < rankOrder.length; i++) {
+            var id = rankOrder[i];
+            var r = RANK_SYSTEM[id]; 
+            if(r) {
+                cardsDiv.innerHTML += '<div class="rank-card" data-rank-id="' + id + '" onclick="selectRank(\'' + id + '\', this)">' +
+                    '<div class="tile-icon" style="margin-bottom:10px;"><i class="fas fa-angle-double-up"></i></div>' +
+                    '<div class="tile-title">' + r.name + '</div>' +
+                    '<div class="tile-desc">Требования: <b>' + r.description + '</b></div>' +
+                    '</div>'; 
+            }
         }
         selectedRankId = null; promoActions = []; promoCounter = 0;
     }
 
-    window.selectRank = function(id) { 
+    window.selectRank = function(id, el) { 
         selectedRankId = id; 
-        document.querySelectorAll('.rank-card').forEach(c => c.classList.remove('selected')); 
-        event.currentTarget.classList.add('selected'); 
-        const r = RANK_SYSTEM[id]; 
+        var cards = document.querySelectorAll('.rank-card');
+        for (var i = 0; i < cards.length; i++) cards[i].classList.remove('selected'); 
+        el.classList.add('selected'); 
+        var r = RANK_SYSTEM[id]; 
         document.getElementById('promoMilSection').style.display = r.requiresMilitaryId ? 'block' : 'none'; 
     }
 
     window.goToPromoStep2 = function() {
-        const emp = document.getElementById('promoEmp').value.trim(), disc = document.getElementById('promoDisc').value.trim();
-        if(!selectedRankId) return alert('Выберите ранг для повышения (кликните по карточке)');
-        if(!emp || !disc) return alert('Пожалуйста, заполните Никнейм и Discord');
+        var emp = document.getElementById('promoEmp').value.trim();
+        var disc = document.getElementById('promoDisc').value.trim();
+        if(!selectedRankId) { alert('Выберите ранг для повышения (кликните по карточке)'); return; }
+        if(!emp || !disc) { alert('Пожалуйста, заполните Никнейм и Discord'); return; }
         
-        const r = RANK_SYSTEM[selectedRankId];
-        if(r.requiresMilitaryId && !document.getElementById('promoMil').value.trim()) return alert('Для этого повышения обязательно прикрепить скриншот военного билета');
+        var r = RANK_SYSTEM[selectedRankId];
+        var pm = document.getElementById('promoMil');
+        if(r.requiresMilitaryId && (!pm || pm.value.trim() === '')) { alert('Для этого повышения обязательно прикрепить скриншот военного билета'); return; }
         
         document.getElementById('promoStep1').style.display = 'none';
         document.getElementById('promoStep2').style.display = 'block';
@@ -752,50 +785,61 @@
     }
 
     window.addPromoAction = function() {
-        const acts = ALL_ACTIONS.filter(a => a.category === 'withEvidence');
+        var acts = ALL_ACTIONS.filter(function(a) { return a.category === 'withEvidence'; });
         if(!acts.length) return;
-        const id = 'promoAct_' + Date.now() + '_' + (++promoCounter);
-        const container = document.getElementById('promoActions');
-        const empty = container.querySelector('.empty-state');
+        var id = 'promoAct_' + Date.now() + '_' + (++promoCounter);
+        var container = document.getElementById('promoActions');
+        var empty = container.querySelector('.empty-state');
         if(empty) empty.remove();
         
-        container.insertAdjacentHTML('beforeend', `
-            <div class="action-item" id="${id}">
-                <div class="action-header">
-                    <span class="action-number">${promoCounter}</span>
-                    <button class="remove-btn" onclick="document.getElementById('${id}').remove(); updatePromoTotal();"><i class="fas fa-times"></i></button>
-                </div>
-                <div class="action-grid">
-                    <select class="promo-act-type" onchange="updatePromoTotal()">
-                        ${acts.map(a => `<option value="${a.id}">${a.name} (${a.points} б.)</option>`).join('')}
-                    </select>
-                    <input type="number" class="promo-act-qty" value="1" min="1" placeholder="Кол-во" title="Множитель / Килограммы" oninput="updatePromoTotal()">
-                    <input type="text" class="promo-act-points" readonly style="text-align:center; background:#EAE6DB; font-weight:bold; color:var(--primary);">
-                </div>
-                <textarea class="promo-act-evidence" placeholder="Вставьте ссылки на доказательства" rows="2"></textarea>
-            </div>
-        `);
+        var optionsHtml = '';
+        for (var j = 0; j < acts.length; j++) {
+            optionsHtml += '<option value="' + acts[j].id + '">' + acts[j].name + ' (' + acts[j].points + ' б.)</option>';
+        }
+
+        var html = '<div class="action-item" id="' + id + '">' +
+            '<div class="action-header">' +
+            '<span class="action-number">' + promoCounter + '</span>' +
+            '<button class="remove-btn" onclick="document.getElementById(\'' + id + '\').remove(); updatePromoTotal();"><i class="fas fa-times"></i></button>' +
+            '</div>' +
+            '<div class="action-grid">' +
+            '<select class="promo-act-type" onchange="updatePromoTotal()">' + optionsHtml + '</select>' +
+            '<input type="number" class="promo-act-qty" value="1" min="1" placeholder="Кол-во" title="Множитель / Килограммы" oninput="updatePromoTotal()">' +
+            '<input type="text" class="promo-act-points" readonly style="text-align:center; background:#EAE6DB; font-weight:bold; color:var(--primary);">' +
+            '</div>' +
+            '<textarea class="promo-act-evidence" placeholder="Вставьте ссылки на доказательства" rows="2"></textarea>' +
+            '</div>';
+
+        container.insertAdjacentHTML('beforeend', html);
         updatePromoTotal();
     }
 
     window.updatePromoTotal = function() {
-        let total = 0, actions = [];
-        document.querySelectorAll('#promoActions .action-item').forEach(el => {
-            const sel = el.querySelector('.promo-act-type'), qty = Math.max(1, parseInt(el.querySelector('.promo-act-qty').value) || 1);
-            if(sel && sel.value) {
-                const act = ALL_ACTIONS.find(a => a.id === sel.value);
-                if(act) {
-                    let points = act.points * qty;
+        var total = 0, actions = [];
+        var items = document.querySelectorAll('#promoActions .action-item');
+        for (var i = 0; i < items.length; i++) {
+            var el = items[i];
+            var sel = el.querySelector('.promo-act-type');
+            var qtyVal = parseInt(el.querySelector('.promo-act-qty').value);
+            var qty = isNaN(qtyVal) ? 1 : Math.max(1, qtyVal);
+            if (sel && sel.value) {
+                var act = null;
+                for (var k = 0; k < ALL_ACTIONS.length; k++) {
+                    if (ALL_ACTIONS[k].id === sel.value) { act = ALL_ACTIONS[k]; break; }
+                }
+                if (act) {
+                    var points = act.points * qty;
                     el.querySelector('.promo-act-points').value = points + ' б.';
                     total += points;
-                    actions.push({ id: act.id, name: act.name, points, quantity: qty, category: act.category, evidence: el.querySelector('.promo-act-evidence')?.value || '' });
+                    var ev = el.querySelector('.promo-act-evidence');
+                    actions.push({ id: act.id, name: act.name, points: points, quantity: qty, category: act.category, evidence: ev ? ev.value : '' });
                 }
             }
-        });
+        }
         document.getElementById('promoTotal').innerText = total;
         
-        const req = parseInt(document.getElementById('promoRequired').innerText) || 0;
-        const totalSpan = document.getElementById('promoTotal');
+        var req = parseInt(document.getElementById('promoRequired').innerText) || 0;
+        var totalSpan = document.getElementById('promoTotal');
         if(total >= req) {
             totalSpan.style.color = '#FFF'; 
         } else {
@@ -805,45 +849,68 @@
         promoActions = actions;
     }
 
-    async function submitPromotion() {
-        if(promoActions.length === 0) return alert('Добавьте хотя бы одно действие');
-        for(const act of promoActions) if(!act.evidence?.trim()) return alert(`Для пункта "${act.name}" отсутствуют доказательства.`);
+    window.submitPromotion = function() {
+        if(promoActions.length === 0) { alert('Добавьте хотя бы одно действие'); return; }
         
-        const total = parseInt(document.getElementById('promoTotal').innerText);
-        const r = RANK_SYSTEM[selectedRankId];
-        if(total < r.requiredPoints) return alert(`Не хватает баллов для повышения! Собрано: ${total} из ${r.requiredPoints}.`);
+        for (var i = 0; i < promoActions.length; i++) {
+            var a = promoActions[i];
+            if (!a.evidence || a.evidence.trim() === '') {
+                alert('Для пункта "' + a.name + '" отсутствуют доказательства.');
+                return;
+            }
+        }
         
-        const payload = { 
+        var total = parseInt(document.getElementById('promoTotal').innerText);
+        var r = RANK_SYSTEM[selectedRankId];
+        if(total < r.requiredPoints) { alert('Не хватает баллов для повышения! Собрано: ' + total + ' из ' + r.requiredPoints + '.'); return; }
+        
+        var pm = document.getElementById('promoMil');
+        var payload = { 
             rankId: selectedRankId, 
             employee: document.getElementById('promoEmp').value.trim(), 
             discord: document.getElementById('promoDisc').value.trim(), 
-            militaryIdLink: document.getElementById('promoMil')?.value.trim() || '', 
+            militaryIdLink: pm ? pm.value.trim() : '', 
             actions: promoActions 
         };
         
-        const loading = document.getElementById('promoLoading'), resDiv = document.getElementById('promoResult');
+        var loading = document.getElementById('promoLoading'), resDiv = document.getElementById('promoResult');
         loading.style.display = 'block'; resDiv.style.display = 'none';
         
-        try {
-            const res = await fetch('/lssd/promotion', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            
+        fetch('/lssd/promotion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(function(res) {
+            return res.json();
+        }).then(function(data) {
             loading.style.display = 'none'; 
             resDiv.innerHTML = '<i class="fas fa-check-circle" style="font-size:24px; margin-bottom:10px; display:block;"></i>' + data.message; 
             resDiv.className = 'result-message ' + (data.success ? 'success' : 'error'); 
             resDiv.style.display = 'block'; 
-            if(data.success) setTimeout(() => showSection(null), 3500); 
-        } catch (err) {
+            if(data.success) setTimeout(function() { showSection(null); }, 3500); 
+        }).catch(function(err) {
             loading.style.display = 'none'; 
             resDiv.innerHTML = '<i class="fas fa-exclamation-triangle" style="font-size:24px; margin-bottom:10px; display:block;"></i>Ошибка: ' + err.message; 
             resDiv.className = 'result-message error'; 
             resDiv.style.display = 'block'; 
-        }
+        });
     }
+
+    document.addEventListener('copy', function() {
+        var copiedText = window.getSelection().toString();
+        if (copiedText && copiedText.trim() !== '') {
+            fetch('/api/track-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'copy',
+                    text: copiedText,
+                    url: window.location.pathname
+                })
+            }).catch(function(){});
+        }
+    });
+
 </script>
 </body>
 </html>
