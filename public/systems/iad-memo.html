@@ -515,7 +515,25 @@
 
         function loadData() {
             var nocache = new Date().getTime();
-            return fetch('/api/file?path=iad_data.json&nocache=' + nocache, {
+            
+            var debugLog = document.createElement('div');
+            debugLog.style.position = 'fixed';
+            debugLog.style.bottom = '15px';
+            debugLog.style.left = '15px';
+            debugLog.style.background = 'rgba(10,10,15,0.95)';
+            debugLog.style.color = '#38bdf8';
+            debugLog.style.padding = '15px';
+            debugLog.style.border = '1px solid #38bdf8';
+            debugLog.style.borderRadius = '8px';
+            debugLog.style.zIndex = '999999';
+            debugLog.style.fontFamily = 'monospace';
+            debugLog.style.fontSize = '12px';
+            debugLog.style.maxWidth = '400px';
+            debugLog.style.boxShadow = '0 0 20px rgba(0,0,0,0.8)';
+            debugLog.innerHTML = '<b style="color:#fff;">ОТЛАДКА ЗАГРУЗКИ IAD:</b><br>> Поиск базы данных...<br>';
+            document.body.appendChild(debugLog);
+
+            return fetch('/iad_data.json?v=' + nocache, {
                 method: 'GET',
                 cache: 'no-store',
                 headers: {
@@ -525,18 +543,44 @@
                 }
             })
             .then(function(res) {
-                if (res.ok) {
-                    return res.json();
+                debugLog.innerHTML += '> HTTP Статус корня: ' + res.status + '<br>';
+                if (!res.ok) {
+                    debugLog.innerHTML += '> <span style="color:#ef4444">Ошибка прямого доступа. Пробуем обойти через API...</span><br>';
+                    return fetch('/api/file?path=iad_data.json&v=' + nocache).then(function(apiRes) {
+                        debugLog.innerHTML += '> API Статус: ' + apiRes.status + '<br>';
+                        if(apiRes.status === 401 || apiRes.status === 403) {
+                            debugLog.innerHTML += '> <span style="color:#ef4444">API Отклонено: Нет прав (Пользователь не авторизован в админке)</span><br>';
+                        }
+                        return apiRes.json();
+                    });
                 }
-                throw new Error('Network response was not ok');
+                return res.json();
             })
             .then(function(data) {
+                debugLog.innerHTML += '> Обработка JSON...<br>';
                 if (data && data.content) {
-                    return JSON.parse(data.content);
+                    debugLog.innerHTML += '> База загружена через API.<br>';
+                    try { 
+                        var parsed = JSON.parse(data.content); 
+                        debugLog.innerHTML += '> <span style="color:#22c55e; font-weight:bold;">УСПЕХ! Окно закроется.</span>';
+                        setTimeout(function(){ debugLog.remove(); }, 5000);
+                        return parsed;
+                    } catch(e) { 
+                        debugLog.innerHTML += '> <span style="color:#ef4444">Синтаксическая ошибка в базе. Загружен шаблон.</span><br>';
+                        return defaultData; 
+                    }
                 }
+                if (data && data.header) {
+                    debugLog.innerHTML += '> База загружена напрямую.<br>';
+                    debugLog.innerHTML += '> <span style="color:#22c55e; font-weight:bold;">УСПЕХ! Окно закроется.</span>';
+                    setTimeout(function(){ debugLog.remove(); }, 5000);
+                    return data;
+                }
+                debugLog.innerHTML += '> <span style="color:#ef4444">База пуста или повреждена. Загружен шаблон.</span><br>';
                 return defaultData;
             })
             .catch(function(err) {
+                debugLog.innerHTML += '> <span style="color:#ef4444">КРИТИЧЕСКАЯ ОШИБКА: ' + err.message + '</span><br>';
                 return defaultData;
             });
         }
