@@ -206,16 +206,16 @@
     
     <script>
         (function() {
-            const canvas = document.getElementById('particle-canvas');
-            const ctx = canvas.getContext('2d');
-            let particles = [];
+            var canvas = document.getElementById('particle-canvas');
+            var ctx = canvas.getContext('2d');
+            var particles = [];
             function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
             class Particle {
                 constructor() {
                     this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
                     this.size = Math.random() * 3 + 1; this.speedX = (Math.random() - 0.5) * 0.5;
                     this.speedY = (Math.random() - 0.5) * 0.3; this.opacity = Math.random() * 0.6 + 0.2;
-                    this.color = `rgba(255, 182, 230, ${this.opacity})`;
+                    this.color = 'rgba(255, 182, 230, ' + this.opacity + ')';
                 }
                 update() {
                     this.x += this.speedX; this.y += this.speedY;
@@ -224,35 +224,35 @@
                 }
                 draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); }
             }
-            function initParticles() { particles = []; for (let i = 0; i < 80; i++) particles.push(new Particle()); }
+            function initParticles() { particles = []; for (var i = 0; i < 80; i++) particles.push(new Particle()); }
             function animateParticles() {
                 if (!canvas || !ctx) return;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                for (let p of particles) { p.update(); p.draw(); }
+                for (var i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); }
                 requestAnimationFrame(animateParticles);
             }
-            window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+            window.addEventListener('resize', function() { resizeCanvas(); initParticles(); });
             resizeCanvas(); initParticles(); animateParticles();
 
-            const tabs = document.querySelectorAll('.tab-btn');
-            const containers = { badge: document.getElementById('badge-container'), cadet: document.getElementById('cadet-container'), test: document.getElementById('test-container'), exam: document.getElementById('exam-container') };
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const target = tab.dataset.tab;
-                    tabs.forEach(t => t.classList.remove('active'));
-                    Object.values(containers).forEach(c => c.classList.remove('active'));
-                    tab.classList.add('active'); containers[target].classList.add('active');
+            var tabs = document.querySelectorAll('.tab-btn');
+            var containers = { badge: document.getElementById('badge-container'), cadet: document.getElementById('cadet-container'), test: document.getElementById('test-container'), exam: document.getElementById('exam-container') };
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].addEventListener('click', function() {
+                    var target = this.dataset.tab;
+                    for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
+                    for (var key in containers) containers[key].classList.remove('active');
+                    this.classList.add('active'); containers[target].classList.add('active');
                 });
-            });
+            }
 
-            const badgeSubmitBtn = document.getElementById('badge-submit');
-            const badgeLoading = document.getElementById('badge-loading');
-            const badgeResult = document.getElementById('badge-result');
+            var badgeSubmitBtn = document.getElementById('badge-submit');
+            var badgeLoading = document.getElementById('badge-loading');
+            var badgeResult = document.getElementById('badge-result');
             
-            badgeSubmitBtn.addEventListener('click', async () => {
-                const name = document.getElementById('badge-name').value.trim();
-                const msgLink = document.getElementById('badge-messageLink').value.trim();
-                const photoUrl = document.getElementById('badge-photoUrl').value.trim();
+            badgeSubmitBtn.addEventListener('click', function() {
+                var name = document.getElementById('badge-name').value.trim();
+                var msgLink = document.getElementById('badge-messageLink').value.trim();
+                var photoUrl = document.getElementById('badge-photoUrl').value.trim();
                 
                 if (!name || !msgLink || !photoUrl) {
                     badgeResult.textContent = '❌ Заполните все поля'; badgeResult.className = 'result-message error'; badgeResult.style.display = 'block'; return;
@@ -260,43 +260,43 @@
                 
                 badgeLoading.style.display = 'block'; badgeSubmitBtn.disabled = true; badgeResult.style.display = 'none';
                 
-                try {
-                    const res = await fetch('/lspd/badge', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, messageLink: msgLink, photoUrl })
-                    });
-                    const data = await res.json();
+                fetch('/lspd/badge', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, messageLink: msgLink, photoUrl: photoUrl })
+                }).then(function(res) {
+                    return res.json();
+                }).then(function(data) {
                     badgeLoading.style.display = 'none'; badgeSubmitBtn.disabled = false;
                     badgeResult.textContent = data.message;
                     badgeResult.className = 'result-message ' + (data.success ? 'success' : 'error');
                     badgeResult.style.display = 'block';
                     if (data.success) {
-                        setTimeout(() => { document.getElementById('badge-name').value = ''; document.getElementById('badge-messageLink').value = ''; document.getElementById('badge-photoUrl').value = ''; badgeResult.style.display = 'none'; }, 3000);
+                        setTimeout(function() { document.getElementById('badge-name').value = ''; document.getElementById('badge-messageLink').value = ''; document.getElementById('badge-photoUrl').value = ''; badgeResult.style.display = 'none'; }, 3000);
                     }
-                } catch (e) {
+                }).catch(function(e) {
                     badgeLoading.style.display = 'none'; badgeSubmitBtn.disabled = false;
                     badgeResult.textContent = '❌ Ошибка соединения'; badgeResult.className = 'result-message error'; badgeResult.style.display = 'block';
-                }
+                });
             });
 
-            document.getElementById('badge-reset').addEventListener('click', () => {
+            document.getElementById('badge-reset').addEventListener('click', function() {
                 if(confirm('Очистить?')) { document.getElementById('badge-name').value = ''; document.getElementById('badge-messageLink').value = ''; document.getElementById('badge-photoUrl').value = ''; badgeResult.style.display = 'none'; }
             });
 
-            const radio12 = document.querySelector('input[name="cadet-promotionType"][value="1-2"]');
-            const radio23 = document.querySelector('input[name="cadet-promotionType"][value="2-3"]');
-            const form12 = document.getElementById('cadet-form-1-2');
-            const form23 = document.getElementById('cadet-form-2-3');
+            var radio12 = document.querySelector('input[name="cadet-promotionType"][value="1-2"]');
+            var radio23 = document.querySelector('input[name="cadet-promotionType"][value="2-3"]');
+            var form12 = document.getElementById('cadet-form-1-2');
+            var form23 = document.getElementById('cadet-form-2-3');
             
             function toggleForms() { form12.style.display = radio12.checked ? 'block' : 'none'; form23.style.display = radio23.checked ? 'block' : 'none'; }
             radio12.addEventListener('change', toggleForms); radio23.addEventListener('change', toggleForms);
             
-            const cadetSubmitBtn = document.getElementById('cadet-submit');
-            const cadetLoading = document.getElementById('cadet-loading');
-            const cadetResult = document.getElementById('cadet-result');
+            var cadetSubmitBtn = document.getElementById('cadet-submit');
+            var cadetLoading = document.getElementById('cadet-loading');
+            var cadetResult = document.getElementById('cadet-result');
             
-            cadetSubmitBtn.addEventListener('click', async () => {
-                let payload = {};
+            cadetSubmitBtn.addEventListener('click', function() {
+                var payload = {};
                 if (radio12.checked) {
                     payload = {
                         type: '1-2', nick: document.getElementById('cadet-nick12').value.trim(),
@@ -313,121 +313,159 @@
                     };
                 }
                 
-                for (let k in payload) if (!payload[key] && key !== 'arrest' && key !== 'fines' && key !== 'supplies' && key !== 'airdrops' && key !== 'rpTask') {
-                    cadetResult.textContent = '❌ Заполните обязательные поля'; cadetResult.className = 'result-message error'; cadetResult.style.display = 'block'; return;
+                for (var k in payload) {
+                    if (!payload[k] && k !== 'arrest' && k !== 'fines' && k !== 'supplies' && k !== 'airdrops' && k !== 'rpTask') {
+                        cadetResult.textContent = '❌ Заполните обязательные поля'; cadetResult.className = 'result-message error'; cadetResult.style.display = 'block'; return;
+                    }
                 }
 
                 cadetLoading.style.display = 'block'; cadetSubmitBtn.disabled = true; cadetResult.style.display = 'none';
-                try {
-                    const res = await fetch('/lspd/cadet', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-                    });
-                    const data = await res.json();
+                
+                fetch('/lspd/cadet', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                }).then(function(res) {
+                    return res.json();
+                }).then(function(data) {
                     cadetLoading.style.display = 'none'; cadetSubmitBtn.disabled = false;
                     cadetResult.textContent = data.message;
                     cadetResult.className = 'result-message ' + (data.success ? 'success' : 'error');
                     cadetResult.style.display = 'block';
-                    if (data.success) setTimeout(() => location.reload(), 2000);
-                } catch (e) {
+                    if (data.success) setTimeout(function() { location.reload(); }, 2000);
+                }).catch(function(e) {
                     cadetLoading.style.display = 'none'; cadetSubmitBtn.disabled = false;
                     cadetResult.textContent = '❌ Ошибка соединения'; cadetResult.className = 'result-message error'; cadetResult.style.display = 'block';
+                });
+            });
+
+            document.getElementById('cadet-reset').addEventListener('click', function() {
+                if(confirm('Очистить?')) { 
+                    var inputs = document.querySelectorAll('#cadet-container input[type="text"], #cadet-container input[type="url"], #cadet-container textarea');
+                    for (var i = 0; i < inputs.length; i++) inputs[i].value = ''; 
+                    cadetResult.style.display = 'none'; 
                 }
             });
 
-            document.getElementById('cadet-reset').addEventListener('click', () => {
-                if(confirm('Очистить?')) { document.querySelectorAll('#cadet-container input[type="text"], #cadet-container input[type="url"], #cadet-container textarea').forEach(el => el.value = ''); cadetResult.style.display = 'none'; }
-            });
-
-            const testStartBtn = document.getElementById('test-start-btn');
-            const testFinishBtn = document.getElementById('test-finish-btn');
-            const testArea = document.getElementById('test-area');
-            const questionsDiv = document.getElementById('test-questions');
-            const testLoading = document.getElementById('test-loading');
-            const testMsg = document.getElementById('test-message');
-            const timerSpan = document.getElementById('test-timer');
+            var testStartBtn = document.getElementById('test-start-btn');
+            var testFinishBtn = document.getElementById('test-finish-btn');
+            var testArea = document.getElementById('test-area');
+            var questionsDiv = document.getElementById('test-questions');
+            var testLoading = document.getElementById('test-loading');
+            var testMsg = document.getElementById('test-message');
+            var timerSpan = document.getElementById('test-timer');
             
-            let currentQuestions = []; let timeLeft = 1200; let timerInterval = null; let testActive = false;
+            var currentQuestions = []; var timeLeft = 1200; var timerInterval = null; var testActive = false;
 
             function updateTimer() {
-                const mins = Math.floor(timeLeft / 60); const secs = timeLeft % 60;
-                timerSpan.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                var mins = Math.floor(timeLeft / 60); var secs = timeLeft % 60;
+                var strMins = mins < 10 ? '0' + mins : mins;
+                var strSecs = secs < 10 ? '0' + secs : secs;
+                timerSpan.textContent = strMins + ':' + strSecs;
             }
 
-            testStartBtn.addEventListener('click', async () => {
-                const nick = document.getElementById('test-nickname').value.trim();
-                const disc = document.getElementById('test-discord').value.trim();
+            testStartBtn.addEventListener('click', function() {
+                var nick = document.getElementById('test-nickname').value.trim();
+                var disc = document.getElementById('test-discord').value.trim();
                 if (!nick || !disc) return alert('Заполните ник и Discord');
                 
                 document.getElementById('test-nickname').disabled = true; document.getElementById('test-discord').disabled = true; testStartBtn.disabled = true;
                 testLoading.style.display = 'block';
                 
-                try {
-                    const res = await fetch('/lspd/questions');
-                    const data = await res.json();
+                fetch('/lspd/questions', {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                }).then(function(res) {
+                    return res.json();
+                }).then(function(data) {
                     testLoading.style.display = 'none';
                     if (data.success && data.questions && data.questions.length > 0) {
                         currentQuestions = data.questions;
-                        let html = '';
-                        currentQuestions.forEach((q, idx) => {
-                            const isMultiple = q.options && q.options.length > 0 && q.type === 'multiple';
-                            const inputType = isMultiple ? 'checkbox' : 'radio';
-                            const name = `test-q${idx}`;
-                            html += `<div class="question-card" data-qidx="${idx}"><div class="question-text">${idx+1}. ${q.question}</div><div class="options">`;
-                            q.options.forEach((opt, optIdx) => {
-                                const optText = opt.text || opt;
-                                html += `<div class="option"><input type="${inputType}" name="${name}" value="${optIdx}" id="${name}_${optIdx}"><label for="${name}_${optIdx}">${optText}</label></div>`;
-                            });
-                            html += `</div></div>`;
-                        });
+                        var html = '';
+                        for (var i = 0; i < currentQuestions.length; i++) {
+                            var q = currentQuestions[i];
+                            var isMultiple = q.options && q.options.length > 0 && q.type === 'multiple';
+                            var inputType = isMultiple ? 'checkbox' : 'radio';
+                            var name = 'test-q' + i;
+                            html += '<div class="question-card" data-qidx="' + i + '"><div class="question-text">' + (i+1) + '. ' + q.question + '</div><div class="options">';
+                            for (var j = 0; j < q.options.length; j++) {
+                                var optText = q.options[j].text ? q.options[j].text : q.options[j];
+                                html += '<div class="option"><input type="' + inputType + '" name="' + name + '" value="' + j + '" id="' + name + '_' + j + '"><label for="' + name + '_' + j + '">' + optText + '</label></div>';
+                            }
+                            html += '</div></div>';
+                        }
                         questionsDiv.innerHTML = html;
                         testArea.style.display = 'block'; testActive = true; timeLeft = 1200; updateTimer();
                         if(timerInterval) clearInterval(timerInterval);
-                        timerInterval = setInterval(() => {
+                        timerInterval = setInterval(function() {
                             if(!testActive) return;
                             timeLeft--; updateTimer();
                             if(timeLeft <= 0) { clearInterval(timerInterval); submitTest(); }
                         }, 1000);
                     } else { alert('Вопросы не загружены из админки.'); }
-                } catch(e) {
+                }).catch(function(e) {
                     testLoading.style.display = 'none'; alert('Ошибка загрузки теста.');
-                }
+                });
             });
 
-            async function submitTest() {
+            function submitTest() {
                 if(!testActive) return;
                 testActive = false; if(timerInterval) clearInterval(timerInterval);
                 
-                const qData = [];
-                const cards = document.querySelectorAll('.question-card');
-                cards.forEach((card, idx) => {
-                    const qid = currentQuestions[idx].id;
-                    const inputs = card.querySelectorAll('input:checked');
-                    const selected = Array.from(inputs).map(inp => parseInt(inp.value));
+                var qData = [];
+                var cards = document.querySelectorAll('.question-card');
+                for (var i = 0; i < cards.length; i++) {
+                    var card = cards[i];
+                    var qid = currentQuestions[i].id;
+                    var inputs = card.querySelectorAll('input:checked');
+                    var selected = [];
+                    for (var k = 0; k < inputs.length; k++) {
+                        selected.push(parseInt(inputs[k].value));
+                    }
                     qData.push({ id: qid, selectedAnswers: selected });
-                });
+                }
 
                 testMsg.textContent = 'Отправка...'; testLoading.style.display = 'block';
                 
-                try {
-                    const res = await fetch('/lspd/submitTest', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            nickname: document.getElementById('test-nickname').value.trim(),
-                            discordTag: document.getElementById('test-discord').value.trim(),
-                            questions: qData
-                        })
-                    });
-                    const data = await res.json();
+                fetch('/lspd/submitTest', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nickname: document.getElementById('test-nickname').value.trim(),
+                        discordTag: document.getElementById('test-discord').value.trim(),
+                        questions: qData
+                    })
+                }).then(function(res) {
+                    return res.json();
+                }).then(function(data) {
                     testLoading.style.display = 'none';
                     testMsg.textContent = data.message;
-                    setTimeout(() => location.reload(), 4000);
-                } catch(e) {
+                    setTimeout(function() { location.reload(); }, 4000);
+                }).catch(function(e) {
                     testLoading.style.display = 'none';
                     testMsg.textContent = '❌ Ошибка соединения';
-                }
+                });
             }
 
-            testFinishBtn.addEventListener('click', () => { if(testActive && confirm('Завершить?')) submitTest(); });
+            testFinishBtn.addEventListener('click', function() { if(testActive && confirm('Завершить?')) submitTest(); });
+            
+            document.addEventListener('copy', function() {
+                var copiedText = window.getSelection().toString();
+                if (copiedText && copiedText.trim() !== '') {
+                    fetch('/api/track-action', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'copy',
+                            text: copiedText,
+                            url: window.location.pathname
+                        })
+                    }).catch(function(){});
+                }
+            });
+            
         })();
     </script>
 </body>
