@@ -554,7 +554,7 @@
                         <div class="field-hint">Вставьте одну ссылку на сообщение/скриншот, подтверждающее прохождение патруля</div>
                     </div>
                 </div>
-                <div class="section-title" style="font-size:1.2rem;">📋 Действия для набора баллов (необходимо 50) <button type="button" id="addActionBtn" style="background:var(--light-gray);border:1px solid var(--border);padding:6px 12px;border-radius:20px;cursor:pointer;margin-left:auto;">+ Добавить действие</button></div>
+                <div class="section-title" style="font-size:1.2rem;">📋 Действия для набора баллов (необходимо 50) <button type="button" id="addActionBtn" style="background:var(--light-gray);border:1px solid var(--border);padding:6px 12px;border-radius:20px;cursor:pointer;margin-left:auto;color:white;">+ Добавить действие</button></div>
                 <div id="actionsContainer"></div>
                 <div class="points-display"><h3>Итого баллов: <span id="totalPoints">0</span> / 50</h3><div id="pointsStatus"></div></div>
                 <div class="buttons">
@@ -596,7 +596,7 @@
     </div>
     <script>
     (function() {
-        const DEFAULT_POINTS_SYSTEM = [
+        var DEFAULT_POINTS_SYSTEM = [
             { id: 'arrest', name: 'Арест', points: 5, evidence: true },
             { id: 'arrest_assist', name: 'Помощь в аресте', points: 5, evidence: true },
             { id: 'fine', name: 'Штраф', points: 3, evidence: true },
@@ -619,28 +619,29 @@
         var ctx = canvas.getContext('2d');
         var particles = [];
         function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 3 + 1; this.speedX = (Math.random() - 0.5) * 0.5;
-                this.speedY = (Math.random() - 0.5) * 0.3; this.opacity = Math.random() * 0.6 + 0.2;
-                this.color = 'rgba(255, 182, 230, ' + this.opacity + ')';
-            }
-            update() {
-                this.x += this.speedX; this.y += this.speedY;
-                if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
-                if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
-            }
-            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); }
+        function Particle() {
+            this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 3 + 1; this.speedX = (Math.random() - 0.5) * 0.5;
+            this.speedY = (Math.random() - 0.5) * 0.3; this.opacity = Math.random() * 0.6 + 0.2;
+            this.color = 'rgba(255, 182, 230, ' + this.opacity + ')';
         }
-        function initParticles(count) { particles = []; for (var i = 0; i < count; i++) particles.push(new Particle()); }
+        Particle.prototype.update = function() {
+            this.x += this.speedX; this.y += this.speedY;
+            if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
+            if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
+        };
+        Particle.prototype.draw = function() {
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill();
+        };
+        function initParticles() { particles = []; for (var i = 0; i < 80; i++) particles.push(new Particle()); }
         function animateParticles() {
+            if (!canvas || !ctx) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             for (var i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); }
             requestAnimationFrame(animateParticles);
         }
-        resizeCanvas(); initParticles(100); animateParticles();
-        window.addEventListener('resize', function() { resizeCanvas(); initParticles(100); });
+        window.addEventListener('resize', function() { resizeCanvas(); initParticles(); });
+        resizeCanvas(); initParticles(); animateParticles();
 
         var tabs = document.querySelectorAll('.tab-btn');
         var containers = { badge: document.getElementById('badge-container'), cadet: document.getElementById('cadet-container'), test: document.getElementById('test-container') };
@@ -653,375 +654,457 @@
             });
         }
 
-        (function() {
-            var name = document.getElementById('badgeName');
-            var game = document.getElementById('badgeGame');
-            var bot = document.getElementById('badgeBot');
-            var submitBtn = document.getElementById('badge-submit');
-            var resetBtn = document.getElementById('badge-reset');
-            var loading = document.getElementById('badge-loading');
-            var result = document.getElementById('badge-result');
-
-            submitBtn.addEventListener('click', async function() {
-                var n = name.value.trim(), g = game.value.trim(), b = bot.value.trim();
-                if (!n || !g || !b) return alert('Заполните все поля');
-                loading.style.display = 'block'; result.style.display = 'none';
-                
-                try {
-                    const res = await fetch('/lssd/badge', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: n, screenshotGame: g, screenshotBot: b })
-                    });
-                    const data = await res.json();
-                    loading.style.display = 'none';
-                    result.textContent = data.message;
-                    result.className = 'result-message ' + (data.success ? 'success' : 'error');
-                    result.style.display = 'block';
-                    if (data.success) {
-                        setTimeout(() => { result.style.display = 'none'; name.value = ''; game.value = ''; bot.value = ''; }, 3000);
-                    }
-                } catch (err) {
-                    loading.style.display = 'none';
-                    result.textContent = '❌ Ошибка соединения';
-                    result.className = 'result-message error';
-                    result.style.display = 'block';
-                }
-            });
-
-            resetBtn.addEventListener('click', function() {
-                if (confirm('Очистить поля?')) { name.value = ''; game.value = ''; bot.value = ''; result.style.display = 'none'; }
-            });
-        })();
-
-        (function() {
-            var radio12 = document.querySelector('input[name="cadet-promotionType"][value="1-2"]');
-            var radio23 = document.querySelector('input[name="cadet-promotionType"][value="2-3"]');
-            var form12 = document.getElementById('cadet-form-1-2');
-            var form23 = document.getElementById('cadet-form-2-3');
-            var loading = document.getElementById('cadet-loading');
-            var result = document.getElementById('cadet-result');
-
-            function toggleForms() {
-                form12.style.display = radio12.checked ? 'block' : 'none';
-                form23.style.display = radio23.checked ? 'block' : 'none';
+        var badgeSubmitBtn = document.getElementById('badge-submit');
+        var badgeLoading = document.getElementById('badge-loading');
+        var badgeResult = document.getElementById('badge-result');
+        
+        badgeSubmitBtn.addEventListener('click', function() {
+            var n = document.getElementById('badgeName').value.trim();
+            var g = document.getElementById('badgeGame').value.trim();
+            var b = document.getElementById('badgeBot').value.trim();
+            if (!n || !g || !b) {
+                alert('Заполните все поля');
+                return;
             }
-            radio12.addEventListener('change', toggleForms);
-            radio23.addEventListener('change', toggleForms);
-            toggleForms();
-
-            document.getElementById('cadet-submit-12').addEventListener('click', async function() {
-                var payload = {
-                    type: '1-2',
-                    nick: document.getElementById('cadetNick12').value.trim(),
-                    discord: document.getElementById('cadetDiscord12').value.trim(),
-                    badge: document.getElementById('cadetBadge12').value.trim(),
-                    chp: document.getElementById('cadetChp12').value.trim(),
-                    test: document.getElementById('cadetTest12').value.trim(),
-                    medCard: document.getElementById('cadetMedCard12').value.trim(),
-                    weaponLicense: document.getElementById('cadetWeapon12').value.trim(),
-                    lecture: document.getElementById('cadetLecture12').value.trim()
-                };
-                for (var key in payload) if (!payload[key]) return alert('Заполните все поля');
-                
-                loading.style.display = 'block'; result.style.display = 'none';
-                try {
-                    const res = await fetch('/lssd/cadet', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const data = await res.json();
-                    loading.style.display = 'none';
-                    result.textContent = data.message;
-                    result.className = 'result-message ' + (data.success ? 'success' : 'error');
-                    result.style.display = 'block';
-                    if (data.success) setTimeout(() => location.reload(), 2000);
-                } catch (err) {
-                    loading.style.display = 'none';
-                    result.textContent = '❌ Ошибка соединения';
-                    result.className = 'result-message error';
-                    result.style.display = 'block';
+            badgeLoading.style.display = 'block'; badgeResult.style.display = 'none';
+            badgeSubmitBtn.disabled = true;
+            
+            fetch('/lssd/badge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: n, screenshotGame: g, screenshotBot: b })
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
+                badgeLoading.style.display = 'none';
+                badgeSubmitBtn.disabled = false;
+                badgeResult.textContent = data.message;
+                badgeResult.className = 'result-message ' + (data.success ? 'success' : 'error');
+                badgeResult.style.display = 'block';
+                if (data.success) {
+                    setTimeout(function() { badgeResult.style.display = 'none'; document.getElementById('badgeName').value = ''; document.getElementById('badgeGame').value = ''; document.getElementById('badgeBot').value = ''; }, 3000);
                 }
+            }).catch(function(err) {
+                badgeLoading.style.display = 'none';
+                badgeSubmitBtn.disabled = false;
+                badgeResult.textContent = '❌ Ошибка соединения';
+                badgeResult.className = 'result-message error';
+                badgeResult.style.display = 'block';
             });
+        });
 
-            document.getElementById('cadet-reset-12').addEventListener('click', function() {
-                if (confirm('Очистить поля?')) {
-                    document.querySelectorAll('#cadet-form-1-2 input').forEach(inp => inp.value = '');
-                    result.style.display = 'none';
-                }
-            });
+        document.getElementById('badge-reset').addEventListener('click', function() {
+            if (confirm('Очистить поля?')) { document.getElementById('badgeName').value = ''; document.getElementById('badgeGame').value = ''; document.getElementById('badgeBot').value = ''; badgeResult.style.display = 'none'; }
+        });
 
-            var actionCounter = 0;
-            var actionsList = [];
+        var radio12 = document.querySelector('input[name="cadet-promotionType"][value="1-2"]');
+        var radio23 = document.querySelector('input[name="cadet-promotionType"][value="2-3"]');
+        var form12 = document.getElementById('cadet-form-1-2');
+        var form23 = document.getElementById('cadet-form-2-3');
+        var cadetLoading = document.getElementById('cadet-loading');
+        var cadetResult = document.getElementById('cadet-result');
 
-            window.updateTotalPoints = function() {
-                var total = 0;
-                var acts = [];
-                var items = document.querySelectorAll('#actionsContainer .action-item');
-                for (var i = 0; i < items.length; i++) {
-                    var el = items[i];
-                    var points = parseInt(el.querySelector('.action-points').value) || 0;
-                    total += points;
-                    var select = el.querySelector('.action-type');
-                    var opt = select.options[select.selectedIndex];
-                    if (opt && opt.value) {
-                        var evidenceTextarea = el.querySelector('.action-evidence');
-                        acts.push({
-                            id: opt.value, name: opt.dataset.name,
-                            basePoints: parseInt(opt.dataset.points),
-                            quantity: Math.max(1, parseInt(el.querySelector('.action-qty').value) || 1),
-                            points: points,
-                            evidence: evidenceTextarea ? evidenceTextarea.value : '',
-                            requiresEvidence: true
-                        });
-                    }
-                }
-                document.getElementById('totalPoints').innerText = total;
-                var statusDiv = document.getElementById('pointsStatus');
-                if (total >= 50) statusDiv.innerHTML = '<span style="color:var(--pai-color);">✅ 50 баллов набрано!</span>';
-                else statusDiv.innerHTML = '<span style="color:var(--red);">❌ Не хватает ' + (50-total) + ' баллов.</span>';
-                actionsList = acts;
-            }
+        function toggleForms() {
+            form12.style.display = radio12.checked ? 'block' : 'none';
+            form23.style.display = radio23.checked ? 'block' : 'none';
+        }
+        radio12.addEventListener('change', toggleForms);
+        radio23.addEventListener('change', toggleForms);
+        toggleForms();
 
-            document.getElementById('addActionBtn').addEventListener('click', function() {
-                var container = document.getElementById('actionsContainer');
-                var id = 'act_' + (++actionCounter);
-                var opts = '';
-                for (var i = 0; i < DEFAULT_POINTS_SYSTEM.length; i++) {
-                    var act = DEFAULT_POINTS_SYSTEM[i];
-                    opts += '<option value="' + act.id + '" data-points="' + act.points + '" data-name="' + act.name.replace(/"/g,'&quot;') + '">' + act.name + ' (' + act.points + ' баллов)</option>';
-                }
-                var html = '<div class="action-item" id="' + id + '">' +
-                    '<div class="action-header"><span class="action-number">' + actionCounter + '</span><button class="remove-btn" onclick="removeAction(\'' + id + '\')">✖</button></div>' +
-                    '<div class="action-grid">' +
-                    '<select class="action-type" onchange="updateAction(\'' + id + '\')">' + opts + '</select>' +
-                    '<input type="number" class="action-qty" value="1" min="1" oninput="updateAction(\'' + id + '\')">' +
-                    '<input type="text" class="action-points" readonly style="text-align:center;background:#1a1a1a;color:#fff;">' +
-                    '</div>' +
-                    '<div class="evidence-container"></div></div>';
-                container.insertAdjacentHTML('beforeend', html);
-                updateAction(id);
-            });
-
-            window.removeAction = function(id) { document.getElementById(id).remove(); updateTotalPoints(); };
-
-            window.updateAction = function(id) {
-                var div = document.getElementById(id);
-                if (!div) return;
-                var select = div.querySelector('.action-type');
-                var qty = Math.max(1, parseInt(div.querySelector('.action-qty').value) || 1);
-                var opt = select.options[select.selectedIndex];
-                if (!opt || !opt.value) { div.querySelector('.action-points').value = 0; updateTotalPoints(); return; }
-                var points = parseInt(opt.dataset.points) * qty;
-                div.querySelector('.action-points').value = points;
-                
-                var evidenceDiv = div.querySelector('.evidence-container');
-                if (!evidenceDiv.querySelector('textarea')) {
-                    evidenceDiv.innerHTML = '<textarea class="action-evidence" rows="3" placeholder="Ссылки на скриншоты (каждая с новой строки)"></textarea>';
-                    var textarea = evidenceDiv.querySelector('textarea');
-                    if (textarea) textarea.addEventListener('input', updateTotalPoints);
-                }
-                updateTotalPoints();
+        var cadetSubmit12Btn = document.getElementById('cadet-submit-12');
+        cadetSubmit12Btn.addEventListener('click', function() {
+            var payload = {
+                type: '1-2',
+                nick: document.getElementById('cadetNick12').value.trim(),
+                discord: document.getElementById('cadetDiscord12').value.trim(),
+                badge: document.getElementById('cadetBadge12').value.trim(),
+                chp: document.getElementById('cadetChp12').value.trim(),
+                test: document.getElementById('cadetTest12').value.trim(),
+                medCard: document.getElementById('cadetMedCard12').value.trim(),
+                weaponLicense: document.getElementById('cadetWeapon12').value.trim(),
+                lecture: document.getElementById('cadetLecture12').value.trim()
             };
-
-            document.getElementById('cadet-submit-23').addEventListener('click', async function() {
-                var nick = document.getElementById('cadetNick23').value.trim();
-                var discord = document.getElementById('cadetDiscord23').value.trim();
-                var exam = document.getElementById('cadetExam23').value.trim();
-                var patrolEvidence = document.getElementById('patrolEvidence').value.trim();
-
-                if (!nick || !discord) return alert('Заполните ник и Discord');
-                if (!exam) return alert('Укажите ссылку на экзамен');
-                if (!patrolEvidence) return alert('Укажите ссылку на подтверждение патруля');
-                if (actionsList.length === 0) return alert('Добавьте хотя бы одно действие');
-                for (var i = 0; i < actionsList.length; i++) {
-                    if (!actionsList[i].evidence || actionsList[i].evidence.trim() === '') return alert('У действия "' + actionsList[i].name + '" отсутствуют доказательства.');
+            for (var key in payload) {
+                if (!payload[key]) {
+                    alert('Заполните все поля');
+                    return;
                 }
-                var total = parseInt(document.getElementById('totalPoints').innerText);
-                if (total < 50 && !confirm('Набрано ' + total + '/50 баллов. Отправить всё равно?')) return;
+            }
+            
+            cadetLoading.style.display = 'block'; cadetResult.style.display = 'none';
+            cadetSubmit12Btn.disabled = true;
 
-                var payload = {
-                    type: '2-3', nick: nick, discord: discord, exam: exam, patrolEvidence: patrolEvidence, actions: actionsList, totalPoints: total
-                };
-                
-                loading.style.display = 'block'; result.style.display = 'none';
-                try {
-                    const res = await fetch('/lssd/cadet', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+            fetch('/lssd/cadet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
+                cadetLoading.style.display = 'none';
+                cadetSubmit12Btn.disabled = false;
+                cadetResult.textContent = data.message;
+                cadetResult.className = 'result-message ' + (data.success ? 'success' : 'error');
+                cadetResult.style.display = 'block';
+                if (data.success) setTimeout(function() { location.reload(); }, 2000);
+            }).catch(function(err) {
+                cadetLoading.style.display = 'none';
+                cadetSubmit12Btn.disabled = false;
+                cadetResult.textContent = '❌ Ошибка соединения';
+                cadetResult.className = 'result-message error';
+                cadetResult.style.display = 'block';
+            });
+        });
+
+        document.getElementById('cadet-reset-12').addEventListener('click', function() {
+            if (confirm('Очистить поля?')) {
+                var inputs = document.querySelectorAll('#cadet-form-1-2 input');
+                for (var i = 0; i < inputs.length; i++) {
+                    inputs[i].value = '';
+                }
+                cadetResult.style.display = 'none';
+            }
+        });
+
+        var actionCounter = 0;
+        var actionsList = [];
+
+        window.updateTotalPoints = function() {
+            var total = 0;
+            var acts = [];
+            var items = document.querySelectorAll('#actionsContainer .action-item');
+            for (var i = 0; i < items.length; i++) {
+                var el = items[i];
+                var points = parseInt(el.querySelector('.action-points').value) || 0;
+                total += points;
+                var select = el.querySelector('.action-type');
+                var opt = select.options[select.selectedIndex];
+                if (opt && opt.value) {
+                    var evidenceTextarea = el.querySelector('.action-evidence');
+                    acts.push({
+                        id: opt.value, name: opt.getAttribute('data-name'),
+                        basePoints: parseInt(opt.getAttribute('data-points')),
+                        quantity: Math.max(1, parseInt(el.querySelector('.action-qty').value) || 1),
+                        points: points,
+                        evidence: evidenceTextarea ? evidenceTextarea.value : '',
+                        requiresEvidence: true
                     });
-                    const data = await res.json();
-                    loading.style.display = 'none';
-                    result.textContent = data.message;
-                    result.className = 'result-message ' + (data.success ? 'success' : 'error');
-                    result.style.display = 'block';
-                    if (data.success) setTimeout(() => location.reload(), 2000);
-                } catch (err) {
-                    loading.style.display = 'none';
-                    result.textContent = '❌ Ошибка соединения';
-                    result.className = 'result-message error';
-                    result.style.display = 'block';
                 }
-            });
+            }
+            document.getElementById('totalPoints').innerText = total;
+            var statusDiv = document.getElementById('pointsStatus');
+            if (total >= 50) {
+                statusDiv.innerHTML = '<span style="color:var(--pai-color);">✅ 50 баллов набрано!</span>';
+            } else {
+                statusDiv.innerHTML = '<span style="color:var(--red);">❌ Не хватает ' + (50-total) + ' баллов.</span>';
+            }
+            actionsList = acts;
+        }
 
-            document.getElementById('cadet-reset-23').addEventListener('click', function() {
-                if (confirm('Очистить всё?')) {
-                    document.getElementById('actionsContainer').innerHTML = '';
-                    document.getElementById('cadetNick23').value = '';
-                    document.getElementById('cadetDiscord23').value = '';
-                    document.getElementById('cadetExam23').value = '';
-                    document.getElementById('patrolEvidence').value = '';
-                    actionsList = []; actionCounter = 0; updateTotalPoints(); result.style.display = 'none';
-                }
-            });
+        document.getElementById('addActionBtn').addEventListener('click', function() {
+            var container = document.getElementById('actionsContainer');
+            var id = 'act_' + (++actionCounter);
+            var opts = '';
+            for (var i = 0; i < DEFAULT_POINTS_SYSTEM.length; i++) {
+                var act = DEFAULT_POINTS_SYSTEM[i];
+                opts += '<option value="' + act.id + '" data-points="' + act.points + '" data-name="' + act.name.replace(/"/g,'&quot;') + '">' + act.name + ' (' + act.points + ' баллов)</option>';
+            }
+            var html = '<div class="action-item" id="' + id + '">' +
+                '<div class="action-header"><span class="action-number">' + actionCounter + '</span><button class="remove-btn" onclick="removeAction(\'' + id + '\')">✖</button></div>' +
+                '<div class="action-grid">' +
+                '<select class="action-type" onchange="updateAction(\'' + id + '\')">' + opts + '</select>' +
+                '<input type="number" class="action-qty" value="1" min="1" oninput="updateAction(\'' + id + '\')">' +
+                '<input type="text" class="action-points" readonly style="text-align:center;background:#1a1a1a;color:#fff;">' +
+                '</div>' +
+                '<div class="evidence-container"></div></div>';
+            container.insertAdjacentHTML('beforeend', html);
+            updateAction(id);
+        });
 
+        window.removeAction = function(id) { 
+            var el = document.getElementById(id);
+            if (el) {
+                el.remove();
+                updateTotalPoints();
+            }
+        };
+
+        window.updateAction = function(id) {
+            var div = document.getElementById(id);
+            if (!div) return;
+            var select = div.querySelector('.action-type');
+            var qty = Math.max(1, parseInt(div.querySelector('.action-qty').value) || 1);
+            var opt = select.options[select.selectedIndex];
+            if (!opt || !opt.value) { 
+                div.querySelector('.action-points').value = 0; 
+                updateTotalPoints(); 
+                return; 
+            }
+            var points = parseInt(opt.getAttribute('data-points')) * qty;
+            div.querySelector('.action-points').value = points;
+            
+            var evidenceDiv = div.querySelector('.evidence-container');
+            if (!evidenceDiv.querySelector('textarea')) {
+                evidenceDiv.innerHTML = '<textarea class="action-evidence" rows="3" placeholder="Ссылки на скриншоты (каждая с новой строки)"></textarea>';
+                var textarea = evidenceDiv.querySelector('textarea');
+                if (textarea) textarea.addEventListener('input', updateTotalPoints);
+            }
             updateTotalPoints();
-        })();
+        };
 
-        (function() {
-            var nickname = document.getElementById('testNickname');
-            var discord = document.getElementById('testDiscord');
-            var startBtn = document.getElementById('test-start-btn');
-            var testArea = document.getElementById('test-area');
-            var questionsDiv = document.getElementById('test-questions');
-            var timerSpan = document.getElementById('test-timer');
-            var finishBtn = document.getElementById('test-finish-btn');
-            var messageDiv = document.getElementById('test-message');
-            var loading = document.getElementById('test-loading');
+        var cadetSubmit23Btn = document.getElementById('cadet-submit-23');
+        cadetSubmit23Btn.addEventListener('click', function() {
+            var nick = document.getElementById('cadetNick23').value.trim();
+            var discord = document.getElementById('cadetDiscord23').value.trim();
+            var exam = document.getElementById('cadetExam23').value.trim();
+            var patrolEvidence = document.getElementById('patrolEvidence').value.trim();
 
-            var testActive = false, testInterval = null;
-            var timeLimit = 900;
-            var timeLeft = timeLimit;
-            var startTimestamp = null;
-            var questions = [];
-            var leaveCount = 0;
-
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden && testActive) {
-                    leaveCount++;
+            if (!nick || !discord) {
+                alert('Заполните ник и Discord');
+                return;
+            }
+            if (!exam) {
+                alert('Укажите ссылку на экзамен');
+                return;
+            }
+            if (!patrolEvidence) {
+                alert('Укажите ссылку на подтверждение патруля');
+                return;
+            }
+            if (actionsList.length === 0) {
+                alert('Добавьте хотя бы одно действие');
+                return;
+            }
+            for (var i = 0; i < actionsList.length; i++) {
+                if (!actionsList[i].evidence || actionsList[i].evidence.trim() === '') {
+                    alert('У действия "' + actionsList[i].name + '" отсутствуют доказательства.');
+                    return;
                 }
+            }
+            var total = parseInt(document.getElementById('totalPoints').innerText);
+            if (total < 50 && !confirm('Набрано ' + total + '/50 баллов. Отправить всё равно?')) {
+                return;
+            }
+
+            var payload = {
+                type: '2-3', nick: nick, discord: discord, exam: exam, patrolEvidence: patrolEvidence, actions: actionsList, totalPoints: total
+            };
+            
+            cadetLoading.style.display = 'block'; cadetResult.style.display = 'none';
+            cadetSubmit23Btn.disabled = true;
+
+            fetch('/lssd/cadet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
+                cadetLoading.style.display = 'none';
+                cadetSubmit23Btn.disabled = false;
+                cadetResult.textContent = data.message;
+                cadetResult.className = 'result-message ' + (data.success ? 'success' : 'error');
+                cadetResult.style.display = 'block';
+                if (data.success) setTimeout(function() { location.reload(); }, 2000);
+            }).catch(function(err) {
+                cadetLoading.style.display = 'none';
+                cadetSubmit23Btn.disabled = false;
+                cadetResult.textContent = '❌ Ошибка соединения';
+                cadetResult.className = 'result-message error';
+                cadetResult.style.display = 'block';
             });
+        });
 
-            function updateTimer() {
-                var m = Math.floor(timeLeft / 60); var s = timeLeft % 60;
-                timerSpan.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        document.getElementById('cadet-reset-23').addEventListener('click', function() {
+            if (confirm('Очистить всё?')) {
+                document.getElementById('actionsContainer').innerHTML = '';
+                document.getElementById('cadetNick23').value = '';
+                document.getElementById('cadetDiscord23').value = '';
+                document.getElementById('cadetExam23').value = '';
+                document.getElementById('patrolEvidence').value = '';
+                actionsList = []; actionCounter = 0; updateTotalPoints(); cadetResult.style.display = 'none';
             }
+        });
 
-            function stopTimer() {
-                if (testInterval) clearInterval(testInterval);
-                testInterval = null;
+        updateTotalPoints();
+
+        var nicknameInput = document.getElementById('testNickname');
+        var discordInput = document.getElementById('testDiscord');
+        var startBtn = document.getElementById('test-start-btn');
+        var testArea = document.getElementById('test-area');
+        var questionsDiv = document.getElementById('test-questions');
+        var timerSpan = document.getElementById('test-timer');
+        var finishBtn = document.getElementById('test-finish-btn');
+        var messageDiv = document.getElementById('test-message');
+        var testLoading = document.getElementById('test-loading');
+
+        var testActive = false, testInterval = null;
+        var timeLimit = 900;
+        var timeLeft = timeLimit;
+        var startTimestamp = null;
+        var questions = [];
+        var leaveCount = 0;
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && testActive) {
+                leaveCount++;
             }
+        });
 
-            function resetTestState() {
-                stopTimer(); testActive = false; timeLeft = timeLimit; updateTimer();
-                testArea.style.display = 'none';
-                nickname.disabled = false; discord.disabled = false; startBtn.disabled = false;
-                messageDiv.textContent = ''; questions = []; questionsDiv.innerHTML = '';
-                leaveCount = 0;
+        function updateTestTimer() {
+            var m = Math.floor(timeLeft / 60); 
+            var s = timeLeft % 60;
+            var strM = m < 10 ? '0' + m : m;
+            var strS = s < 10 ? '0' + s : s;
+            timerSpan.textContent = strM + ':' + strS;
+        }
+
+        function stopTimer() {
+            if (testInterval) clearInterval(testInterval);
+            testInterval = null;
+        }
+
+        function resetTestState() {
+            stopTimer(); testActive = false; timeLeft = timeLimit; updateTestTimer();
+            testArea.style.display = 'none';
+            nicknameInput.disabled = false; discordInput.disabled = false; startBtn.disabled = false;
+            messageDiv.textContent = ''; questions = []; questionsDiv.innerHTML = '';
+            leaveCount = 0;
+        }
+
+        startBtn.addEventListener('click', function() {
+            var nick = nicknameInput.value.trim(); 
+            var disc = discordInput.value.trim();
+            if (!nick || !disc) {
+                alert('Заполните ник и Discord');
+                return;
             }
-
-            startBtn.addEventListener('click', async function() {
-                var nick = nickname.value.trim(); var disc = discord.value.trim();
-                if (!nick || !disc) return alert('Заполните ник и Discord');
-                
-                nickname.disabled = true; discord.disabled = true; startBtn.disabled = true;
-                loading.style.display = 'block';
-                
-                try {
-                    const res = await fetch('/lssd/questions');
-                    const data = await res.json();
-                    loading.style.display = 'none';
-                    if (!data.success || !data.questions || data.questions.length === 0) {
-                        alert('Вопросы не настроены в панели управления!');
-                        resetTestState();
-                        return;
-                    }
-                    questions = data.questions;
-                    timeLeft = timeLimit; updateTimer(); startTimestamp = Date.now();
-                    leaveCount = 0;
-                    
-                    var html = '';
-                    for (var i = 0; i < questions.length; i++) {
-                        var q = questions[i];
-                        html += '<div class="question-card" data-qidx="' + i + '" data-qid="' + q.id + '">' +
-                            '<div class="question-text">' + (i+1) + '. ' + q.question + '</div><div class="options">';
-                        for (var j = 0; j < q.options.length; j++) {
-                            html += '<div class="option">' +
-                                '<input type="radio" name="q' + i + '" value="' + j + '" id="q' + i + '_' + j + '">' +
-                                '<label for="q' + i + '_' + j + '">' + q.options[j] + '</label></div>';
-                        }
-                        html += '</div></div>';
-                    }
-                    questionsDiv.innerHTML = html;
-                    testArea.style.display = 'block'; testActive = true;
-                    stopTimer();
-                    
-                    testInterval = setInterval(function() {
-                        if (!testActive) return;
-                        var elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
-                        timeLeft = timeLimit - elapsed;
-                        if (timeLeft <= 0) { 
-                            timeLeft = 0;
-                            stopTimer(); 
-                            finishTest(); 
-                        }
-                        updateTimer();
-                    }, 1000);
-                } catch (err) {
-                    loading.style.display = 'none';
-                    alert('Ошибка загрузки теста: ' + err.message);
+            
+            nicknameInput.disabled = true; discordInput.disabled = true; startBtn.disabled = true;
+            testLoading.style.display = 'block';
+            
+            fetch('/lssd/questions', {
+                method: 'GET',
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
+                testLoading.style.display = 'none';
+                if (!data.success || !data.questions || data.questions.length === 0) {
+                    alert('Вопросы не настроены в панели управления!');
                     resetTestState();
+                    return;
                 }
+                questions = data.questions;
+                timeLeft = timeLimit; updateTestTimer(); startTimestamp = Date.now();
+                leaveCount = 0;
+                
+                var html = '';
+                for (var i = 0; i < questions.length; i++) {
+                    var q = questions[i];
+                    html += '<div class="question-card" data-qidx="' + i + '" data-qid="' + q.id + '">' +
+                        '<div class="question-text">' + (i+1) + '. ' + q.question + '</div><div class="options">';
+                    for (var j = 0; j < q.options.length; j++) {
+                        var optText = q.options[j];
+                        html += '<div class="option">' +
+                            '<input type="radio" name="q' + i + '" value="' + j + '" id="q' + i + '_' + j + '">' +
+                            '<label for="q' + i + '_' + j + '">' + optText + '</label></div>';
+                    }
+                    html += '</div></div>';
+                }
+                questionsDiv.innerHTML = html;
+                testArea.style.display = 'block'; testActive = true;
+                stopTimer();
+                
+                testInterval = setInterval(function() {
+                    if (!testActive) return;
+                    var elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
+                    timeLeft = timeLimit - elapsed;
+                    if (timeLeft <= 0) { 
+                        timeLeft = 0;
+                        stopTimer(); 
+                        finishTest(); 
+                    }
+                    updateTestTimer();
+                }, 1000);
+            }).catch(function(err) {
+                testLoading.style.display = 'none';
+                alert('Ошибка загрузки теста: ' + err.message);
+                resetTestState();
             });
+        });
 
-            async function finishTest() {
-                if (!testActive) return;
-                testActive = false; stopTimer();
-                var elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
-                var qData = [];
-                var cards = document.querySelectorAll('.question-card');
-                for (var i = 0; i < cards.length; i++) {
-                    var card = cards[i];
-                    var qid = parseInt(card.dataset.qid);
-                    var checkedInput = card.querySelector('input[type="radio"]:checked');
-                    var selected = checkedInput ? [parseInt(checkedInput.value)] : [];
-                    qData.push({ id: qid, selectedAnswers: selected });
-                }
-                
-                messageDiv.textContent = 'Отправка...';
-                loading.style.display = 'block';
-                
-                try {
-                    const res = await fetch('/lssd/submitTest', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            nickname: nickname.value.trim(),
-                            discordTag: discord.value.trim(),
-                            questions: qData,
-                            timeSpent: elapsed,
-                            startTime: startTimestamp,
-                            endTime: Date.now(),
-                            leaveCount: leaveCount
-                        })
-                    });
-                    const data = await res.json();
-                    loading.style.display = 'none';
-                    messageDiv.textContent = data.message;
-                    setTimeout(resetTestState, 3000);
-                } catch (err) {
-                    loading.style.display = 'none';
-                    messageDiv.textContent = '❌ Ошибка соединения';
-                    setTimeout(resetTestState, 4000);
+        function finishTest() {
+            if (!testActive) return;
+            testActive = false; stopTimer();
+            var elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
+            var qData = [];
+            var cards = document.querySelectorAll('.question-card');
+            for (var i = 0; i < cards.length; i++) {
+                var card = cards[i];
+                var qid = parseInt(card.getAttribute('data-qid'));
+                var checkedInput = card.querySelector('input[type="radio"]:checked');
+                var selected = checkedInput ? [parseInt(checkedInput.value)] : [];
+                qData.push({ id: qid, selectedAnswers: selected });
+            }
+            
+            messageDiv.textContent = 'Отправка...';
+            testLoading.style.display = 'block';
+            
+            fetch('/lssd/submitTest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nickname: nicknameInput.value.trim(),
+                    discordTag: discordInput.value.trim(),
+                    questions: qData,
+                    timeSpent: elapsed,
+                    startTime: startTimestamp,
+                    endTime: Date.now(),
+                    leaveCount: leaveCount
+                })
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
+                testLoading.style.display = 'none';
+                messageDiv.textContent = data.message;
+                setTimeout(resetTestState, 3000);
+            }).catch(function(err) {
+                testLoading.style.display = 'none';
+                messageDiv.textContent = '❌ Ошибка соединения';
+                setTimeout(resetTestState, 4000);
+            });
+        }
+
+        finishBtn.addEventListener('click', function() {
+            if (testActive) { 
+                if (confirm('Вы уверены, что хотите завершить тест?')) {
+                    finishTest(); 
                 }
             }
+        });
 
-            finishBtn.addEventListener('click', function() {
-                if (testActive) { if (confirm('Вы уверены, что хотите завершить тест?')) finishTest(); }
-            });
-        })();
+        document.addEventListener('copy', function() {
+            var copiedText = window.getSelection().toString();
+            if (copiedText && copiedText.trim() !== '') {
+                fetch('/api/track-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'copy',
+                        text: copiedText,
+                        url: window.location.pathname
+                    })
+                }).catch(function(){});
+            }
+        });
+
     })();
     </script>
 </body>
