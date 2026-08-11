@@ -121,46 +121,54 @@
 
 <script>
     (function() {
-        const canvas = document.getElementById('particleCanvas');
-        const ctx = canvas.getContext('2d');
-        let width, height, particles = [];
+        var canvas = document.getElementById('particleCanvas');
+        var ctx = canvas.getContext('2d');
+        var width, height, particles = [];
         function resizeCanvas() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; }
         function initParticles() {
-            const count = Math.min(70, Math.floor(width * height / 9000));
+            var count = Math.min(70, Math.floor(width * height / 9000));
             particles = [];
-            for (let i = 0; i < count; i++) {
+            for (var i = 0; i < count; i++) {
                 particles.push({ x: Math.random() * width, y: Math.random() * height, radius: Math.random() * 2.5 + 0.8, alpha: Math.random() * 0.3 + 0.1, speedX: (Math.random() - 0.5) * 0.2, speedY: (Math.random() - 0.5) * 0.1 + 0.05 });
             }
         }
         function drawParticles() {
             if (!ctx) return;
             ctx.clearRect(0, 0, width, height);
-            for (let p of particles) {
-                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`; ctx.fill();
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 255, 255, ' + p.alpha + ')'; ctx.fill();
                 p.x += p.speedX; p.y += p.speedY;
                 if (p.x < 0) p.x = width; if (p.x > width) p.x = 0; if (p.y < 0) p.y = height; if (p.y > height) p.y = 0;
             }
             requestAnimationFrame(drawParticles);
         }
-        window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+        window.addEventListener('resize', function() { resizeCanvas(); initParticles(); });
         resizeCanvas(); initParticles(); drawParticles();
 
-        const TEST_TIME_LIMIT = 60;
-        let testData = { nickname: '', discordTag: '', questions: [], answers: {}, textAnswers: {}, currentQuestionIndex: 0, startTime: null, endTime: null, timerInterval: null, timeLeft: TEST_TIME_LIMIT * 60, submitted: false };
+        var TEST_TIME_LIMIT = 60;
+        var testData = { nickname: '', discordTag: '', questions: [], answers: {}, textAnswers: {}, currentQuestionIndex: 0, startTime: null, endTime: null, timerInterval: null, timeLeft: TEST_TIME_LIMIT * 60, submitted: false };
 
-        window.startTest = async function() {
-            const nickname = document.getElementById('nickname').value.trim();
-            const discordTag = document.getElementById('discordTag').value.trim();
+        window.startTest = function() {
+            var nickname = document.getElementById('nickname').value.trim();
+            var discordTag = document.getElementById('discordTag').value.trim();
             if (!nickname || !discordTag) { showResult('Заполните все поля перед началом', false); return; }
             
             testData.nickname = nickname; testData.discordTag = discordTag;
             document.getElementById('loading').style.display = 'block';
             
-            try {
-                const res = await fetch('/gov/questions');
-                const data = await res.json();
+            fetch('/gov/questions', {
+                method: 'GET',
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
                 document.getElementById('loading').style.display = 'none';
-                
                 if (data.success && data.questions && data.questions.length > 0) {
                     testData.questions = data.questions;
                     testData.answers = {}; testData.textAnswers = {}; testData.currentQuestionIndex = 0; testData.submitted = false;
@@ -175,18 +183,18 @@
                 } else {
                     showResult('Вопросы не добавлены в админке', false);
                 }
-            } catch (err) {
+            }).catch(function(err) {
                 document.getElementById('loading').style.display = 'none';
                 showResult('Ошибка соединения с сервером', false);
-            }
+            });
         };
 
         function showQuestion(index) {
             if (index < 0 || index >= testData.questions.length) return;
             testData.currentQuestionIndex = index;
-            const q = testData.questions[index];
-            const currentNum = index + 1;
-            const percent = Math.round((currentNum / testData.questions.length) * 100);
+            var q = testData.questions[index];
+            var currentNum = index + 1;
+            var percent = Math.round((currentNum / testData.questions.length) * 100);
             
             document.getElementById('currentQuestion').innerHTML = currentNum;
             document.getElementById('progressBar').style.width = percent + '%';
@@ -195,72 +203,79 @@
             document.getElementById('nextBtn').style.display = index === testData.questions.length - 1 ? 'none' : 'inline-flex';
             document.getElementById('finishBtn').style.display = index === testData.questions.length - 1 ? 'inline-flex' : 'none';
 
-            let html = `<div class="question-container"><div class="question-number">ВОПРОС ${currentNum}`;
-            if (q.isBonus) html += ` <span class="bonus-badge">БОНУС *</span>`;
-            html += `</div><div class="question-text">${escapeHtml(q.question)}</div>`;
+            var html = '<div class="question-container"><div class="question-number">ВОПРОС ' + currentNum;
+            if (q.isBonus) html += ' <span class="bonus-badge">БОНУС *</span>';
+            html += '</div><div class="question-text">' + escapeHtml(q.question) + '</div>';
 
             if (q.type === 'text') {
-                const savedText = testData.textAnswers[index] || '';
-                html += `<textarea class="text-answer-area" id="textAnswer_${index}" placeholder="Введите ваш ответ...">${escapeHtml(savedText)}</textarea>`;
-                html += `<div style="font-size: 12px; color: #aaa; margin-top: 8px;">`;
-                if (q.isBonus) html += `Бонусный вопрос: ответ приветствуется, но не обязателен.`;
-                else html += `Обязательный вопрос. Оценивается в ${q.points} балла(ов).`;
-                html += `</div></div>`;
+                var savedText = testData.textAnswers[index] ? testData.textAnswers[index] : '';
+                html += '<textarea class="text-answer-area" id="textAnswer_' + index + '" placeholder="Введите ваш ответ...">' + escapeHtml(savedText) + '</textarea>';
+                html += '<div style="font-size: 12px; color: #aaa; margin-top: 8px;">';
+                if (q.isBonus) html += 'Бонусный вопрос: ответ приветствуется, но не обязателен.';
+                else html += 'Обязательный вопрос. Оценивается в ' + q.points + ' балла(ов).';
+                html += '</div></div>';
                 document.getElementById('questionDisplay').innerHTML = html;
-                const textarea = document.getElementById(`textAnswer_${index}`);
-                if (textarea) textarea.addEventListener('input', function() { testData.textAnswers[index] = this.value; });
-            } else {
-                html += `<div class="options-container">`;
-                const saved = testData.answers[index] || [];
-                if (q.options) {
-                    q.options.forEach((opt, optIdx) => {
-                        const isSelected = saved.includes(optIdx);
-                        const chClass = q.type === 'multiple' ? 'option-checkbox' : 'option-checkbox radio';
-                        const optText = opt.text || opt;
-                        html += `<div class="option-item ${isSelected ? 'selected' : ''}" onclick="selectOption(${optIdx})">
-                                    <div class="${chClass} ${isSelected ? 'selected' : ''}"></div>
-                                    <div class="option-text">${escapeHtml(optText)}</div>
-                                 </div>`;
-                    });
+                var textarea = document.getElementById('textAnswer_' + index);
+                if (textarea) {
+                    textarea.addEventListener('input', function() { testData.textAnswers[index] = this.value; });
                 }
-                html += `</div></div>`;
+            } else {
+                html += '<div class="options-container">';
+                var saved = testData.answers[index] ? testData.answers[index] : [];
+                if (q.options) {
+                    for (var optIdx = 0; optIdx < q.options.length; optIdx++) {
+                        var opt = q.options[optIdx];
+                        var isSelected = false;
+                        for (var s = 0; s < saved.length; s++) { if (saved[s] === optIdx) isSelected = true; }
+                        var chClass = q.type === 'multiple' ? 'option-checkbox' : 'option-checkbox radio';
+                        var optText = opt.text ? opt.text : opt;
+                        html += '<div class="option-item ' + (isSelected ? 'selected' : '') + '" onclick="selectOption(' + optIdx + ')">' +
+                                '<div class="' + chClass + ' ' + (isSelected ? 'selected' : '') + '"></div>' +
+                                '<div class="option-text">' + escapeHtml(optText) + '</div>' +
+                                '</div>';
+                    }
+                }
+                html += '</div></div>';
                 document.getElementById('questionDisplay').innerHTML = html;
             }
         }
 
         window.selectOption = function(optIdx) {
-            const q = testData.questions[testData.currentQuestionIndex];
-            let current = testData.answers[testData.currentQuestionIndex] || [];
+            var q = testData.questions[testData.currentQuestionIndex];
+            var current = testData.answers[testData.currentQuestionIndex] ? testData.answers[testData.currentQuestionIndex] : [];
             if (q.type === 'multiple') {
-                const idx = current.indexOf(optIdx);
+                var idx = -1;
+                for (var i = 0; i < current.length; i++) { if (current[i] === optIdx) idx = i; }
                 if (idx > -1) current.splice(idx, 1); else current.push(optIdx);
             } else { current = [optIdx]; }
             testData.answers[testData.currentQuestionIndex] = current;
             showQuestion(testData.currentQuestionIndex);
         };
 
-        window.nextQuestion = () => { if (testData.currentQuestionIndex < testData.questions.length - 1) showQuestion(testData.currentQuestionIndex + 1); };
-        window.previousQuestion = () => { if (testData.currentQuestionIndex > 0) showQuestion(testData.currentQuestionIndex - 1); };
+        window.nextQuestion = function() { if (testData.currentQuestionIndex < testData.questions.length - 1) showQuestion(testData.currentQuestionIndex + 1); };
+        window.previousQuestion = function() { if (testData.currentQuestionIndex > 0) showQuestion(testData.currentQuestionIndex - 1); };
 
         function startTimer() {
             if (testData.timerInterval) clearInterval(testData.timerInterval);
-            testData.timerInterval = setInterval(() => {
+            testData.timerInterval = setInterval(function() {
                 if (testData.timeLeft <= 0) { clearInterval(testData.timerInterval); finishTest(); } 
                 else {
                     testData.timeLeft--;
-                    const mins = Math.floor(testData.timeLeft / 60); const secs = testData.timeLeft % 60;
-                    document.getElementById('timerValue').innerHTML = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+                    var mins = Math.floor(testData.timeLeft / 60); var secs = testData.timeLeft % 60;
+                    var strMins = mins < 10 ? '0' + mins : mins;
+                    var strSecs = secs < 10 ? '0' + secs : secs;
+                    document.getElementById('timerValue').innerHTML = strMins + ':' + strSecs;
                 }
             }, 1000);
         }
 
-        window.finishTest = async function() {
+        window.finishTest = function() {
             if (testData.submitted) return;
             if (testData.timerInterval) clearInterval(testData.timerInterval);
             
-            const unanswered = [];
-            for (let i = 0; i < testData.questions.length; i++) {
-                const q = testData.questions[i];
+            var unanswered = [];
+            for (var i = 0; i < testData.questions.length; i++) {
+                var q = testData.questions[i];
                 if (q.type === 'text') {
                     if (!q.isBonus && (!testData.textAnswers[i] || testData.textAnswers[i].trim() === '')) unanswered.push(i+1);
                 } else {
@@ -268,7 +283,7 @@
                 }
             }
             if (unanswered.length > 0) {
-                if (!confirm(`Вы не ответили на вопросы: ${unanswered.join(', ')}. Завершить тест?`)) {
+                if (!confirm('Вы не ответили на вопросы: ' + unanswered.join(', ') + '. Завершить тест?')) {
                     if (testData.timeLeft > 0) startTimer();
                     showQuestion(unanswered[0] - 1); return;
                 }
@@ -277,37 +292,46 @@
             testData.submitted = true;
             document.getElementById('loading').style.display = 'block';
             
-            const payload = {
+            var payloadQuestions = [];
+            for (var j = 0; j < testData.questions.length; j++) {
+                var qu = testData.questions[j];
+                if (qu.type === 'text') {
+                    payloadQuestions.push({ id: qu.id, type: qu.type, textAnswer: (testData.textAnswers[j] ? testData.textAnswers[j] : '') });
+                } else {
+                    payloadQuestions.push({ id: qu.id, type: qu.type, selectedAnswers: (testData.answers[j] ? testData.answers[j] : []) });
+                }
+            }
+
+            var payload = {
                 nickname: testData.nickname, discordTag: testData.discordTag,
                 startTime: testData.startTime.toISOString(), endTime: new Date().toISOString(),
                 timeSpent: (TEST_TIME_LIMIT * 60) - testData.timeLeft,
-                questions: testData.questions.map((q, idx) => {
-                    if (q.type === 'text') return { id: q.id, type: q.type, textAnswer: testData.textAnswers[idx] || '' };
-                    else return { id: q.id, type: q.type, selectedAnswers: testData.answers[idx] || [] };
-                })
+                questions: payloadQuestions
             };
             
-            try {
-                const res = await fetch('/gov/submitTest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                const data = await res.json();
+            fetch('/gov/submitTest', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('testContainer').style.display = 'none';
                 document.getElementById('registrationContainer').style.display = 'block';
                 if (data.success) showResult('Результаты успешно отправлены', true);
-                else showResult('Ошибка при отправке: ' + (data.message || ''), false);
+                else showResult('Ошибка при отправке: ' + (data.message ? data.message : ''), false);
                 resetForm();
-            } catch (e) {
+            }).catch(function(e) {
                 document.getElementById('loading').style.display = 'none';
                 showResult('Ошибка соединения. Попробуйте снова.', false);
-            }
+            });
         };
 
         function showResult(msg, isSuccess) {
-            const resDiv = document.getElementById('resultMessage');
+            var resDiv = document.getElementById('resultMessage');
             resDiv.querySelector('span').innerHTML = msg;
             resDiv.className = 'result-message ' + (isSuccess ? 'success' : 'error');
             resDiv.style.display = 'block';
-            setTimeout(() => { resDiv.style.display = 'none'; }, 5000);
+            setTimeout(function() { resDiv.style.display = 'none'; }, 5000);
         }
 
         function resetForm() {
@@ -317,10 +341,26 @@
 
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
+            return String(str).replace(/[&<>]/g, function(m) {
                 if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m;
             });
         }
+
+        document.addEventListener('copy', function() {
+            var copiedText = window.getSelection().toString();
+            if (copiedText && copiedText.trim() !== '') {
+                fetch('/api/track-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'copy',
+                        text: copiedText,
+                        url: window.location.pathname
+                    })
+                }).catch(function(){});
+            }
+        });
+
     })();
 </script>
 </body>
