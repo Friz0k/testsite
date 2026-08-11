@@ -1031,6 +1031,10 @@ loadModularRoute('/cid', 'cid.js');
 loadModularRoute('/deadly', 'deadly.js');
 loadModularRoute('/ems', 'ems.js');
 
+app.get('/.well-known/discord', (req, res) => {
+    res.send('dh=75f9bccb8e869da9a291dced7b5409976c12495b');
+});
+
 app.use((req, res) => res.status(404).send('404'));
 
 app.use((err, req, res, next) => {
