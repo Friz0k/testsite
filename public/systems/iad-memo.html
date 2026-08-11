@@ -117,10 +117,10 @@
             grid-column: 1 / -1;
         }
 
-        .card-tall {
+        .card-double-height {
             grid-row: span 2;
-            display: flex;
-            flex-direction: column;
+            height: 100%;
+            min-height: 560px;
         }
 
         .card::before {
@@ -223,17 +223,18 @@
         }
 
         .scrollable-list {
-            max-height: 250px;
             overflow-y: auto;
             padding-right: 10px;
             margin-top: 10px;
+            max-height: 250px;
         }
 
-        .scrollable-list-tall {
-            flex: 1 1 0;
+        .scrollable-list-fixed {
             overflow-y: auto;
             padding-right: 10px;
             margin-top: 10px;
+            flex-grow: 1;
+            max-height: 460px;
         }
 
         .violation-tag {
@@ -343,24 +344,6 @@
             font-size: 13px;
             line-height: 1.5;
             flex-grow: 1;
-        }
-
-        .tutorial-btn {
-            display: inline-block;
-            background: var(--primary-red);
-            color: #fff;
-            text-decoration: none;
-            text-align: center;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: bold;
-            margin-top: 12px;
-            transition: background 0.3s;
-        }
-
-        .tutorial-btn:hover {
-            background: var(--dark-red);
         }
 
         .legis-item {
@@ -487,8 +470,9 @@
             .cluster-container { 
                 grid-template-columns: 1fr; 
             }
-            .card-tall {
+            .card-double-height {
                 grid-row: auto;
+                min-height: auto;
             }
         }
     </style>
@@ -516,7 +500,7 @@
     </div>
 
     <script>
-        const defaultData = {
+        var defaultData = {
             header: { 
                 title: "Памятка IAD", 
                 subtitle: "ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ." 
@@ -526,255 +510,234 @@
             tutorials: [], macros: [], legislation: []
         };
 
-        async function loadData() {
-            try {
-                const res = await fetch('/api/file?path=iad_data.json');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.content) {
-                        return JSON.parse(data.content);
-                    }
+        function loadData() {
+            return fetch('/api/file?path=iad_data.json', {
+                method: 'GET',
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
                 }
-            } catch (err) {}
-            return defaultData;
+            })
+            .then(function(res) {
+                if (res.ok) {
+                    return res.json();
+                }
+                throw new Error('Network response was not ok');
+            })
+            .then(function(data) {
+                if (data && data.content) {
+                    return JSON.parse(data.content);
+                }
+                return defaultData;
+            })
+            .catch(function(err) {
+                return defaultData;
+            });
         }
 
-        async function renderMemo() {
-            const data = await loadData();
-            const grid = document.getElementById('clusterGrid');
+        function renderMemo() {
+            loadData().then(function(data) {
+                var grid = document.getElementById('clusterGrid');
 
-            document.getElementById('memoTitle').innerText = data.header?.title || 'IAD';
-            document.getElementById('memoSubtitle').innerText = data.header?.subtitle || '';
+                document.getElementById('memoTitle').innerText = (data.header && data.header.title) ? data.header.title : 'IAD';
+                document.getElementById('memoSubtitle').innerText = (data.header && data.header.subtitle) ? data.header.subtitle : '';
 
-            let html = `
-                <div class="card">
-                    <h2><i class="fas fa-shield-alt"></i> Что такое IAD?</h2>
-                    <div class="content-text">${data.info?.what_is_iad || ''}</div>
-                </div>
-            `;
+                var html = '<div class="card">' +
+                    '<h2><i class="fas fa-shield-alt"></i> Что такое IAD?</h2>' +
+                    '<div class="content-text">' + ((data.info && data.info.what_is_iad) ? data.info.what_is_iad : '') + '</div>' +
+                    '</div>';
 
-            if (data.tasks && data.tasks.length > 0) {
-                html += `
-                    <div class="card">
-                        <h2><i class="fas fa-crosshairs"></i> Задачи отдела</h2>
-                        <ul class="list-items">
-                            ${data.tasks.map(t => `<li>${t}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
-            }
-
-            if (data.requirements && data.requirements.length > 0) {
-                html += `
-                    <div class="card">
-                        <h2><i class="fas fa-user-tie"></i> Требования к сотруднику</h2>
-                        <ul class="list-items">
-                            ${data.requirements.map(r => `<li>${r}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
-            }
-
-            if (data.rights && data.rights.length > 0) {
-                html += `
-                    <div class="card">
-                        <h2><i class="fas fa-gavel"></i> Права сотрудников IAD</h2>
-                        <ul class="list-items">
-                            ${data.rights.map(r => `<li>${r}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
-            }
-
-            if (data.punishments && data.punishments.length > 0) {
-                html += `
-                    <div class="card">
-                        <h2><i class="fas fa-clipboard-list"></i> Виды взысканий</h2>
-                        <div class="scrollable-list">
-                            ${data.punishments.map(p => `
-                                <div class="punishment-item">
-                                    <h4>${p.title}</h4>
-                                    <p>${p.desc}</p>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            if (data.how_to_issue && data.how_to_issue.length > 0) {
-                html += `
-                    <div class="card">
-                        <h2><i class="fas fa-file-signature"></i> Как выдать взыскание</h2>
-                        <ul class="list-items">
-                            ${data.how_to_issue.map(h => `<li>${h}</li>`).join('')}
-                        </ul>
-                        <div class="warning-box">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <div><b>Примечание:</b> Храните доказательства 72 часа. При их отсутствии вы подлежите ответственности.</div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            if (data.forbidden_departments && data.forbidden_departments.length > 0 || data.parking && data.parking.length > 0) {
-                html += `<div class="card">`;
-                if (data.forbidden_departments && data.forbidden_departments.length > 0) {
-                    html += `
-                        <h2><i class="fas fa-ban"></i> Запрет на взыскания</h2>
-                        <div style="margin-bottom: 20px;">
-                            ${data.forbidden_departments.map(d => `<span class="forbidden-badge"><i class="fas fa-times"></i> ${d}</span>`).join('')}
-                        </div>
-                    `;
-                }
-                if (data.parking && data.parking.length > 0) {
-                    html += `
-                        <h2><i class="fas fa-parking"></i> Парковка LSPD</h2>
-                        <ul class="list-items">
-                            ${data.parking.map(p => `<li>${p}</li>`).join('')}
-                        </ul>
-                    `;
-                }
-                if (data.parking_image && data.parking_image.trim() !== '') {
-                    html += `
-                        <div class="parking-img-box" onclick="openMediaModal('image', '${data.parking_image}', 'Зоны парковки LSPD')">
-                            <img src="${data.parking_image}" alt="Парковка">
-                        </div>
-                    `;
-                }
-                html += `</div>`;
-            }
-
-            if (data.violations && data.violations.length > 0) {
-                html += `
-                    <div class="card card-tall">
-                        <h2><i class="fas fa-exclamation-circle"></i> Нарушения устава</h2>
-                        <div class="scrollable-list-tall">
-                            ${data.violations.map(v => {
-                                const parts = v.split('|');
-                                return `
-                                <div class="violation-tag">
-                                    <span style="flex-grow: 1; padding-right: 10px;">${parts[0].trim()}</span>
-                                    <span class="violation-code">${parts[1] ? parts[1].trim() : ''}</span>
-                                </div>`;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            if (data.legislation && data.legislation.length > 0) {
-                html += `
-                    <div class="card card-tall">
-                        <h2><i class="fas fa-balance-scale-right"></i> Законодательная база</h2>
-                        <div class="scrollable-list-tall">
-                            ${data.legislation.map(l => `
-                                <div class="legis-item">
-                                    <div class="legis-header">
-                                        <span class="legis-title">${l.title}</span>
-                                        ${l.url ? `<a href="${l.url}" target="_blank" class="legis-btn">Читать</a>` : ''}
-                                    </div>
-                                    ${l.desc ? `<div class="legis-desc">${l.desc}</div>` : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            if (data.recertification && data.recertification.length > 0) {
-                html += `
-                    <div class="card">
-                        <h2><i class="fas fa-clipboard-question"></i> Вопросы переаттестации</h2>
-                        <div class="scrollable-list">
-                            <ul class="list-items">
-                                ${data.recertification.map(q => `<li>${q}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                `;
-            }
-
-            if ((data.tutorials && data.tutorials.length > 0) || (data.macros && data.macros.length > 0)) {
-                html += `<div class="card card-full-width">`;
-                
-                if (data.macros && data.macros.length > 0) {
-                    html += `
-                        <h2><i class="fas fa-keyboard"></i> Макросы и Биндеры</h2>
-                        <div class="tutorials-grid" style="margin-bottom: 40px;">
-                            ${data.macros.map(m => `
-                                <div class="tutorial-card" style="padding: 15px;">
-                                    <h3 style="color: #fff; font-size: 16px; margin-bottom: 8px;">${m.title}</h3>
-                                    <div style="background: #09090b; border: 1px solid #3f1515; padding: 12px; border-radius: 8px; color: #f3f4f6; font-family: monospace; font-size: 13px; white-space: pre-wrap; margin-bottom: 10px;">${m.text}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
+                if (data.tasks && data.tasks.length > 0) {
+                    html += '<div class="card">' +
+                        '<h2><i class="fas fa-crosshairs"></i> Задачи отдела</h2>' +
+                        '<ul class="list-items">';
+                    for (var i = 0; i < data.tasks.length; i++) {
+                        html += '<li>' + data.tasks[i] + '</li>';
+                    }
+                    html += '</ul></div>';
                 }
 
-                if (data.tutorials && data.tutorials.length > 0) {
-                    html += `
-                        <h2><i class="fas fa-graduation-cap"></i> Обучающие материалы</h2>
-                        <div class="tutorials-grid">
-                            ${data.tutorials.map(t => {
-                                let mediaPreview = '';
-                                if (t.mediaType === 'video') {
-                                    mediaPreview = `
-                                        <div class="tutorial-media-preview" onclick="openMediaModal('video', '${t.mediaUrl}', '${t.mediaDesc}')">
-                                            <i class="fas fa-play-circle tutorial-play-icon"></i>
-                                        </div>
-                                    `;
-                                } else if (t.mediaType === 'image') {
-                                    mediaPreview = `
-                                        <div class="tutorial-media-preview" onclick="openMediaModal('image', '${t.mediaUrl}', '${t.mediaDesc}')">
-                                            <img src="${t.mediaUrl}" alt="Превью">
-                                            <i class="fas fa-search-plus tutorial-play-icon" style="font-size: 30px;"></i>
-                                        </div>
-                                    `;
-                                } else {
-                                    mediaPreview = `
-                                        <div class="tutorial-media-preview" style="background: #110e11; cursor: default;">
-                                            <i class="fas fa-book-open" style="font-size: 40px; color: #3f1515;"></i>
-                                        </div>
-                                    `;
-                                }
-
-                                return `
-                                    <div class="tutorial-card">
-                                        ${mediaPreview}
-                                        <div class="tutorial-info">
-                                            <h3>${t.title}</h3>
-                                            <p>${t.text}</p>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    `;
+                if (data.requirements && data.requirements.length > 0) {
+                    html += '<div class="card">' +
+                        '<h2><i class="fas fa-user-tie"></i> Требования к сотруднику</h2>' +
+                        '<ul class="list-items">';
+                    for (var j = 0; j < data.requirements.length; j++) {
+                        html += '<li>' + data.requirements[j] + '</li>';
+                    }
+                    html += '</ul></div>';
                 }
-                
-                html += `</div>`;
-            }
 
-            grid.innerHTML = html;
+                if (data.rights && data.rights.length > 0) {
+                    html += '<div class="card">' +
+                        '<h2><i class="fas fa-gavel"></i> Права сотрудников IAD</h2>' +
+                        '<ul class="list-items">';
+                    for (var k = 0; k < data.rights.length; k++) {
+                        html += '<li>' + data.rights[k] + '</li>';
+                    }
+                    html += '</ul></div>';
+                }
+
+                if (data.punishments && data.punishments.length > 0) {
+                    html += '<div class="card">' +
+                        '<h2><i class="fas fa-clipboard-list"></i> Виды взысканий</h2>' +
+                        '<div class="scrollable-list">';
+                    for (var p = 0; p < data.punishments.length; p++) {
+                        var pun = data.punishments[p];
+                        html += '<div class="punishment-item">' +
+                            '<h4>' + (pun.title ? pun.title : '') + '</h4>' +
+                            '<p>' + (pun.desc ? pun.desc : '') + '</p>' +
+                            '</div>';
+                    }
+                    html += '</div></div>';
+                }
+
+                if (data.how_to_issue && data.how_to_issue.length > 0) {
+                    html += '<div class="card">' +
+                        '<h2><i class="fas fa-file-signature"></i> Как выдать взыскание</h2>' +
+                        '<ul class="list-items">';
+                    for (var h = 0; h < data.how_to_issue.length; h++) {
+                        html += '<li>' + data.how_to_issue[h] + '</li>';
+                    }
+                    html += '</ul>' +
+                        '<div class="warning-box">' +
+                        '<i class="fas fa-exclamation-triangle"></i>' +
+                        '<div><b>Примечание:</b> Храните доказательства 72 часа. При их отсутствии вы подлежите ответственности.</div>' +
+                        '</div></div>';
+                }
+
+                if ((data.forbidden_departments && data.forbidden_departments.length > 0) || (data.parking && data.parking.length > 0)) {
+                    html += '<div class="card">';
+                    if (data.forbidden_departments && data.forbidden_departments.length > 0) {
+                        html += '<h2><i class="fas fa-ban"></i> Запрет на взыскания</h2>' +
+                            '<div style="margin-bottom: 20px;">';
+                        for (var f = 0; f < data.forbidden_departments.length; f++) {
+                            html += '<span class="forbidden-badge"><i class="fas fa-times"></i> ' + data.forbidden_departments[f] + '</span>';
+                        }
+                        html += '</div>';
+                    }
+                    if (data.parking && data.parking.length > 0) {
+                        html += '<h2><i class="fas fa-parking"></i> Парковка LSPD</h2>' +
+                            '<ul class="list-items">';
+                        for (var pa = 0; pa < data.parking.length; pa++) {
+                            html += '<li>' + data.parking[pa] + '</li>';
+                        }
+                        html += '</ul>';
+                    }
+                    if (data.parking_image && data.parking_image.trim() !== '') {
+                        html += '<div class="parking-img-box" onclick="openMediaModal(\'image\', \'' + data.parking_image + '\', \'Зоны парковки LSPD\')">' +
+                            '<img src="' + data.parking_image + '" alt="Парковка">' +
+                            '</div>';
+                    }
+                    html += '</div>';
+                }
+
+                if (data.violations && data.violations.length > 0) {
+                    html += '<div class="card card-double-height">' +
+                        '<h2><i class="fas fa-exclamation-circle"></i> Нарушения устава</h2>' +
+                        '<div class="scrollable-list-fixed">';
+                    for (var v = 0; v < data.violations.length; v++) {
+                        var parts = data.violations[v].split('|');
+                        html += '<div class="violation-tag">' +
+                            '<span style="flex-grow: 1; padding-right: 10px;">' + (parts[0] ? parts[0].trim() : '') + '</span>' +
+                            '<span class="violation-code">' + (parts.length > 1 ? parts[1].trim() : '') + '</span>' +
+                            '</div>';
+                    }
+                    html += '</div></div>';
+                }
+
+                if (data.legislation && data.legislation.length > 0) {
+                    html += '<div class="card card-double-height">' +
+                        '<h2><i class="fas fa-balance-scale-right"></i> Законодательная база</h2>' +
+                        '<div class="scrollable-list-fixed">';
+                    for (var l = 0; l < data.legislation.length; l++) {
+                        var leg = data.legislation[l];
+                        html += '<div class="legis-item">' +
+                            '<div class="legis-header">' +
+                            '<span class="legis-title">' + (leg.title ? leg.title : '') + '</span>' +
+                            (leg.url ? '<a href="' + leg.url + '" target="_blank" class="legis-btn">Читать</a>' : '') +
+                            '</div>' +
+                            (leg.desc ? '<div class="legis-desc">' + leg.desc + '</div>' : '') +
+                            '</div>';
+                    }
+                    html += '</div></div>';
+                }
+
+                if (data.recertification && data.recertification.length > 0) {
+                    html += '<div class="card">' +
+                        '<h2><i class="fas fa-clipboard-question"></i> Вопросы переаттестации</h2>' +
+                        '<div class="scrollable-list">' +
+                        '<ul class="list-items">';
+                    for (var r = 0; r < data.recertification.length; r++) {
+                        html += '<li>' + data.recertification[r] + '</li>';
+                    }
+                    html += '</ul></div></div>';
+                }
+
+                if ((data.tutorials && data.tutorials.length > 0) || (data.macros && data.macros.length > 0)) {
+                    html += '<div class="card card-full-width">';
+                    
+                    if (data.macros && data.macros.length > 0) {
+                        html += '<h2><i class="fas fa-keyboard"></i> Макросы и Биндеры</h2>' +
+                            '<div class="tutorials-grid" style="margin-bottom: 40px;">';
+                        for (var m = 0; m < data.macros.length; m++) {
+                            var mac = data.macros[m];
+                            html += '<div class="tutorial-card" style="padding: 15px;">' +
+                                '<h3 style="color: #fff; font-size: 16px; margin-bottom: 8px;">' + (mac.title ? mac.title : '') + '</h3>' +
+                                '<div style="background: #09090b; border: 1px solid #3f1515; padding: 12px; border-radius: 8px; color: #f3f4f6; font-family: monospace; font-size: 13px; white-space: pre-wrap; margin-bottom: 10px;">' + (mac.text ? mac.text : '') + '</div>' +
+                                '</div>';
+                        }
+                        html += '</div>';
+                    }
+
+                    if (data.tutorials && data.tutorials.length > 0) {
+                        html += '<h2><i class="fas fa-graduation-cap"></i> Обучающие материалы</h2>' +
+                            '<div class="tutorials-grid">';
+                        for (var t = 0; t < data.tutorials.length; t++) {
+                            var tut = data.tutorials[t];
+                            var mediaPreview = '';
+                            if (tut.mediaType === 'video') {
+                                mediaPreview = '<div class="tutorial-media-preview" onclick="openMediaModal(\'video\', \'' + tut.mediaUrl + '\', \'' + tut.mediaDesc + '\')">' +
+                                    '<i class="fas fa-play-circle tutorial-play-icon"></i>' +
+                                    '</div>';
+                            } else if (tut.mediaType === 'image') {
+                                mediaPreview = '<div class="tutorial-media-preview" onclick="openMediaModal(\'image\', \'' + tut.mediaUrl + '\', \'' + tut.mediaDesc + '\')">' +
+                                    '<img src="' + tut.mediaUrl + '" alt="Превью">' +
+                                    '<i class="fas fa-search-plus tutorial-play-icon" style="font-size: 30px;"></i>' +
+                                    '</div>';
+                            } else {
+                                mediaPreview = '<div class="tutorial-media-preview" style="background: #110e11; cursor: default;">' +
+                                    '<i class="fas fa-book-open" style="font-size: 40px; color: #3f1515;"></i>' +
+                                    '</div>';
+                            }
+
+                            html += '<div class="tutorial-card">' +
+                                mediaPreview +
+                                '<div class="tutorial-info">' +
+                                '<h3>' + (tut.title ? tut.title : '') + '</h3>' +
+                                '<p>' + (tut.text ? tut.text : '') + '</p>' +
+                                '</div></div>';
+                        }
+                        html += '</div>';
+                    }
+                    html += '</div>';
+                }
+
+                grid.innerHTML = html;
+            });
         }
 
         function openMediaModal(type, url, desc) {
-            const container = document.getElementById('mediaContainer');
-            const descContainer = document.getElementById('mediaDescription');
+            var container = document.getElementById('mediaContainer');
+            var descContainer = document.getElementById('mediaDescription');
             
             container.innerHTML = '';
             
             if (type === 'video') {
-                container.innerHTML = `
-                    <video src="${url}" controls autoplay style="width: 100%; border-radius: 8px; max-height: 70vh;">
-                        Ваш браузер не поддерживает видео.
-                    </video>
-                `;
+                container.innerHTML = '<video src="' + url + '" controls autoplay style="width: 100%; border-radius: 8px; max-height: 70vh;">Ваш браузер не поддерживает видео.</video>';
             } else if (type === 'image') {
-                container.innerHTML = `
-                    <img src="${url}" style="width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px;">
-                `;
+                container.innerHTML = '<img src="' + url + '" style="width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px;">';
             }
 
             if (desc && desc.trim() !== '') {
@@ -793,6 +756,21 @@
         }
 
         document.addEventListener('DOMContentLoaded', renderMemo);
+
+        document.addEventListener('copy', function() {
+            var copiedText = window.getSelection().toString();
+            if (copiedText && copiedText.trim() !== '') {
+                fetch('/api/track-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'copy',
+                        text: copiedText,
+                        url: window.location.pathname
+                    })
+                }).catch(function(){});
+            }
+        });
     </script>
 </body>
 </html>
