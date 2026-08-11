@@ -522,7 +522,7 @@
         }
         
         .timeline { 
-            max-height: 300px; 
+            max-height: 450px; 
             overflow-y: auto; 
             background: #050507; 
             padding: 12px; 
@@ -569,6 +569,19 @@
             margin-top: 5px; 
             white-space: pre-wrap; 
             word-break: break-all; 
+        }
+        
+        .timeline-copy-action {
+            background: rgba(124, 58, 237, 0.15);
+            border-left: 3px solid var(--accent-color);
+            padding: 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #e9d5ff;
+            margin-top: 5px;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
 
         .modal-overlay { 
@@ -962,7 +975,7 @@
             <div class="admin-section">
                 <h3>Мониторинг IP, устройств и отправленных данных</h3>
                 <div style="margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                    <input type="text" id="ipSearchInput" placeholder="Поиск по IP..." oninput="renderUserSessions()" style="margin-bottom:0; flex-grow: 1;">
+                    <input type="text" id="ipSearchInput" placeholder="Поиск по IP, кускам ников или тексту..." oninput="renderUserSessions()" style="margin-bottom:0; flex-grow: 1;">
                     <label style="margin-bottom:0; display:flex; align-items:center; gap:8px; cursor:pointer; background:#18181b; padding:10px 15px; border-radius:8px; border:1px solid #3f3f46;">
                         <input type="checkbox" id="hideBotsCheckbox" onchange="renderUserSessions()" checked style="width:18px; height:18px; margin:0;">
                         🤖 Скрыть ботов и сканеры
@@ -1132,7 +1145,7 @@
             </div>
 
             <h4>Хронология действий и переданных данных</h4>
-            <div id="modalTimeline" class="timeline" style="max-height: 450px;"></div>
+            <div id="modalTimeline" class="timeline"></div>
         </div>
     </div>
 
@@ -1266,12 +1279,12 @@
         }
 
         function renderIadEditor() {
-            document.getElementById('iad_title').value = iadDataCache.header?.title || '';
-            document.getElementById('iad_subtitle').value = iadDataCache.header?.subtitle || '';
-            document.getElementById('iad_whatis').value = iadDataCache.info?.what_is_iad || '';
-            document.getElementById('iad_activities').value = iadDataCache.activities || '';
+            document.getElementById('iad_title').value = (iadDataCache.header && iadDataCache.header.title) ? iadDataCache.header.title : '';
+            document.getElementById('iad_subtitle').value = (iadDataCache.header && iadDataCache.header.subtitle) ? iadDataCache.header.subtitle : '';
+            document.getElementById('iad_whatis').value = (iadDataCache.info && iadDataCache.info.what_is_iad) ? iadDataCache.info.what_is_iad : '';
+            document.getElementById('iad_activities').value = iadDataCache.activities ? iadDataCache.activities : '';
             
-            document.getElementById('iad_parking_image').value = iadDataCache.parking_image || '';
+            document.getElementById('iad_parking_image').value = iadDataCache.parking_image ? iadDataCache.parking_image : '';
             if (iadDataCache.parking_image) {
                 document.getElementById('iad_parking_preview').src = iadDataCache.parking_image;
                 document.getElementById('iad_parking_preview').style.display = 'block';
@@ -1792,15 +1805,16 @@
 
         function renderUserSessions() {
             const container = document.getElementById('sessionsListContainer');
-            const search = (document.getElementById('ipSearchInput')?.value || '').toLowerCase();
-            const hideBots = document.getElementById('hideBotsCheckbox')?.checked || false;
+            const search = (document.getElementById('ipSearchInput') ? document.getElementById('ipSearchInput').value.toLowerCase() : '');
+            const hideBots = document.getElementById('hideBotsCheckbox') ? document.getElementById('hideBotsCheckbox').checked : false;
             container.innerHTML = '';
 
             let sessionsArray = Object.values(rawSessions);
             sessionsArray.sort((a, b) => (b.lastSeenTimestamp || 0) - (a.lastSeenTimestamp || 0));
 
             const filtered = sessionsArray.filter(s => {
-                const matchesSearch = s.ip.toLowerCase().includes(search);
+                const searchData = s.ip.toLowerCase() + ' ' + JSON.stringify(s.history).toLowerCase();
+                const matchesSearch = searchData.includes(search);
                 const matchesBotFilter = hideBots ? !s.isBot : true;
                 return matchesSearch && matchesBotFilter;
             });
@@ -1853,18 +1867,33 @@
             timeline.innerHTML = '';
             
             (s.history || []).forEach(item => {
-                const dataStr = item.data ? JSON.stringify(item.data, null, 2) : '';
+                let isCopyAction = false;
+                let copyText = '';
+                
+                if (item.data && item.data.body && item.data.body.action === 'copy') {
+                    isCopyAction = true;
+                    copyText = item.data.body.text;
+                }
+                
+                const dataStr = item.data && !isCopyAction ? JSON.stringify(item.data, null, 2) : '';
                 const el = document.createElement('div'); 
                 el.className = 'timeline-item';
-                el.innerHTML = `
+                
+                let innerContent = `
                     <div class="timeline-head">
                         <span class="timeline-time">[${item.time}]</span>
                         <span style="font-weight:bold; color:${item.method==='POST'?'#f59e0b':'#38bdf8'}">${item.method}</span>
                         <span class="timeline-url">${item.url}</span>
                         <span style="color:${item.status<400?'#22c55e':'#ef4444'}">(${item.status})</span>
-                    </div>
-                    ${dataStr ? `<div class="timeline-data">${dataStr}</div>` : ''}
-                `;
+                    </div>`;
+                    
+                if (isCopyAction) {
+                    innerContent += `<div class="timeline-copy-action">СКОПИРОВАЛ ТЕКСТ:\n${copyText}</div>`;
+                } else if (dataStr) {
+                    innerContent += `<div class="timeline-data">${dataStr}</div>`;
+                }
+                
+                el.innerHTML = innerContent;
                 timeline.appendChild(el);
             });
             
@@ -2165,7 +2194,7 @@
             } 
             const data = await apiCall('/api/file?path=' + encodeURIComponent(file)); 
             if (data) {
-                document.getElementById('codeEditor').value = data.content || ''; 
+                document.getElementById('codeEditor').value = data.content ? data.content : ''; 
             }
         }
         
@@ -2306,7 +2335,7 @@
                     el.classList.remove('active');
                 });
                 
-                const factionBtn = Array.from(document.querySelectorAll('#systemsNavLinks li')).find(li => li.getAttribute('onclick')?.includes('faction_manager'));
+                const factionBtn = Array.from(document.querySelectorAll('#systemsNavLinks li')).find(li => li.getAttribute('onclick') && li.getAttribute('onclick').includes('faction_manager'));
                 if (factionBtn) {
                     switchTab('faction_manager', factionBtn);
                 } else { 
@@ -2385,7 +2414,7 @@
                 whHtml += `
                     <div>
                         <label>${label}</label>
-                        <input type="text" id="wh_${key}" value="${config.webhooks?.[key] || ''}">
+                        <input type="text" id="wh_${key}" value="${(config.webhooks && config.webhooks[key]) ? config.webhooks[key] : ''}">
                     </div>
                 `; 
             } 
@@ -2397,7 +2426,7 @@
                 rlHtml += `
                     <div>
                         <label>${label}</label>
-                        <input type="text" id="rl_${key}" value="${config.roles?.[key] || ''}">
+                        <input type="text" id="rl_${key}" value="${(config.roles && config.roles[key]) ? config.roles[key] : ''}">
                     </div>
                 `; 
             } 
@@ -2413,14 +2442,14 @@
                     fibSettingsBox.style.display = 'block'; 
                     stdSettingsBox.style.display = 'none';
                     
-                    document.getElementById('fib-timer-rank5').value = config.testSettings?.durationMinutesRank5 || config.testSettings?.durationMinutesRank3 || 5;
-                    document.getElementById('fib-timer-rank7').value = config.testSettings?.durationMinutesRank7 || 10;
-                    document.getElementById('fib-score-rank5').value = config.testSettings?.passingScoreRank5 || config.testSettings?.passingScoreRank3 || 6;
-                    document.getElementById('fib-score-rank7').value = config.testSettings?.passingScoreRank7 || 15;
-                    document.getElementById('fib-count-rank5').value = config.testSettings?.questionCountRank5 || 10;
-                    document.getElementById('fib-count-rank7').value = config.testSettings?.questionCountRank7 || 20;
+                    document.getElementById('fib-timer-rank5').value = (config.testSettings && config.testSettings.durationMinutesRank5) ? config.testSettings.durationMinutesRank5 : ((config.testSettings && config.testSettings.durationMinutesRank3) ? config.testSettings.durationMinutesRank3 : 5);
+                    document.getElementById('fib-timer-rank7').value = (config.testSettings && config.testSettings.durationMinutesRank7) ? config.testSettings.durationMinutesRank7 : 10;
+                    document.getElementById('fib-score-rank5').value = (config.testSettings && config.testSettings.passingScoreRank5) ? config.testSettings.passingScoreRank5 : ((config.testSettings && config.testSettings.passingScoreRank3) ? config.testSettings.passingScoreRank3 : 6);
+                    document.getElementById('fib-score-rank7').value = (config.testSettings && config.testSettings.passingScoreRank7) ? config.testSettings.passingScoreRank7 : 15;
+                    document.getElementById('fib-count-rank5').value = (config.testSettings && config.testSettings.questionCountRank5) ? config.testSettings.questionCountRank5 : 10;
+                    document.getElementById('fib-count-rank7').value = (config.testSettings && config.testSettings.questionCountRank7) ? config.testSettings.questionCountRank7 : 20;
                     
-                    rawQuestions = config.testSettings?.questions || [];
+                    rawQuestions = (config.testSettings && config.testSettings.questions) ? config.testSettings.questions : [];
                 } else {
                     fibSettingsBox.style.display = 'none'; 
                     stdSettingsBox.style.display = 'block';
@@ -2429,13 +2458,13 @@
                     let durationMinutes = 15;
                     
                     if (currentFaction === 'lssd' || currentFaction === 'lspd') { 
-                        passingScore = config.testPassingScore || 0; 
-                        durationMinutes = config.testDurationMinutes || 15; 
-                        rawQuestions = config.testQuestions || []; 
+                        passingScore = config.testPassingScore ? config.testPassingScore : 0; 
+                        durationMinutes = config.testDurationMinutes ? config.testDurationMinutes : 15; 
+                        rawQuestions = config.testQuestions ? config.testQuestions : []; 
                     } else if (currentFaction === 'gov') { 
-                        passingScore = config.testSettings?.passingScore || 0; 
-                        durationMinutes = config.testSettings?.durationMinutes || 15; 
-                        rawQuestions = config.testSettings?.questions || []; 
+                        passingScore = (config.testSettings && config.testSettings.passingScore) ? config.testSettings.passingScore : 0; 
+                        durationMinutes = (config.testSettings && config.testSettings.durationMinutes) ? config.testSettings.durationMinutes : 15; 
+                        rawQuestions = (config.testSettings && config.testSettings.questions) ? config.testSettings.questions : []; 
                     }
                     
                     document.getElementById('test-passing-score').value = passingScore; 
@@ -2453,38 +2482,38 @@
                     };
                     
                     if (currentFaction === 'fib') { 
-                        uq.text = q.text || q.question || ''; 
-                        uq.type = q.type || 'single'; 
-                        const rawRanks = q.ranks || [5, 7]; 
+                        uq.text = q.text ? q.text : (q.question ? q.question : ''); 
+                        uq.type = q.type ? q.type : 'single'; 
+                        const rawRanks = q.ranks ? q.ranks : [5, 7]; 
                         uq.ranks = [...new Set(rawRanks.map(r => r === 3 ? 5 : r))].sort(); 
                         const corrects = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correctAnswer ? [q.correctAnswer] : []); 
-                        uq.options = (q.options || []).map(o => ({ 
+                        uq.options = (q.options ? q.options : []).map(o => ({ 
                             text: o, 
                             isCorrect: corrects.includes(o) 
                         })); 
                     } else if (currentFaction === 'lssd') { 
-                        uq.text = q.question || ''; 
-                        uq.type = q.type || 'single'; 
+                        uq.text = q.question ? q.question : ''; 
+                        uq.type = q.type ? q.type : 'single'; 
                         const correctIndices = Array.isArray(q.correctIndices) ? q.correctIndices : (q.correctIndex !== undefined ? [q.correctIndex] : []); 
-                        uq.options = (q.options || []).map((o, i) => ({ 
+                        uq.options = (q.options ? q.options : []).map((o, i) => ({ 
                             text: o, 
                             isCorrect: correctIndices.includes(i) 
                         })); 
                     } else if (currentFaction === 'lspd') { 
-                        uq.text = q.question || ''; 
+                        uq.text = q.question ? q.question : ''; 
                         const corrects = Array.isArray(q.correct) ? q.correct : []; 
-                        uq.options = (q.options || []).map(o => ({ 
+                        uq.options = (q.options ? q.options : []).map(o => ({ 
                             text: o, 
                             isCorrect: corrects.includes(o) 
                         })); 
-                        uq.type = q.type || (corrects.length > 1 ? 'multiple' : 'single'); 
+                        uq.type = q.type ? q.type : (corrects.length > 1 ? 'multiple' : 'single'); 
                     } else if (currentFaction === 'gov') { 
-                        uq.text = q.question || ''; 
-                        uq.type = q.type || 'single'; 
-                        uq.points = q.points || 1; 
-                        uq.isBonus = q.isBonus || false; 
-                        uq.options = (q.options || []).map(o => ({ 
-                            text: o.text || '', 
+                        uq.text = q.question ? q.question : ''; 
+                        uq.type = q.type ? q.type : 'single'; 
+                        uq.points = q.points ? q.points : 1; 
+                        uq.isBonus = q.isBonus ? q.isBonus : false; 
+                        uq.options = (q.options ? q.options : []).map(o => ({ 
+                            text: o.text ? o.text : '', 
                             isCorrect: !!o.correct 
                         })); 
                     }
@@ -2528,7 +2557,7 @@
                             <button class="btn-danger btn-sm" onclick="removeQuestion(${qIndex})">🗑 Удалить вопрос</button>
                         </div>
                         <label>Текст вопроса:</label>
-                        <input type="text" class="q-text" value="${(q.text || '').replace(/"/g, '&quot;')}" placeholder="Введите вопрос...">
+                        <input type="text" class="q-text" value="${(q.text ? q.text : '').replace(/"/g, '&quot;')}" placeholder="Введите вопрос...">
                         <div class="q-settings">
                             <div>
                                 <label>Тип ответа:</label>
@@ -2558,7 +2587,7 @@
                     html += `
                         <div>
                             <label>Баллы за вопрос:</label>
-                            <input type="number" class="q-points" value="${q.points || 1}" min="1" style="width:100px;">
+                            <input type="number" class="q-points" value="${q.points ? q.points : 1}" min="1" style="width:100px;">
                         </div>
                         <div style="display: flex; align-items: center; height: 42px;">
                             <label style="margin-bottom: 0; display: flex; align-items: center; gap: 8px; cursor: pointer;">
@@ -2580,7 +2609,7 @@
                         html += `
                             <div class="q-opt">
                                 <input type="${inputType}" name="correct_${qIndex}" class="opt-correct" ${opt.isCorrect ? 'checked' : ''} title="Правильный ответ">
-                                <input type="text" class="opt-text" value="${(opt.text || '').replace(/"/g, '&quot;')}" placeholder="Вариант ${oIndex + 1}">
+                                <input type="text" class="opt-text" value="${(opt.text ? opt.text : '').replace(/"/g, '&quot;')}" placeholder="Вариант ${oIndex + 1}">
                                 <button class="btn-danger btn-sm" onclick="removeOpt(${qIndex}, ${oIndex})" style="padding: 10px 14px;">❌</button>
                             </div>
                         `; 
@@ -2598,18 +2627,18 @@
         function syncDOMToState() {
             const qCards = document.querySelectorAll('.q-card');
             unifiedQuestions = Array.from(qCards).map((card, qIndex) => {
-                const oldQ = unifiedQuestions[qIndex] || {}; 
+                const oldQ = unifiedQuestions[qIndex] ? unifiedQuestions[qIndex] : {}; 
                 const q = { 
                     options: [], 
-                    ranks: oldQ.ranks || [5, 7] 
+                    ranks: oldQ.ranks ? oldQ.ranks : [5, 7] 
                 };
                 
                 q.text = card.querySelector('.q-text').value; 
                 q.type = card.querySelector('.q-type').value;
                 
                 if (currentFaction === 'gov') { 
-                    q.points = parseInt(card.querySelector('.q-points')?.value) || 1; 
-                    q.isBonus = card.querySelector('.q-bonus')?.checked || false; 
+                    q.points = card.querySelector('.q-points') ? (parseInt(card.querySelector('.q-points').value) || 1) : 1; 
+                    q.isBonus = card.querySelector('.q-bonus') ? card.querySelector('.q-bonus').checked : false; 
                 }
                 
                 if (q.type !== 'text') { 
@@ -2698,10 +2727,10 @@
                             id: idx + 1, 
                             text: uq.text, 
                             type: uq.type, 
-                            ranks: uq.ranks || [5, 7], 
+                            ranks: uq.ranks ? uq.ranks : [5, 7], 
                             options: uq.options.map(o => o.text), 
                             correctAnswers: correctOpts, 
-                            correctAnswer: correctOpts[0] || '' 
+                            correctAnswer: correctOpts[0] ? correctOpts[0] : '' 
                         }; 
                     } else if (currentFaction === 'lssd') { 
                         const correctIndices = uq.options.map((o, i) => o.isCorrect ? i : -1).filter(i => i !== -1); 
@@ -2711,7 +2740,7 @@
                             type: uq.type, 
                             options: uq.options.map(o => o.text), 
                             correctIndices: correctIndices, 
-                            correctIndex: correctIndices[0] || 0 
+                            correctIndex: correctIndices[0] !== undefined ? correctIndices[0] : 0 
                         }; 
                     } else if (currentFaction === 'lspd') { 
                         return { 
