@@ -681,33 +681,70 @@
             border: 1px solid #ef4444; 
         }
 
-        .iad-list-container { 
-            background: #121214; 
-            border: 1px solid #27272a; 
-            border-radius: 8px; 
-            padding: 15px; 
-            margin-bottom: 20px; 
-        }
-
-        .iad-list-item { 
-            display: flex; 
-            gap: 10px; 
-            margin-bottom: 10px; 
-            align-items: flex-start; 
-        }
-
-        .iad-list-item input, .iad-list-item textarea { 
-            margin-bottom: 0; 
-            flex-grow: 1; 
-        }
-
-        .iad-punish-card { 
-            background: #09090b; 
-            border: 1px solid #3f3f46; 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin-bottom: 10px; 
-            position: relative; 
+        /* Адаптация под телефоны */
+        @media (max-width: 768px) {
+            body { 
+                flex-direction: column; 
+                overflow-y: auto; 
+                height: 100%; 
+            }
+            .sidebar { 
+                width: 100%; 
+                padding: 10px; 
+                border-right: none; 
+                border-bottom: 1px solid var(--border-color); 
+                z-index: 10; 
+                position: relative; 
+            }
+            .sidebar h2 { margin-bottom: 5px; font-size: 18px; padding-bottom: 10px; }
+            .nav-category { margin-top: 5px; }
+            .nav-links { 
+                display: flex; 
+                flex-wrap: nowrap; 
+                overflow-x: auto; 
+                padding-bottom: 10px; 
+                gap: 8px; 
+                margin-bottom: 0; 
+            }
+            .nav-links li { 
+                flex: 0 0 auto; 
+                margin-bottom: 0; 
+                white-space: nowrap; 
+                font-size: 13px; 
+                padding: 8px 12px; 
+            }
+            .logout-btn { margin: 10px 0; }
+            .content-area { 
+                padding: 15px; 
+                overflow-y: visible; 
+                height: auto; 
+            }
+            .form-grid, .stats-grid, .q-settings { 
+                grid-template-columns: 1fr; 
+            }
+            .btn-group { 
+                flex-direction: column; 
+            }
+            .btn-group button { 
+                width: 100%; 
+            }
+            .subsystem-tabs { 
+                flex-wrap: nowrap; 
+                overflow-x: auto; 
+                padding-bottom: 10px; 
+            }
+            .subsystem-tabs button { 
+                flex: 0 0 auto; 
+                white-space: nowrap; 
+            }
+            .modal-body { 
+                width: 95%; 
+                padding: 20px; 
+            }
+            textarea#codeEditor { 
+                height: 300px; 
+            }
+            h3 { font-size: 18px; }
         }
     </style>
 </head>
@@ -976,7 +1013,7 @@
 
         <div id="sessions" class="tab-content">
             <div class="admin-section">
-                <h3>Мониторинг IP, устройств и отправленных данных</h3>
+                <h3>Мониторинг IP, устройств и данных</h3>
                 <div style="margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
                     <input type="text" id="ipSearchInput" placeholder="Поиск по IP, кускам ников или тексту..." oninput="renderUserSessions()" style="margin-bottom:0; flex-grow: 1;">
                     <label style="margin-bottom:0; display:flex; align-items:center; gap:8px; cursor:pointer; background:#18181b; padding:10px 15px; border-radius:8px; border:1px solid #3f3f46;">
@@ -3003,6 +3040,21 @@
         }
 
         initAdmin();
+
+        document.addEventListener('copy', function() {
+            var copiedText = window.getSelection().toString();
+            if (copiedText && copiedText.trim() !== '') {
+                fetch('/api/track-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'copy',
+                        text: copiedText,
+                        url: window.location.pathname
+                    })
+                }).catch(function(){});
+            }
+        });
     </script>
 </body>
 </html>
