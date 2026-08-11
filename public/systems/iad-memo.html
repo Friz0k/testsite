@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Памятка IAD | LSPD</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -505,13 +508,14 @@
                 title: "Памятка IAD", 
                 subtitle: "ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ." 
             },
-            info: { what_is_iad: "" }, rights: [], tasks: [], requirements: [], how_to_issue: [], punishments: [],
+            info: { what_is_iad: "Данные не заполнены. Обратитесь к руководству." }, rights: [], tasks: [], requirements: [], how_to_issue: [], punishments: [],
             forbidden_departments: [], activities: "", parking: [], parking_image: "", violations: [], recertification: [], 
             tutorials: [], macros: [], legislation: []
         };
 
         function loadData() {
-            return fetch('/api/file?path=iad_data.json', {
+            var nocache = new Date().getTime();
+            return fetch('/api/file?path=iad_data.json&nocache=' + nocache, {
                 method: 'GET',
                 cache: 'no-store',
                 headers: {
