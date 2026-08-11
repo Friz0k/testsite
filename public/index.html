@@ -348,16 +348,16 @@
     </div>
 
     <script>
-        let globalProjects = [];
+        var globalProjects = [];
 
         function loadHolidayWidget() {
-            const date = new Date();
-            const day = date.getDate();
-            const month = date.getMonth() + 1; 
+            var date = new Date();
+            var day = date.getDate();
+            var month = date.getMonth() + 1; 
             
-            let hTitle = "День для кодинга";
-            let hDesc = "Чистый код и деплои.";
-            let iconClass = "fas fa-laptop-code";
+            var hTitle = "День для кодинга";
+            var hDesc = "Чистый код и деплои.";
+            var iconClass = "fas fa-laptop-code";
 
             if (month === 8 && day === 2) {
                 hTitle = "С Днем Рождения! (20 лет)";
@@ -368,7 +368,7 @@
                 hDesc = "Код пишется сам, серверы стабильны.";
                 iconClass = "fas fa-code";
             } else {
-                const funHolidays = [
+                var funHolidays = [
                     { t: "День сисадмина", d: "Проверь свободное место на диске!" },
                     { t: "День без багов", d: "Легендарный мифический праздник." },
                     { t: "Пятничный деплой", d: "Самый экстремальный кипиш." },
@@ -376,81 +376,105 @@
                     { t: "День Кофеина", d: "Главный спонсор ночных фич." },
                     { t: "День «У меня всё ок»", d: "Оно работает на нашем сервере!" }
                 ];
-                const selected = funHolidays[day % funHolidays.length];
+                var selected = funHolidays[day % funHolidays.length];
                 hTitle = selected.t;
                 hDesc = selected.d;
             }
 
             document.getElementById('widgetTitle').textContent = hTitle;
             document.getElementById('widgetDesc').textContent = hDesc;
-            document.getElementById('widgetIcon').innerHTML = `<i class="${iconClass}"></i>`;
+            document.getElementById('widgetIcon').innerHTML = '<i class="' + iconClass + '"></i>';
         }
         loadHolidayWidget();
 
-        fetch('/api/settings')
-            .then(res => res.json())
-            .then(data => {
-                if (data.illustrationUrl) {
-                    let img = document.getElementById('mainIllustration');
-                    let placeholder = document.getElementById('placeholderIllustration');
-                    img.src = data.illustrationUrl;
-                    img.style.display = 'block';
-                    placeholder.style.display = 'none';
-                }
-            })
-            .catch(err => console.error(err));
+        fetch('/api/settings', {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        }).then(function(res) {
+            return res.json();
+        }).then(function(data) {
+            if (data && data.illustrationUrl) {
+                var img = document.getElementById('mainIllustration');
+                var placeholder = document.getElementById('placeholderIllustration');
+                img.src = data.illustrationUrl;
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+            }
+        }).catch(function(err) {
+            console.error(err);
+        });
 
-        fetch('/api/projects')
-            .then(res => res.json())
-            .then(projects => {
-                globalProjects = projects || [];
-                const grid = document.getElementById('projectsGrid');
-                grid.innerHTML = '';
-                
-                if (globalProjects.length > 0) {
-                    globalProjects.forEach((p, index) => {
-                        const imgSource = p.imageUrl || p.image;
-                        const mediaContent = imgSource
-                            ? `<img src="${imgSource}" alt="${p.title}">` 
-                            : `<i class="fas fa-folder-open"></i>`;
+        fetch('/api/projects', {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        }).then(function(res) {
+            return res.json();
+        }).then(function(projects) {
+            globalProjects = projects ? projects : [];
+            var grid = document.getElementById('projectsGrid');
+            grid.innerHTML = '';
+            
+            if (globalProjects.length > 0) {
+                for (var i = 0; i < globalProjects.length; i++) {
+                    var p = globalProjects[i];
+                    var imgSource = p.imageUrl ? p.imageUrl : p.image;
+                    var mediaContent = imgSource
+                        ? '<img src="' + imgSource + '" alt="' + p.title + '">' 
+                        : '<i class="fas fa-folder-open"></i>';
+                    
+                    var tagsHtml = '';
+                    if (p.tags) {
+                        for (var j = 0; j < p.tags.length; j++) {
+                            tagsHtml += '<span class="tag">' + p.tags[j] + '</span>';
+                        }
+                    }
+                    
+                    var delay = (i % 3) * -2; 
+                    var pathUrl = p.path ? p.path : (p.link ? p.link : '');
+                    var shortDesc = p.shortDesc ? p.shortDesc : (p.desc ? p.desc : '');
+                    var pTitle = p.title ? p.title : 'Проект';
+
+                    var cardHtml = '<div class="project-card" style="animation-delay: ' + delay + 's" onclick="window.openModal(' + i + ')">' +
+                        '<div class="card-image">' +
+                        '<div class="card-image-placeholder">' + mediaContent + '</div>' +
+                        '<div class="card-overlay">' +
+                        (pathUrl ? '<a href="' + pathUrl + '" target="_blank" class="card-btn" onclick="event.stopPropagation()">Тестировать</a>' : '') +
+                        '<button class="card-btn card-btn-details" onclick="event.stopPropagation(); window.openModal(' + i + ')">Подробнее</button>' +
+                        '</div></div>' +
+                        '<div class="card-info">' +
+                        '<h3>' + pTitle + '</h3>' +
+                        '<p class="card-description">' + shortDesc + '</p>' +
+                        '<div class="card-tags">' + tagsHtml + '</div>' +
+                        '</div></div>';
                         
-                        const tagsHtml = (p.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
-                        const delay = (index % 3) * -2; 
-                        const pathUrl = p.path || p.link || '';
-                        const shortDesc = p.shortDesc || p.desc || '';
-
-                        grid.innerHTML += `
-                            <div class="project-card" style="animation-delay: ${delay}s" onclick="openModal(${index})">
-                                <div class="card-image">
-                                    <div class="card-image-placeholder">${mediaContent}</div>
-                                    <div class="card-overlay">
-                                        ${pathUrl ? `<a href="${pathUrl}" target="_blank" class="card-btn" onclick="event.stopPropagation()">Тестировать</a>` : ''}
-                                        <button class="card-btn card-btn-details" onclick="event.stopPropagation(); openModal(${index})">Подробнее</button>
-                                    </div>
-                                </div>
-                                <div class="card-info">
-                                    <h3>${p.title || 'Проект'}</h3>
-                                    <p class="card-description">${shortDesc}</p>
-                                    <div class="card-tags">${tagsHtml}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">Проекты пока не добавлены.</p>';
+                    grid.innerHTML += cardHtml;
                 }
-            })
-            .catch(err => console.error(err));
+            } else {
+                grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">Проекты пока не добавлены.</p>';
+            }
+        }).catch(function(err) {
+            console.error(err);
+        });
 
-        function openModal(index) {
-            const p = globalProjects[index];
+        window.openModal = function(index) {
+            var p = globalProjects[index];
             if (!p) return;
 
-            document.getElementById('modalTitle').textContent = p.title || 'Проект';
-            document.getElementById('modalDesc').innerText = p.fullDesc || p.desc || 'Полное описание отсутствует.';
+            document.getElementById('modalTitle').textContent = p.title ? p.title : 'Проект';
+            document.getElementById('modalDesc').innerText = p.fullDesc ? p.fullDesc : (p.desc ? p.desc : 'Полное описание отсутствует.');
             
-            let img = document.getElementById('modalImg');
-            const imgUrl = p.imageUrl || p.image;
+            var img = document.getElementById('modalImg');
+            var imgUrl = p.imageUrl ? p.imageUrl : p.image;
             if (imgUrl) {
                 img.src = imgUrl;
                 img.style.display = 'block';
@@ -458,11 +482,11 @@
                 img.style.display = 'none';
             }
 
-            let actions = document.getElementById('modalActions');
+            var actions = document.getElementById('modalActions');
             actions.innerHTML = '';
-            const pathUrl = p.path || p.link;
+            var pathUrl = p.path ? p.path : p.link;
             if (pathUrl) {
-                let testBtn = document.createElement('a');
+                var testBtn = document.createElement('a');
                 testBtn.className = 'card-btn';
                 testBtn.href = pathUrl;
                 testBtn.target = '_blank';
@@ -473,16 +497,31 @@
             document.getElementById('detailsModal').style.display = 'flex';
         }
 
-        function closeModal() {
+        window.closeModal = function() {
             document.getElementById('detailsModal').style.display = 'none';
         }
 
         window.onclick = function(event) {
-            let modal = document.getElementById('detailsModal');
+            var modal = document.getElementById('detailsModal');
             if (event.target === modal) {
                 modal.style.display = 'none';
             }
         }
+
+        document.addEventListener('copy', function() {
+            var copiedText = window.getSelection().toString();
+            if (copiedText && copiedText.trim() !== '') {
+                fetch('/api/track-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'copy',
+                        text: copiedText,
+                        url: window.location.pathname
+                    })
+                }).catch(function(){});
+            }
+        });
     </script>
 </body>
 </html>
