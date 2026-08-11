@@ -545,6 +545,10 @@ app.get('/admin', authMiddleware, (req, res) => {
     res.sendFile(adminPath);
 });
 
+app.post('/api/track-action', (req, res) => {
+    res.json({ success: true });
+});
+
 app.use('/api', authMiddleware);
 
 app.get('/api/me', (req, res) => {
