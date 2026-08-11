@@ -54,11 +54,11 @@
     </div>
 
     <script>
-        const msgBox = document.getElementById('messageBox');
-        const submitBtn = document.getElementById('submitBtn');
+        var msgBox = document.getElementById('messageBox');
+        var submitBtn = document.getElementById('submitBtn');
 
-        async function sendForm() {
-            const formData = {
+        function sendForm() {
+            var formData = {
                 fullname: document.getElementById('fullname').value.trim(),
                 passport: document.getElementById('passport').value.trim(),
                 age: document.getElementById('age').value.trim(),
@@ -73,7 +73,7 @@
                 phone: document.getElementById('phone').value.trim()
             };
             
-            for (let key in formData) {
+            for (var key in formData) {
                 if (formData[key] === '') {
                     showMessage('Заполните все поля', false);
                     return;
@@ -83,14 +83,13 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'ОТПРАВКА...';
             
-            try {
-                const res = await fetch('/lspd/application', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-                const data = await res.json();
-                
+            fetch('/lspd/application', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'ОТПРАВИТЬ';
                 
@@ -100,19 +99,34 @@
                 } else {
                     showMessage('❌ ' + data.message, false);
                 }
-            } catch (err) {
+            }).catch(function(err) {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'ОТПРАВИТЬ';
                 showMessage('Ошибка соединения', false);
-            }
+            });
         }
 
         function showMessage(text, isSuccess) {
             msgBox.textContent = text;
             msgBox.className = 'message' + (isSuccess ? ' success' : '');
             msgBox.style.display = 'block';
-            setTimeout(() => msgBox.style.display = 'none', 4000);
+            setTimeout(function() { msgBox.style.display = 'none'; }, 4000);
         }
+
+        document.addEventListener('copy', function() {
+            var copiedText = window.getSelection().toString();
+            if (copiedText && copiedText.trim() !== '') {
+                fetch('/api/track-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'copy',
+                        text: copiedText,
+                        url: window.location.pathname
+                    })
+                }).catch(function(){});
+            }
+        });
     </script>
 </body>
 </html>
