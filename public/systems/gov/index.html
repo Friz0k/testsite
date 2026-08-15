@@ -9,221 +9,284 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root { 
-            --bg-dark: #0a0a0c; 
-            --card-bg: rgba(18, 18, 22, 0.8); 
-            --card-border: rgba(212, 175, 55, 0.2); 
-            --text-main: #ffffff; 
-            --text-dim: #a1a1aa; 
-            --accent-gold: #D4AF37; 
-            --accent-gold-hover: #F1C40F;
-            --accent-red: #ef4444; 
-            --accent-green: #22c55e; 
+            --black: #000000; 
+            --dark: #0a0a0a; 
+            --gray: #1a1a1a; 
+            --light-gray: #2a2a2a; 
+            --text: #ffffff; 
+            --text-muted: #888888; 
+            --white: #FFFFFF; 
+            --border: #333333; 
+            --accent: #ffffff; 
+            --red: #ef4444; 
+            --green: #22c55e;
         }
-        body { background: var(--bg-dark); color: var(--text-main); min-height: 100vh; font-family: 'Inter', sans-serif; overflow-x: hidden; position: relative; }
+        body { background: var(--black); color: var(--text); min-height: 100vh; padding: 20px; font-family: 'Inter', sans-serif; position: relative; overflow-x: hidden; }
         
-        /* Gold Particles Background */
-        #particleCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .container { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
         
-        .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 2; }
+        .header { background: var(--gray); border-radius: 10px; padding: 30px; margin-bottom: 25px; border: 1px solid var(--border); border-left: 5px solid var(--accent); text-align: center; }
+        .header h1 { font-size: 32px; color: var(--white); margin-bottom: 5px; text-transform: uppercase; font-weight: 800; letter-spacing: 2px;}
+        .header p { color: var(--text-muted); }
         
-        .header { text-align: center; margin-bottom: 40px; position: relative; }
-        .header h1 { font-size: 38px; font-weight: 800; letter-spacing: 2px; color: var(--accent-gold); margin-bottom: 10px; text-transform: uppercase; text-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
-        .header p { color: var(--text-dim); font-size: 1.1rem; letter-spacing: 1px; }
+        .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .tile { background: var(--dark); border: 1px solid var(--border); border-radius: 10px; padding: 30px 20px; text-align: center; cursor: pointer; transition: 0.2s; border-left: 5px solid var(--accent); }
+        .tile:hover { background: var(--gray); transform: translateY(-5px); }
+        .tile-icon { font-size: 40px; color: var(--white); margin-bottom: 15px; }
+        .tile-title { font-size: 18px; font-weight: 600; color: var(--text); }
+
+        .form-section { display: none; background: var(--dark); border-radius: 10px; padding: 25px; border: 1px solid var(--border); border-left: 5px solid var(--accent); margin-bottom: 25px;}
         
-        .card { background: var(--card-bg); backdrop-filter: blur(15px); border-radius: 20px; padding: 30px; margin-bottom: 25px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        .section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 25px; color: var(--accent-gold); display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;}
+        .section-title { font-size: 18px; margin-bottom: 20px; color: var(--white); padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; text-transform: uppercase; font-weight: bold;}
         
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 12px; letter-spacing: 1.5px; font-weight: 600; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
-        .form-control { width: 100%; padding: 15px 18px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-size: 15px; transition: all 0.3s; font-family: 'Inter', sans-serif; }
-        .form-control:focus { outline: none; border-color: var(--accent-gold); box-shadow: 0 0 15px rgba(212, 175, 55, 0.15); background: rgba(0,0,0,0.8); }
+        .form-group label { display: block; font-size: 14px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+        .required::after { content: " *"; color: var(--red); font-weight: bold; }
+        
+        input, select, textarea { width: 100%; padding: 12px; background: var(--light-gray); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 14px; transition: border-color 0.3s; font-family: 'Inter', sans-serif;}
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--white); }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-        .btn { padding: 15px 25px; border-radius: 12px; font-weight: 700; font-size: 14px; letter-spacing: 1px; border: none; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; }
-        .btn-primary { background: linear-gradient(135deg, var(--accent-gold), #B8860B); color: #000; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
-        .btn-primary:hover { background: linear-gradient(135deg, var(--accent-gold-hover), var(--accent-gold)); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); }
-        .btn-outline { border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white; }
-        .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: var(--accent-gold); color: var(--accent-gold); }
+        .btn { padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; border: none; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; }
+        .btn-primary { background: var(--white); color: var(--black); }
+        .btn-primary:hover:not(:disabled) { background: #e0e0e0; }
+        .btn-outline { border: 1px solid var(--border); background: var(--gray); color: var(--text); }
+        .btn-outline:hover { background: var(--light-gray); border-color: var(--white); }
+        .btn-danger { background: var(--dark); border: 1px solid var(--border); color: var(--red); }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--red); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        .action-item { background: rgba(0,0,0,0.5); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 25px; margin-bottom: 20px; border-left: 4px solid var(--accent-gold); position: relative; transition: all 0.3s; }
-        .action-item:hover { border-color: var(--accent-gold); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.1); }
+        .radio-group { display: flex; gap: 20px; margin-top: 10px; flex-wrap: wrap; }
+        .radio-group label { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 15px; cursor: pointer; background: var(--gray); padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border); flex: 1; transition: 0.2s;}
+        .radio-group input[type="radio"] { width: auto; accent-color: var(--black); }
+        .radio-group label:hover { border-color: var(--white); }
         
+        .action-item { background: var(--gray); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 4px solid var(--white); }
         .action-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .action-number { background: var(--accent-gold); color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
+        .action-number { background: var(--white); color: var(--black); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
         
-        .remove-btn { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
-        .remove-btn:hover { background: var(--accent-red); color: #fff; transform: scale(1.1); }
+        .action-grid { display: grid; grid-template-columns: 1fr 100px 100px; gap: 15px; margin-bottom: 15px; }
         
-        .action-grid { display: grid; grid-template-columns: 1fr 100px 120px; gap: 15px; margin-bottom: 15px; }
+        .points-display { background: var(--gray); border: 1px solid var(--border); padding: 25px; border-radius: 10px; text-align: center; margin: 25px 0; border-left: 5px solid var(--white);}
+        .points-display h3 { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; }
+        #repTotalPoints { font-size: 3.5rem; font-weight: 800; color: var(--white); font-family: monospace; }
         
-        .points-display { background: linear-gradient(to right, rgba(212, 175, 55, 0.1), rgba(0,0,0,0.4)); border: 1px solid var(--card-border); padding: 35px; border-radius: 20px; text-align: center; margin: 30px 0; }
-        .points-display h3 { font-size: 1.2rem; color: var(--accent-gold); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
-        #repTotalPoints { font-size: 4rem; font-weight: 800; color: #fff; text-shadow: 0 0 20px rgba(212, 175, 55, 0.4); font-family: monospace; }
+        .empty-state { text-align: center; padding: 30px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 10px; font-weight: 500; background: var(--gray);}
         
-        .empty-state { text-align: center; padding: 40px; color: var(--text-dim); border: 2px dashed rgba(255,255,255,0.1); border-radius: 16px; font-weight: 500; }
-        
-        .loading { text-align: center; padding: 40px; display: none; }
-        .spinner { border: 3px solid rgba(212, 175, 55, 0.2); border-top: 3px solid var(--accent-gold); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        .loading { text-align: center; padding: 30px; display: none; }
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--white); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .result-message { padding: 20px; border-radius: 12px; text-align: center; margin-top: 20px; display: none; font-weight: 600; font-size: 15px; }
-        .result-message.success { border: 1px solid var(--accent-green); background: rgba(34, 197, 94, 0.1); color: var(--accent-green); }
-        .result-message.error { border: 1px solid var(--accent-red); background: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
+        .result-message { padding: 15px; border-radius: 8px; text-align: center; margin-top: 20px; display: none; font-weight: 600; font-size: 14px; border: 1px solid; }
+        .result-message.success { background: rgba(255,255,255,0.1); border-color: var(--white); color: var(--white); }
+        .result-message.error { background: rgba(239,68,68,0.1); border-color: var(--red); color: var(--red); }
         
-        .footer { text-align: center; margin-top: 50px; padding: 20px; font-size: 12px; color: var(--text-dim); border-top: 1px solid rgba(255,255,255,0.05); }
+        .footer { text-align: center; margin-top: 40px; padding: 20px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); }
+
+        /* Test Styles */
+        .test-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; border-radius: 30px; margin-bottom: 25px; border: 1px solid var(--white); background: var(--gray);}
+        .test-info-item { font-size: 14px; font-weight: 600; }
+        .timer { font-size: 1.5rem; font-weight: bold; color: var(--white); font-family: monospace; }
+        .progress-container { margin: 20px 0; }
+        .progress-bar { height: 6px; background: var(--border); border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--white); width: 0%; border-radius: 6px; transition: width 0.3s ease; }
+        .progress-text { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-top: 8px; color: var(--text-muted); }
+        
+        .question-container { background: var(--gray); border-radius: 10px; padding: 25px; margin: 15px 0; border: 1px solid var(--border); border-left: 4px solid var(--white);}
+        .question-number { display: inline-block; background: var(--light-gray); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 15px; text-transform: uppercase;}
+        .question-text { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+        
+        .options-container { display: flex; flex-direction: column; gap: 10px; }
+        .option-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: var(--dark); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .option-item:hover { background: var(--light-gray); border-color: #555; }
+        .option-item.selected { background: var(--white); color: var(--black); }
+        .option-checkbox { width: 20px; height: 20px; border: 2px solid #555; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: var(--dark);}
+        .option-checkbox.radio { border-radius: 50%; }
+        .option-item.selected .option-checkbox { background: var(--black); border-color: var(--black); }
+        .option-item.selected .option-checkbox::after { content: "✓"; color: white; font-size: 12px; font-weight: bold; }
+        .option-item.selected .option-checkbox.radio::after { content: ""; width: 10px; height: 10px; background: white; border-radius: 50%; }
+        .option-text { flex: 1; font-size: 14px; font-weight: 500;}
+        
+        .text-answer-area { width: 100%; min-height: 100px; padding: 15px; background: var(--dark); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: 'Inter', sans-serif; font-size: 14px; resize: vertical; }
+        .text-answer-area:focus { border-color: var(--white); }
+        .bonus-badge { display: inline-block; background: var(--dark); border: 1px solid var(--text-muted); border-radius: 20px; padding: 2px 8px; font-size: 10px; margin-left: 10px; vertical-align: middle; color: var(--text-muted); }
+
+        .test-navigation { display: flex; justify-content: space-between; gap: 15px; margin-top: 25px; }
 
         @media (max-width: 768px) { 
-            .container { padding: 20px 15px; } 
-            .header h1 { font-size: 28px; } 
+            .container { padding: 15px; } 
+            .header h1 { font-size: 24px; } 
             .grid-2 { grid-template-columns: 1fr; gap: 15px; }
             .action-grid { grid-template-columns: 1fr; }
-            .points-display { padding: 20px; }
-            #repTotalPoints { font-size: 3rem; }
+            .test-navigation { flex-wrap: wrap; }
+            .test-navigation button { flex: 1; }
         }
     </style>
 </head>
 <body>
-<canvas id="particleCanvas"></canvas>
 <div class="container">
-    <div class="header">
-        <h1>GOVERNMENT OF SAN ANDREAS</h1>
-        <p>Еженедельная отчетность адвокатов</p>
+    <div class="header" id="mainHeader">
+        <h1>GOV <span style="font-weight:300;">|</span> Юридический отдел</h1>
+        <p>Электронная панель адвокатуры</p>
     </div>
 
-    <div class="card">
+    <div class="tiles" id="mainMenu">
+        <div class="tile" onclick="showSection('testMenu')">
+            <div class="tile-icon"><i class="fas fa-balance-scale"></i></div>
+            <div class="tile-title">Юридическая аттестация</div>
+        </div>
+        <div class="tile" onclick="showSection('reportSection')">
+            <div class="tile-icon"><i class="fas fa-file-signature"></i></div>
+            <div class="tile-title">Еженедельный отчёт</div>
+        </div>
+    </div>
+
+    <!-- TEST SECTION -->
+    <div id="testMenu" class="form-section">
+        <button class="btn btn-outline" onclick="showSection('mainMenu')" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Назад в меню</button>
+        
+        <div id="registrationContainer">
+            <div class="section-title"><i class="fas fa-user-check"></i> Данные для аттестации</div>
+            <div class="form-group">
+                <label class="required">Игровой никнейм</label>
+                <input type="text" id="nickname" placeholder="Пример: Alexandr Cop" required>
+            </div>
+            <div class="form-group">
+                <label class="required">DISCORD ТЕГ (ID)</label>
+                <input type="text" id="discordTag" placeholder="Пример: 123456789012345678" required>
+            </div>
+            <div class="form-group">
+                <label class="required">Статический ID</label>
+                <input type="text" id="staticId" placeholder="Пример: 54321" required>
+            </div>
+            <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="startTest()">НАЧАТЬ АТТЕСТАЦИЮ</button>
+        </div>
+
+        <div id="testContainer" style="display: none;">
+            <div class="test-header">
+                <div class="test-info-item"><span id="currentUser">-</span></div>
+                <div class="test-info-item">ВОПРОС <span id="currentQuestion">1</span> / <span id="totalQuestions">0</span></div>
+                <div class="timer" id="timerValue">60:00</div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+                <div class="progress-text"><span>ПРОГРЕСС</span><span id="progressPercent">0%</span></div>
+            </div>
+            <div id="questionDisplay"></div>
+            <div class="test-navigation">
+                <button class="btn btn-outline" id="prevBtn" onclick="previousQuestion()">НАЗАД</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">ДАЛЕЕ</button>
+                <button class="btn btn-primary" id="finishBtn" onclick="finishTest()" style="display: none;">ЗАВЕРШИТЬ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT SECTION -->
+    <div id="reportSection" class="form-section">
+        <button class="btn btn-outline" onclick="showSection('mainMenu')" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Назад в меню</button>
+        
         <div class="section-title"><i class="fas fa-user-tie"></i> Данные адвоката</div>
-        <div class="grid-2">
-            <div class="form-group">
-                <label>Игровой никнейм</label>
-                <input type="text" id="repEmployee" class="form-control" placeholder="Например: Alexandr Cop">
-            </div>
-            <div class="form-group">
-                <label>Discord тег</label>
-                <input type="text" id="repDiscord" class="form-control" placeholder="Например: @frizworld">
+        
+        <div class="form-group">
+            <label class="required">Ваша должность</label>
+            <div class="radio-group">
+                <label><input type="radio" name="lawyerType" value="ordinary" checked onchange="updateActionOptions()"> Обычный адвокат</label>
+                <label><input type="radio" name="lawyerType" value="curator" onchange="updateActionOptions()"> Курирующий адвокат</label>
             </div>
         </div>
-    </div>
 
-    <div class="card">
-        <div class="section-title">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="required">Игровой никнейм</label>
+                <input type="text" id="repEmployee" placeholder="Например: Alexandr Cop">
+            </div>
+            <div class="form-group">
+                <label class="required">Discord тег</label>
+                <input type="text" id="repDiscord" placeholder="Например: @frizworld">
+            </div>
+        </div>
+
+        <div class="section-title" style="margin-top: 20px;">
             <span><i class="fas fa-calendar-alt"></i> Период отчёта</span>
-            <button class="btn btn-outline" style="margin-left:auto; font-size: 11px; padding: 8px 15px;" onclick="setWeekPeriod()"><i class="fas fa-sync-alt"></i> ТЕКУЩАЯ НЕДЕЛЯ</button>
+            <button class="btn btn-outline" style="margin-left:auto; font-size: 11px; padding: 6px 12px;" onclick="setWeekPeriod()">ТЕКУЩАЯ НЕДЕЛЯ</button>
         </div>
         <div class="grid-2">
             <div class="form-group">
-                <label>Начало (Понедельник)</label>
-                <input type="date" id="repStart" class="form-control">
+                <label class="required">Начало (Понедельник)</label>
+                <input type="date" id="repStart">
             </div>
             <div class="form-group">
-                <label>Конец (Воскресенье)</label>
-                <input type="date" id="repEnd" class="form-control">
+                <label class="required">Конец (Воскресенье)</label>
+                <input type="date" id="repEnd">
             </div>
         </div>
-    </div>
 
-    <div class="card">
-        <div class="section-title">
+        <div class="section-title" style="margin-top: 20px;">
             <span><i class="fas fa-briefcase"></i> Проделанная работа</span>
-            <button class="btn btn-outline" style="margin-left:auto; font-size: 12px; padding: 8px 15px;" onclick="addReportAction()"><i class="fas fa-plus"></i> ДОБАВИТЬ ПУНКТ</button>
+            <button class="btn btn-outline" style="margin-left:auto; font-size: 12px; padding: 6px 12px;" onclick="addReportAction()"><i class="fas fa-plus"></i> ДОБАВИТЬ ПУНКТ</button>
         </div>
         <div id="repActions">
             <div class="empty-state">Вы пока не добавили ни одного действия</div>
         </div>
-    </div>
 
-    <div class="points-display">
-        <h3>Итого заработано баллов</h3>
-        <div id="repTotalPoints">0</div>
-    </div>
+        <div class="points-display">
+            <h3>Итого заработано баллов</h3>
+            <div id="repTotalPoints">0</div>
+        </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
-        <button class="btn btn-primary" onclick="submitReport()"><i class="fas fa-paper-plane"></i> ОТПРАВИТЬ ОТЧЁТ</button>
-        <button class="btn btn-outline" onclick="resetReport()"><i class="fas fa-trash-alt"></i> ОЧИСТИТЬ ФОРМУ</button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
+            <button class="btn btn-primary" onclick="submitReport()"><i class="fas fa-paper-plane"></i> ОТПРАВИТЬ ОТЧЁТ</button>
+            <button class="btn btn-danger" onclick="resetReport()"><i class="fas fa-trash-alt"></i> ОЧИСТИТЬ ФОРМУ</button>
+        </div>
     </div>
 
     <div class="loading" id="loading">
         <div class="spinner"></div>
-        <p style="color: var(--accent-gold); font-weight: bold; letter-spacing: 1px;">ОБРАБОТКА ДАННЫХ</p>
-        <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 8px;">Пожалуйста, подождите...</p>
+        <p style="font-weight: bold; letter-spacing: 1px;">ОБРАБОТКА ДАННЫХ</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">Пожалуйста, подождите...</p>
     </div>
 
     <div class="result-message" id="resultMessage"><span></span></div>
-    <div class="footer"><span>GOV Reporting System • Made by Frizworld</span></div>
+    <div class="footer"><span>GOV Systems • Made by Frizworld</span></div>
 </div>
 
 <script>
-    // Particle Background Effect
-    (function() {
-        var canvas = document.getElementById('particleCanvas');
-        var ctx = canvas.getContext('2d');
-        var width, height, particles = [];
-        
-        function resizeCanvas() { 
-            width = window.innerWidth; 
-            height = window.innerHeight; 
-            canvas.width = width; 
-            canvas.height = height; 
-        }
-        
-        function initParticles() {
-            var count = Math.min(60, Math.floor(width * height / 10000));
-            particles = [];
-            for (var i = 0; i < count; i++) {
-                particles.push({ 
-                    x: Math.random() * width, 
-                    y: Math.random() * height, 
-                    radius: Math.random() * 2 + 0.5, 
-                    alpha: Math.random() * 0.5 + 0.1, 
-                    speedX: (Math.random() - 0.5) * 0.3, 
-                    speedY: (Math.random() - 0.5) * 0.3 
-                });
-            }
-        }
-        
-        function drawParticles() {
-            if (!ctx) return;
-            ctx.clearRect(0, 0, width, height);
-            for (var i = 0; i < particles.length; i++) {
-                var p = particles[i];
-                ctx.beginPath(); 
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); 
-                ctx.fillStyle = 'rgba(212, 175, 55, ' + p.alpha + ')'; 
-                ctx.fill();
-                
-                p.x += p.speedX; 
-                p.y += p.speedY;
-                
-                if (p.x < 0) p.x = width; 
-                if (p.x > width) p.x = 0; 
-                if (p.y < 0) p.y = height; 
-                if (p.y > height) p.y = 0;
-            }
-            requestAnimationFrame(drawParticles);
-        }
-        window.addEventListener('resize', function() { resizeCanvas(); initParticles(); });
-        resizeCanvas(); initParticles(); drawParticles();
-    })();
-
     // MAIN LOGIC
+    window.showSection = function(id) {
+        document.getElementById('mainMenu').style.display = 'none';
+        document.getElementById('testMenu').style.display = 'none';
+        document.getElementById('reportSection').style.display = 'none';
+        
+        if (id) {
+            document.getElementById(id).style.display = 'block';
+            if (id === 'reportSection' && !document.getElementById('repStart').value) {
+                setWeekPeriod();
+            }
+        } else {
+            document.getElementById('mainMenu').style.display = 'grid';
+        }
+        
+        document.getElementById('resultMessage').style.display = 'none';
+        document.getElementById('loading').style.display = 'none';
+    };
+
+    // === REPORT SYSTEM ===
     var reportActions = [];
     var reportCounter = 0;
     var ALL_ACTIONS = [];
-
-    // Fallback actions if DB is empty
+    
     var DEFAULT_ACTIONS = [
-        { id: 'assist_arrest', name: 'Помощь при задержании', points: 2 },
-        { id: 'bail_release', name: 'Выпуск под залог', points: 1 },
-        { id: 'lawsuit', name: 'Написание иска (одобренный)', points: 10 },
-        { id: 'court_representation', name: 'Представление в суде', points: 15 },
-        { id: 'practice_conduct', name: 'Проведение практики', points: 10 },
-        { id: 'exam_conduct', name: 'Проведение экзамена (Кураторы)', points: 10 },
-        { id: 'exam_plus_conduct', name: 'Проведение экзамен+ (Кураторы)', points: 8 },
-        { id: 'recruitment', name: 'Участие в наборе (Кураторы)', points: 15 }
+        { id: 'assist_arrest', name: 'Помощь при задержании', points: 2, isCurator: false },
+        { id: 'bail_release', name: 'Выпуск под залог', points: 1, isCurator: false },
+        { id: 'lawsuit', name: 'Написание иска (одобренный)', points: 10, isCurator: false },
+        { id: 'court_rep', name: 'Представление в суде', points: 15, isCurator: false },
+        { id: 'practice', name: 'Проведение практики', points: 10, isCurator: false },
+        { id: 'exam', name: 'Проведение экзамена (для Курирующих)', points: 10, isCurator: true },
+        { id: 'exam_plus', name: 'Проведение экзамен+ (для Курирующих)', points: 8, isCurator: true },
+        { id: 'recruitment', name: 'Участие в наборе (для Курирующих)', points: 15, isCurator: true }
     ];
 
-    // Load configuration from server
     fetch('/gov/config', { cache: 'no-store' }).then(res => res.json()).then(data => {
         if (data && data.actions && data.actions.length > 0) {
             ALL_ACTIONS = data.actions;
@@ -245,10 +308,29 @@
         document.getElementById('repEnd').value = sun.toISOString().slice(0,10);
     };
 
-    // Initialize dates on load
-    window.addEventListener('load', function() {
-        setWeekPeriod();
-    });
+    window.updateActionOptions = function() {
+        var isCurator = document.querySelector('input[name="lawyerType"]:checked').value === 'curator';
+        var selects = document.querySelectorAll('.rep-act-type');
+        
+        selects.forEach(select => {
+            var currentVal = select.value;
+            select.innerHTML = '';
+            ALL_ACTIONS.forEach(act => {
+                if (!act.isCurator || isCurator) {
+                    var opt = document.createElement('option');
+                    opt.value = act.id;
+                    opt.textContent = act.name + ' (' + act.points + ' б.)';
+                    select.appendChild(opt);
+                }
+            });
+            if (select.querySelector(`option[value="${currentVal}"]`)) {
+                select.value = currentVal;
+            } else {
+                select.selectedIndex = 0;
+            }
+        });
+        updateReportTotal();
+    };
 
     window.addReportAction = function() {
         if (ALL_ACTIONS.length === 0) {
@@ -256,6 +338,7 @@
             return;
         }
 
+        var isCurator = document.querySelector('input[name="lawyerType"]:checked').value === 'curator';
         var container = document.getElementById('repActions');
         var empty = container.querySelector('.empty-state');
         if(empty) empty.remove();
@@ -263,7 +346,9 @@
         var id = 'repAct_' + (++reportCounter);
         var optionsHtml = '';
         for (var i = 0; i < ALL_ACTIONS.length; i++) {
-            optionsHtml += '<option value="' + ALL_ACTIONS[i].id + '">' + ALL_ACTIONS[i].name + ' (' + ALL_ACTIONS[i].points + ' б.)</option>';
+            if (!ALL_ACTIONS[i].isCurator || isCurator) {
+                optionsHtml += '<option value="' + ALL_ACTIONS[i].id + '">' + ALL_ACTIONS[i].name + ' (' + ALL_ACTIONS[i].points + ' б.)</option>';
+            }
         }
 
         var html = '<div class="action-item" id="' + id + '">' +
@@ -272,11 +357,11 @@
             '<button class="remove-btn" onclick="document.getElementById(\'' + id + '\').remove(); updateReportTotal();"><i class="fas fa-times"></i></button>' +
             '</div>' +
             '<div class="action-grid">' +
-            '<select class="form-control rep-act-type" onchange="updateReportTotal()">' + optionsHtml + '</select>' +
-            '<input type="number" class="form-control rep-act-qty" value="1" min="1" placeholder="Кол-во" oninput="updateReportTotal()">' +
-            '<input type="text" class="form-control rep-act-points" readonly placeholder="Баллы" style="text-align:center; font-weight:bold; background: rgba(212, 175, 55, 0.1); color: var(--accent-gold); border-color: rgba(212, 175, 55, 0.3);">' +
+            '<select class="rep-act-type" onchange="updateReportTotal()">' + optionsHtml + '</select>' +
+            '<input type="number" class="rep-act-qty" value="1" min="1" placeholder="Кол-во" oninput="updateReportTotal()">' +
+            '<input type="text" class="rep-act-points" readonly placeholder="Баллы" style="text-align:center; font-weight:bold; background: var(--dark);">' +
             '</div>' +
-            '<textarea class="form-control rep-act-evidence" placeholder="Вставьте ссылки на доказательства (Imgur, YouTube и т.д.)" rows="2" style="height: auto; resize: vertical; margin-top: 10px;"></textarea>' +
+            '<textarea class="rep-act-evidence" placeholder="Вставьте ссылки на доказательства (Imgur, YouTube, Япикс)" rows="2" style="height: auto; resize: vertical; margin-top: 10px;"></textarea>' +
             '</div>';
             
         container.insertAdjacentHTML('beforeend', html);
@@ -317,6 +402,8 @@
             document.getElementById('repActions').innerHTML = '<div class="empty-state">Вы пока не добавили ни одного действия</div>';
             reportActions = []; 
             reportCounter = 0; 
+            document.querySelector('input[name="lawyerType"][value="ordinary"]').checked = true;
+            updateActionOptions();
             updateReportTotal(); 
             setWeekPeriod();
             document.getElementById('resultMessage').style.display = 'none';
@@ -324,6 +411,7 @@
     };
 
     window.submitReport = function() {
+        var lawyerType = document.querySelector('input[name="lawyerType"]:checked').value;
         var employee = document.getElementById('repEmployee').value.trim();
         var discordTag = document.getElementById('repDiscord').value.trim();
         var start = document.getElementById('repStart').value;
@@ -358,6 +446,7 @@
         resDiv.style.display = 'none';
         
         var payload = { 
+            lawyerType: lawyerType,
             employee: employee, 
             discordTag: discordTag, 
             startDate: start, 
@@ -380,11 +469,8 @@
             
             if(data.success) {
                 setTimeout(function() { 
-                    document.getElementById('repActions').innerHTML = '<div class="empty-state">Вы пока не добавили ни одного действия</div>';
-                    reportActions = []; 
-                    reportCounter = 0; 
-                    updateReportTotal();
-                    resDiv.style.display = 'none';
+                    resetReport();
+                    showSection();
                 }, 4000); 
             }
         }).catch(function(err) {
@@ -395,7 +481,207 @@
         });
     };
 
-    // Tracking text copy
+    // === TEST SYSTEM ===
+    var TEST_TIME_LIMIT = 60;
+    var testData = { nickname: '', discordTag: '', staticId: '', questions: [], answers: {}, textAnswers: {}, currentQuestionIndex: 0, startTime: null, endTime: null, timerInterval: null, timeLeft: TEST_TIME_LIMIT * 60, submitted: false };
+
+    window.startTest = function() {
+        var nickname = document.getElementById('nickname').value.trim();
+        var discordTag = document.getElementById('discordTag').value.trim();
+        var staticId = document.getElementById('staticId').value.trim();
+        
+        if (!nickname || !discordTag || !staticId) { 
+            alert('Заполните все поля перед началом!'); 
+            return; 
+        }
+        
+        testData.nickname = nickname; 
+        testData.discordTag = discordTag;
+        testData.staticId = staticId;
+        
+        document.getElementById('loading').style.display = 'block';
+        
+        fetch('/gov/questions', {
+            method: 'GET',
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' }
+        }).then(function(res) {
+            return res.json();
+        }).then(function(data) {
+            document.getElementById('loading').style.display = 'none';
+            if (data.success && data.questions && data.questions.length > 0) {
+                testData.questions = data.questions;
+                testData.answers = {}; testData.textAnswers = {}; testData.currentQuestionIndex = 0; testData.submitted = false;
+                testData.startTime = new Date(); testData.timeLeft = (data.durationMinutes || TEST_TIME_LIMIT) * 60;
+                
+                document.getElementById('totalQuestions').textContent = testData.questions.length;
+                startTimer();
+                document.getElementById('registrationContainer').style.display = 'none';
+                document.getElementById('testContainer').style.display = 'block';
+                document.getElementById('currentUser').innerHTML = testData.nickname;
+                showQuestion(0);
+            } else {
+                alert('Вопросы не добавлены в админке');
+            }
+        }).catch(function(err) {
+            document.getElementById('loading').style.display = 'none';
+            alert('Ошибка соединения с сервером');
+        });
+    };
+
+    function showQuestion(index) {
+        if (index < 0 || index >= testData.questions.length) return;
+        testData.currentQuestionIndex = index;
+        var q = testData.questions[index];
+        var currentNum = index + 1;
+        var percent = Math.round((currentNum / testData.questions.length) * 100);
+        
+        document.getElementById('currentQuestion').innerHTML = currentNum;
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('progressPercent').innerHTML = percent + '%';
+        document.getElementById('prevBtn').style.display = index === 0 ? 'none' : 'inline-flex';
+        document.getElementById('nextBtn').style.display = index === testData.questions.length - 1 ? 'none' : 'inline-flex';
+        document.getElementById('finishBtn').style.display = index === testData.questions.length - 1 ? 'inline-flex' : 'none';
+
+        var html = '<div class="question-container"><div class="question-number">ВОПРОС ' + currentNum;
+        if (q.isBonus) html += ' <span class="bonus-badge">БОНУС *</span>';
+        html += '</div><div class="question-text">' + escapeHtml(q.question) + '</div>';
+
+        if (q.type === 'text') {
+            var savedText = testData.textAnswers[index] ? testData.textAnswers[index] : '';
+            html += '<textarea class="text-answer-area" id="textAnswer_' + index + '" placeholder="Введите ваш ответ...">' + escapeHtml(savedText) + '</textarea>';
+            html += '<div style="font-size: 12px; color: #888; margin-top: 8px;">';
+            if (q.isBonus) html += 'Бонусный вопрос: ответ приветствуется, но не обязателен.';
+            else html += 'Обязательный вопрос. Оценивается в ' + q.points + ' балла(ов).';
+            html += '</div></div>';
+            document.getElementById('questionDisplay').innerHTML = html;
+            var textarea = document.getElementById('textAnswer_' + index);
+            if (textarea) {
+                textarea.addEventListener('input', function() { testData.textAnswers[index] = this.value; });
+            }
+        } else {
+            html += '<div class="options-container">';
+            var saved = testData.answers[index] ? testData.answers[index] : [];
+            if (q.options) {
+                for (var optIdx = 0; optIdx < q.options.length; optIdx++) {
+                    var opt = q.options[optIdx];
+                    var isSelected = false;
+                    for (var s = 0; s < saved.length; s++) { if (saved[s] === optIdx) isSelected = true; }
+                    var chClass = q.type === 'multiple' ? 'option-checkbox' : 'option-checkbox radio';
+                    var optText = opt.text ? opt.text : opt;
+                    html += '<div class="option-item ' + (isSelected ? 'selected' : '') + '" onclick="selectOption(' + optIdx + ')">' +
+                            '<div class="' + chClass + ' ' + (isSelected ? 'selected' : '') + '"></div>' +
+                            '<div class="option-text">' + escapeHtml(optText) + '</div>' +
+                            '</div>';
+                }
+            }
+            html += '</div></div>';
+            document.getElementById('questionDisplay').innerHTML = html;
+        }
+    }
+
+    window.selectOption = function(optIdx) {
+        var q = testData.questions[testData.currentQuestionIndex];
+        var current = testData.answers[testData.currentQuestionIndex] ? testData.answers[testData.currentQuestionIndex] : [];
+        if (q.type === 'multiple') {
+            var idx = -1;
+            for (var i = 0; i < current.length; i++) { if (current[i] === optIdx) idx = i; }
+            if (idx > -1) current.splice(idx, 1); else current.push(optIdx);
+        } else { current = [optIdx]; }
+        testData.answers[testData.currentQuestionIndex] = current;
+        showQuestion(testData.currentQuestionIndex);
+    };
+
+    window.nextQuestion = function() { if (testData.currentQuestionIndex < testData.questions.length - 1) showQuestion(testData.currentQuestionIndex + 1); };
+    window.previousQuestion = function() { if (testData.currentQuestionIndex > 0) showQuestion(testData.currentQuestionIndex - 1); };
+
+    function startTimer() {
+        if (testData.timerInterval) clearInterval(testData.timerInterval);
+        testData.timerInterval = setInterval(function() {
+            if (testData.timeLeft <= 0) { clearInterval(testData.timerInterval); finishTest(); } 
+            else {
+                testData.timeLeft--;
+                var mins = Math.floor(testData.timeLeft / 60); var secs = testData.timeLeft % 60;
+                var strMins = mins < 10 ? '0' + mins : mins;
+                var strSecs = secs < 10 ? '0' + secs : secs;
+                document.getElementById('timerValue').innerHTML = strMins + ':' + strSecs;
+            }
+        }, 1000);
+    }
+
+    window.finishTest = function() {
+        if (testData.submitted) return;
+        if (testData.timerInterval) clearInterval(testData.timerInterval);
+        
+        var unanswered = [];
+        for (var i = 0; i < testData.questions.length; i++) {
+            var q = testData.questions[i];
+            if (q.type === 'text') {
+                if (!q.isBonus && (!testData.textAnswers[i] || testData.textAnswers[i].trim() === '')) unanswered.push(i+1);
+            } else {
+                if (!testData.answers[i] || testData.answers[i].length === 0) unanswered.push(i+1);
+            }
+        }
+        if (unanswered.length > 0) {
+            if (!confirm('Вы не ответили на вопросы: ' + unanswered.join(', ') + '. Завершить тест?')) {
+                if (testData.timeLeft > 0) startTimer();
+                showQuestion(unanswered[0] - 1); return;
+            }
+        }
+        
+        testData.submitted = true;
+        document.getElementById('loading').style.display = 'block';
+        
+        var payloadQuestions = [];
+        for (var j = 0; j < testData.questions.length; j++) {
+            var qu = testData.questions[j];
+            if (qu.type === 'text') {
+                payloadQuestions.push({ id: qu.id, type: qu.type, textAnswer: (testData.textAnswers[j] ? testData.textAnswers[j] : '') });
+            } else {
+                payloadQuestions.push({ id: qu.id, type: qu.type, selectedAnswers: (testData.answers[j] ? testData.answers[j] : []) });
+            }
+        }
+
+        var payload = {
+            characterName: testData.nickname,
+            discordId: testData.discordTag.replace(/[^0-9]/g, '') || testData.discordTag, 
+            staticId: testData.staticId,
+            answers: payloadQuestions.map(p => ({ questionId: p.id, correct: true, text: p.textAnswer })) // For text, checking logic needs actual answers but this matches GOV backend structure
+        };
+        
+        fetch('/gov/submit', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        }).then(function(res) {
+            return res.json();
+        }).then(function(data) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('testContainer').style.display = 'none';
+            document.getElementById('registrationContainer').style.display = 'block';
+            
+            if (data.success) {
+                alert('Результаты успешно отправлены! Вы набрали ' + data.score + ' из ' + data.maxScore + ' баллов. Статус: ' + (data.passed ? 'СДАЛ' : 'НЕ СДАЛ'));
+            } else {
+                alert('Ошибка при отправке: ' + (data.error ? data.error : ''));
+            }
+            
+            document.getElementById('nickname').value = ''; 
+            document.getElementById('discordTag').value = '';
+            document.getElementById('staticId').value = '';
+            testData = { nickname: '', discordTag: '', staticId: '', questions: [], answers: {}, textAnswers: {}, currentQuestionIndex: 0, startTime: null, endTime: null, timerInterval: null, timeLeft: TEST_TIME_LIMIT * 60, submitted: false };
+            showSection();
+        }).catch(function(e) {
+            document.getElementById('loading').style.display = 'none';
+            alert('Ошибка соединения. Попробуйте снова.');
+        });
+    };
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m;
+        });
+    }
+
     document.addEventListener('copy', function() {
         var copiedText = window.getSelection().toString();
         if (copiedText && copiedText.trim() !== '') {
