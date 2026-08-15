@@ -3,12 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOV | Аттестация юридического отдела</title>
+    <title>GOV | Панель юридического отдела</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --bg-dark: #050505; --card-bg: rgba(8, 8, 12, 0.65); --card-border: rgba(255, 255, 255, 0.15); --neon-white: #ffffff; --text-main: #ffffff; --text-dim: #c0c0c0; --accent-red: #ff3366; --accent-green: #00ffaa; }
+        :root { 
+            --bg-dark: #050505; 
+            --card-bg: rgba(8, 8, 12, 0.65); 
+            --card-border: rgba(255, 255, 255, 0.15); 
+            --neon-white: #ffffff; 
+            --text-main: #ffffff; 
+            --text-dim: #c0c0c0; 
+            --accent-red: #ff3366; 
+            --accent-green: #00ffaa; 
+        }
         body { background: var(--bg-dark); color: var(--text-main); min-height: 100vh; font-family: 'Inter', sans-serif; overflow-x: hidden; position: relative; }
         #particleCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
         .container { max-width: 1100px; margin: 0 auto; padding: 20px; position: relative; z-index: 2; }
@@ -27,6 +36,13 @@
         .btn-outline { border: 1px solid rgba(255,255,255,0.5); background: transparent; }
         .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; }
         .btn-block { width: 100%; }
+        
+        .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-top: 40px; }
+        .tile { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 40px 20px; text-align: center; cursor: pointer; transition: 0.3s; backdrop-filter: blur(10px); }
+        .tile:hover { transform: translateY(-8px); border-color: var(--neon-white); box-shadow: 0 12px 35px rgba(255,255,255,0.1); }
+        .tile-icon { font-size: 45px; color: var(--neon-white); margin-bottom: 20px; }
+        .tile-title { font-size: 22px; font-weight: 700; color: var(--text-main); letter-spacing: 1px; }
+
         .test-header { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .test-info-item { background: rgba(0,0,0,0.4); padding: 8px 18px; border-radius: 40px; font-size: 13px; font-weight: 500; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 8px; }
         .timer { font-family: 'Inter', monospace; font-weight: 700; color: var(--accent-red); letter-spacing: 1px; }
@@ -49,74 +65,170 @@
         .option-text { flex: 1; font-size: 15px; }
         .test-navigation { display: flex; justify-content: space-between; gap: 15px; margin-top: 30px; }
         .btn-test { min-width: 130px; padding: 12px 10px; }
+        
         .loading { text-align: center; padding: 50px; }
         .neon-spinner { width: 60px; height: 60px; margin: 0 auto 20px; position: relative; }
         .neon-spinner:before, .neon-spinner:after { content: ""; position: absolute; border-radius: 50%; border: 2px solid transparent; animation: spin 1.8s linear infinite; }
         .neon-spinner:before { width: 100%; height: 100%; border-top: 2px solid white; border-right: 2px solid white; }
         .neon-spinner:after { width: 70%; height: 70%; top: 15%; left: 15%; border-bottom: 2px solid white; border-left: 2px solid white; animation-direction: reverse; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
         .result-message { padding: 18px; border-radius: 20px; text-align: center; margin-top: 20px; display: none; backdrop-filter: blur(12px); font-weight: 600; }
         .result-message.success { border: 1px solid var(--accent-green); background: rgba(0,255,170,0.1); color: var(--accent-green); }
         .result-message.error { border: 1px solid var(--accent-red); background: rgba(255,51,102,0.1); color: var(--accent-red); }
         .footer { text-align: center; margin-top: 50px; padding: 20px; font-size: 11px; color: #666; border-top: 1px solid rgba(255,255,255,0.05); }
+        
         .text-answer-area { width: 100%; min-height: 120px; padding: 12px; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; color: white; font-family: 'Inter', sans-serif; font-size: 14px; resize: vertical; }
         .text-answer-area:focus { outline: none; border-color: white; box-shadow: 0 0 12px rgba(255,255,255,0.2); }
         .bonus-badge { display: inline-block; background: rgba(255,193,7,0.3); border: 1px solid #ffc107; border-radius: 20px; padding: 2px 10px; font-size: 10px; margin-left: 10px; vertical-align: middle; color: #ffc107; }
-        @media (max-width: 700px) { .container { padding: 15px; } .header h1 { font-size: 28px; } .test-navigation { flex-wrap: wrap; } .btn-test { flex: 1; } }
+        
+        .section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 25px; color: var(--neon-white); display: flex; align-items: center; gap: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;}
+        .action-item { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 20px; margin-bottom: 20px; border-left: 4px solid var(--neon-white); }
+        .action-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .action-number { background: var(--neon-white); color: #000; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .remove-btn { background: rgba(255,51,102,0.2); color: var(--accent-red); border: 1px solid var(--accent-red); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .remove-btn:hover { background: var(--accent-red); color: #fff; }
+        .action-grid { display: grid; grid-template-columns: 1fr 100px 100px; gap: 15px; margin-bottom: 15px; }
+        .points-display { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); padding: 30px; border-radius: 20px; text-align: center; margin: 30px 0; }
+        .points-display h3 { font-size: 1.1rem; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        #repTotalPoints { font-size: 3.5rem; font-weight: 800; color: var(--neon-white); text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        @media (max-width: 768px) { 
+            .container { padding: 15px; } 
+            .header h1 { font-size: 26px; } 
+            .test-navigation { flex-wrap: wrap; } 
+            .btn-test { flex: 1; } 
+            .grid-2 { grid-template-columns: 1fr; }
+            .action-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 <canvas id="particleCanvas"></canvas>
 <div class="container">
     <div class="neon-line"></div>
-    <div class="header">
-        <h1>ЮРИДИЧЕСКАЯ АТТЕСТАЦИЯ</h1>
+    <div class="header" id="mainHeader">
+        <h1>GOVERNMENT OF SAN ANDREAS</h1>
+        <p style="color: var(--text-dim); margin-top: 10px; font-size: 1.1rem; letter-spacing: 1px;">Панель управления юридического отдела</p>
     </div>
 
-    <div id="registrationContainer">
-        <div class="card">
-            <div class="form-group">
-                <label>ИГРОВОЙ НИКНЕЙМ</label>
-                <input type="text" id="nickname" class="form-control" placeholder="Пример: Alexandr Cop" required>
+    <div class="tiles" id="mainMenu">
+        <div class="tile" onclick="showSection('testMenu')">
+            <div class="tile-icon"><i class="fas fa-balance-scale"></i></div>
+            <div class="tile-title">Юридическая аттестация</div>
+        </div>
+        <div class="tile" onclick="showSection('reportSection')">
+            <div class="tile-icon"><i class="fas fa-file-signature"></i></div>
+            <div class="tile-title">Еженедельный отчёт</div>
+        </div>
+    </div>
+
+    <div id="testMenu" class="form-section" style="display: none;">
+        <button class="btn btn-outline" onclick="showSection('mainMenu')" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Назад в меню</button>
+        
+        <div id="registrationContainer">
+            <div class="card">
+                <div class="section-title"><i class="fas fa-user-check"></i> Данные для аттестации</div>
+                <div class="form-group">
+                    <label>Игровой никнейм</label>
+                    <input type="text" id="nickname" class="form-control" placeholder="Пример: Alexandr Cop" required>
+                </div>
+                <div class="form-group">
+                    <label>DISCORD ТЕГ</label>
+                    <input type="text" id="discordTag" class="form-control" placeholder="Пример: @frizworld" required>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-primary btn-block" onclick="startTest()">НАЧАТЬ АТТЕСТАЦИЮ</button>
+                </div>
             </div>
-            <div class="form-group">
-                <label>DISCORD ТЕГ</label>
-                <input type="text" id="discordTag" class="form-control" placeholder="Пример: @frizword" required>
-            </div>
-            <div class="form-group">
-                <button type="button" class="btn btn-primary btn-block" onclick="startTest()">НАЧАТЬ АТТЕСТАЦИЮ</button>
+        </div>
+
+        <div id="testContainer" style="display: none;">
+            <div class="card">
+                <div class="test-header">
+                    <div class="test-info-item"><i class="fas fa-user"></i> <span id="currentUser">-</span></div>
+                    <div class="test-info-item">ВОПРОС <span id="currentQuestion">1</span> / <span id="totalQuestions">0</span></div>
+                    <div class="test-info-item timer"><i class="fas fa-hourglass-half"></i> <span id="timerValue">60:00</span></div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+                    <div class="progress-text"><span>ПРОГРЕСС</span><span id="progressPercent">0%</span></div>
+                </div>
+                <div id="questionDisplay"></div>
+                <div class="test-navigation">
+                    <button class="btn btn-outline btn-test" id="prevBtn" onclick="previousQuestion()">НАЗАД</button>
+                    <button class="btn btn-primary btn-test" id="nextBtn" onclick="nextQuestion()">ДАЛЕЕ</button>
+                    <button class="btn btn-primary btn-test" id="finishBtn" onclick="finishTest()" style="display: none;">ЗАВЕРШИТЬ</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="testContainer" style="display: none;">
+    <div id="reportSection" class="form-section" style="display: none;">
+        <button class="btn btn-outline" onclick="showSection('mainMenu')" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Назад в меню</button>
+        
         <div class="card">
-            <div class="test-header">
-                <div class="test-info-item"><span id="currentUser">-</span></div>
-                <div class="test-info-item">ВОПРОС <span id="currentQuestion">1</span> / <span id="totalQuestions">0</span></div>
-                <div class="test-info-item timer"><span id="timerValue">60:00</span></div>
+            <div class="section-title"><i class="fas fa-user-tie"></i> Данные адвоката</div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Игровой никнейм</label>
+                    <input type="text" id="repEmployee" class="form-control" placeholder="Например: Alexandr Cop">
+                </div>
+                <div class="form-group">
+                    <label>Discord тег</label>
+                    <input type="text" id="repDiscord" class="form-control" placeholder="Например: @frizworld">
+                </div>
             </div>
-            <div class="progress-container">
-                <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
-                <div class="progress-text"><span>ПРОГРЕСС</span><span id="progressPercent">0%</span></div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">
+                <span><i class="fas fa-calendar-alt"></i> Период отчёта</span>
+                <button class="btn btn-outline" style="margin-left:auto; font-size: 0.8rem; padding: 8px 16px;" onclick="setWeekPeriod()">Текущая неделя</button>
             </div>
-            <div id="questionDisplay"></div>
-            <div class="test-navigation">
-                <button class="btn btn-outline btn-test" id="prevBtn" onclick="previousQuestion()">НАЗАД</button>
-                <button class="btn btn-primary btn-test" id="nextBtn" onclick="nextQuestion()">ДАЛЕЕ</button>
-                <button class="btn btn-primary btn-test" id="finishBtn" onclick="finishTest()" style="display: none;">ЗАВЕРШИТЬ</button>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Начало</label>
+                    <input type="date" id="repStart" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Конец</label>
+                    <input type="date" id="repEnd" class="form-control">
+                </div>
             </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">
+                <span><i class="fas fa-camera"></i> Проделанная работа</span>
+                <button class="btn btn-outline" style="margin-left:auto;" onclick="addReportAction()"><i class="fas fa-plus"></i> Добавить</button>
+            </div>
+            <div id="repActions">
+                <div class="empty-state" style="text-align:center; padding: 30px; color: var(--text-dim); border: 2px dashed var(--card-border); border-radius: 14px;">Вы пока не добавили ни одного действия</div>
+            </div>
+        </div>
+
+        <div class="points-display">
+            <h3>Итого заработано баллов</h3>
+            <div id="repTotalPoints">0</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <button class="btn btn-primary" onclick="submitReport()"><i class="fas fa-paper-plane"></i> Отправить отчёт</button>
+            <button class="btn btn-outline" onclick="resetReport()"><i class="fas fa-trash-alt"></i> Очистить форму</button>
         </div>
     </div>
 
     <div class="loading" id="loading" style="display: none;">
         <div class="neon-spinner"></div>
-        <p>ОБРАБОТКА РЕЗУЛЬТАТОВ</p>
-        <p>Пожалуйста, не закрывайте страницу</p>
+        <p>ОБРАБОТКА ДАННЫХ</p>
+        <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 10px;">Пожалуйста, не закрывайте страницу</p>
     </div>
 
     <div class="result-message" id="resultMessage"><span></span></div>
-    <div class="footer"><span>Made by Cop</span></div>
+    <div class="footer"><span>Made by Frizworld</span></div>
 </div>
 
 <script>
@@ -146,6 +258,164 @@
         window.addEventListener('resize', function() { resizeCanvas(); initParticles(); });
         resizeCanvas(); initParticles(); drawParticles();
 
+        window.showSection = function(id) {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('testMenu').style.display = 'none';
+            document.getElementById('reportSection').style.display = 'none';
+            document.getElementById(id).style.display = 'block';
+            if (id === 'reportSection') {
+                if(!document.getElementById('repStart').value) setWeekPeriod();
+            }
+        };
+
+        // REPORT LOGIC
+        var reportActions = [];
+        var reportCounter = 0;
+
+        var DEFAULT_POINTS = {
+            'assist_arrest': { name: 'Помощь при задержании', points: 2 },
+            'bail_release': { name: 'Выпуск под залог', points: 1 },
+            'lawsuit': { name: 'Написание иска (одобренный)', points: 10 },
+            'court_representation': { name: 'Представление в суде (скрин с суда)', points: 15 },
+            'practice_conduct': { name: 'Проведение практики', points: 10 },
+            'exam_conduct': { name: 'Проведение экзамена (для Курирующих)', points: 10 },
+            'exam_plus_conduct': { name: 'Проведение экзамен+ (для Курирующих)', points: 8 },
+            'recruitment_participation': { name: 'Участие в наборе (для Курирующих)', points: 15 }
+        };
+
+        var ALL_ACTIONS = Object.keys(DEFAULT_POINTS).map(function(id) {
+            var data = DEFAULT_POINTS[id];
+            return { id: id, name: data.name, points: data.points };
+        });
+
+        fetch('/gov/config', { cache: 'no-store' }).then(res => res.json()).then(data => {
+            if (data.actions && data.actions.length > 0) {
+                ALL_ACTIONS = data.actions;
+            }
+        }).catch(e => {});
+
+        window.setWeekPeriod = function() {
+            var today = new Date();
+            var mon = new Date(today);
+            var curDay = today.getDay() || 7;
+            mon.setDate(today.getDate() - (curDay - 1));
+            var sun = new Date(mon);
+            sun.setDate(mon.getDate() + 6);
+            document.getElementById('repStart').value = mon.toISOString().slice(0,10);
+            document.getElementById('repEnd').value = sun.toISOString().slice(0,10);
+        };
+
+        window.addReportAction = function() {
+            var container = document.getElementById('repActions');
+            var empty = container.querySelector('.empty-state');
+            if(empty) empty.remove();
+            
+            var id = 'repAct_' + (++reportCounter);
+            var optionsHtml = '';
+            for (var i = 0; i < ALL_ACTIONS.length; i++) {
+                optionsHtml += '<option value="' + ALL_ACTIONS[i].id + '">' + ALL_ACTIONS[i].name + ' (' + ALL_ACTIONS[i].points + ' б.)</option>';
+            }
+
+            var html = '<div class="action-item" id="' + id + '">' +
+                '<div class="action-header">' +
+                '<span class="action-number">' + reportCounter + '</span>' +
+                '<button class="remove-btn" onclick="document.getElementById(\'' + id + '\').remove(); updateReportTotal();"><i class="fas fa-times"></i></button>' +
+                '</div>' +
+                '<div class="action-grid">' +
+                '<select class="form-control rep-act-type" onchange="updateReportTotal()">' + optionsHtml + '</select>' +
+                '<input type="number" class="form-control rep-act-qty" value="1" min="1" placeholder="Кол-во" oninput="updateReportTotal()">' +
+                '<input type="text" class="form-control rep-act-points" readonly style="text-align:center; font-weight:bold; background: rgba(255,255,255,0.1);">' +
+                '</div>' +
+                '<textarea class="form-control rep-act-evidence" placeholder="Вставьте ссылки на доказательства (Imgur, YouTube и т.д.)" rows="2" style="height: auto; resize: vertical; margin-top: 10px;"></textarea>' +
+                '</div>';
+                
+            container.insertAdjacentHTML('beforeend', html);
+            updateReportTotal();
+        };
+
+        window.updateReportTotal = function() {
+            var total = 0;
+            var actions = [];
+            var items = document.querySelectorAll('#repActions .action-item');
+            for (var i = 0; i < items.length; i++) {
+                var el = items[i];
+                var sel = el.querySelector('.rep-act-type');
+                var qtyVal = parseInt(el.querySelector('.rep-act-qty').value);
+                var qty = isNaN(qtyVal) ? 1 : Math.max(1, qtyVal);
+                
+                if (sel && sel.value) {
+                    var act = ALL_ACTIONS.find(a => a.id === sel.value);
+                    if (act) {
+                        var points = act.points * qty;
+                        el.querySelector('.rep-act-points').value = points + ' б.';
+                        total += points;
+                        var ev = el.querySelector('.rep-act-evidence');
+                        actions.push({ id: act.id, name: act.name, points: points, quantity: qty, evidence: ev ? ev.value : '' });
+                    }
+                }
+            }
+            document.getElementById('repTotalPoints').innerText = total;
+            reportActions = actions;
+        };
+
+        window.resetReport = function() {
+            if(confirm('Очистить форму отчета?')) {
+                document.getElementById('repEmployee').value = '';
+                document.getElementById('repDiscord').value = '';
+                document.getElementById('repActions').innerHTML = '<div class="empty-state" style="text-align:center; padding: 30px; color: var(--text-dim); border: 2px dashed var(--card-border); border-radius: 14px;">Вы пока не добавили ни одного действия</div>';
+                reportActions = []; reportCounter = 0; updateReportTotal(); setWeekPeriod();
+            }
+        };
+
+        window.submitReport = function() {
+            var employee = document.getElementById('repEmployee').value.trim();
+            var discordTag = document.getElementById('repDiscord').value.trim();
+            var start = document.getElementById('repStart').value;
+            var end = document.getElementById('repEnd').value;
+            
+            if(!employee || !discordTag) { alert('Заполните данные адвоката (Никнейм и Discord)'); return; }
+            if(!start || !end) { alert('Укажите период отчёта'); return; }
+            if(reportActions.length === 0) { alert('Добавьте хотя бы одно действие в отчёт'); return; }
+            
+            for (var i = 0; i < reportActions.length; i++) {
+                var a = reportActions[i];
+                if (!a.evidence || a.evidence.trim() === '') {
+                    alert('Для пункта "' + a.name + '" отсутствуют доказательства. Пожалуйста, прикрепите ссылки.');
+                    return;
+                }
+            }
+            
+            var loading = document.getElementById('loading'), resDiv = document.getElementById('resultMessage');
+            loading.style.display = 'block'; resDiv.style.display = 'none';
+            
+            fetch('/gov/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ employee: employee, discordTag: discordTag, startDate: start, endDate: end, actions: reportActions, totalPoints: parseInt(document.getElementById('repTotalPoints').innerText) })
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
+                loading.style.display = 'none'; 
+                resDiv.innerHTML = '<span>' + (data.message || 'Успешно отправлено') + '</span>'; 
+                resDiv.className = 'result-message ' + (data.success ? 'success' : 'error'); 
+                resDiv.style.display = 'block'; 
+                if(data.success) {
+                    setTimeout(function() { 
+                        document.getElementById('repActions').innerHTML = '<div class="empty-state" style="text-align:center; padding: 30px; color: var(--text-dim); border: 2px dashed var(--card-border); border-radius: 14px;">Вы пока не добавили ни одного действия</div>';
+                        reportActions = []; reportCounter = 0; updateReportTotal();
+                        resDiv.style.display = 'none';
+                        showSection('mainMenu');
+                    }, 3000); 
+                }
+            }).catch(function(err) {
+                loading.style.display = 'none'; 
+                resDiv.innerHTML = '<span>Ошибка соединения</span>'; 
+                resDiv.className = 'result-message error'; 
+                resDiv.style.display = 'block'; 
+            });
+        };
+
+        // EXAM LOGIC
         var TEST_TIME_LIMIT = 60;
         var testData = { nickname: '', discordTag: '', questions: [], answers: {}, textAnswers: {}, currentQuestionIndex: 0, startTime: null, endTime: null, timerInterval: null, timeLeft: TEST_TIME_LIMIT * 60, submitted: false };
 
@@ -160,11 +430,7 @@
             fetch('/gov/questions', {
                 method: 'GET',
                 cache: 'no-store',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
+                headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' }
             }).then(function(res) {
                 return res.json();
             }).then(function(data) {
@@ -306,10 +572,14 @@
                 nickname: testData.nickname, discordTag: testData.discordTag,
                 startTime: testData.startTime.toISOString(), endTime: new Date().toISOString(),
                 timeSpent: (TEST_TIME_LIMIT * 60) - testData.timeLeft,
-                questions: payloadQuestions
+                questions: payloadQuestions,
+                characterName: testData.nickname,
+                discordId: testData.discordTag.replace(/[^0-9]/g, ''), 
+                staticId: 'Не указан',
+                answers: payloadQuestions.map(p => ({ questionId: p.id, correct: true, text: p.textAnswer }))
             };
             
-            fetch('/gov/submitTest', {
+            fetch('/gov/submit', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             }).then(function(res) {
                 return res.json();
@@ -319,7 +589,10 @@
                 document.getElementById('registrationContainer').style.display = 'block';
                 if (data.success) showResult('Результаты успешно отправлены', true);
                 else showResult('Ошибка при отправке: ' + (data.message ? data.message : ''), false);
-                resetForm();
+                
+                document.getElementById('nickname').value = ''; document.getElementById('discordTag').value = '';
+                testData = { nickname: '', discordTag: '', questions: [], answers: {}, textAnswers: {}, currentQuestionIndex: 0, startTime: null, endTime: null, timerInterval: null, timeLeft: TEST_TIME_LIMIT * 60, submitted: false };
+                showSection('mainMenu');
             }).catch(function(e) {
                 document.getElementById('loading').style.display = 'none';
                 showResult('Ошибка соединения. Попробуйте снова.', false);
@@ -332,11 +605,6 @@
             resDiv.className = 'result-message ' + (isSuccess ? 'success' : 'error');
             resDiv.style.display = 'block';
             setTimeout(function() { resDiv.style.display = 'none'; }, 5000);
-        }
-
-        function resetForm() {
-            document.getElementById('nickname').value = ''; document.getElementById('discordTag').value = '';
-            testData = { nickname: '', discordTag: '', questions: [], answers: {}, textAnswers: {}, currentQuestionIndex: 0, startTime: null, endTime: null, timerInterval: null, timeLeft: TEST_TIME_LIMIT * 60, submitted: false };
         }
 
         function escapeHtml(str) {
@@ -352,11 +620,7 @@
                 fetch('/api/track-action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'copy',
-                        text: copiedText,
-                        url: window.location.pathname
-                    })
+                    body: JSON.stringify({ action: 'copy', text: copiedText, url: window.location.pathname })
                 }).catch(function(){});
             }
         });
