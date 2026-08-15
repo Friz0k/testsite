@@ -851,6 +851,16 @@
                     </div>
                 </div>
 
+                <div id="subsystem-actions" class="subsystem-content">
+                    <h4>Настройка критериев отчета и баллов</h4>
+                    <div id="actions-list" style="margin-top: 20px;"></div>
+                    <button type="button" class="btn-success" onclick="addActionCriteria()" style="margin-top: 15px;">➕ Добавить критерий</button>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                        <button type="button" onclick="saveFactionSettings()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ВСЕ НАСТРОЙКИ</button>
+                    </div>
+                </div>
+
                 <div id="subsystem-iad" class="subsystem-content">
                     <div class="subsystem-tabs" id="iad-tabs" style="margin-top: 15px;">
                         <button type="button" class="iad-tab-btn active" onclick="switchIadTab('iad-main', this)">Основное</button>
@@ -2317,6 +2327,7 @@
         var globalConfig = {}; 
         var currentFaction = ''; 
         var unifiedQuestions = []; 
+        var factionActions = [];
         var userAuth = null;
         
         var factionSchemas = {
@@ -2332,7 +2343,8 @@
             lssd: { 
                 subsystems: [
                     { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' }, 
-                    { id: 'subsystem-testing', name: '📝 Тестирование кадетов/SA' }
+                    { id: 'subsystem-testing', name: '📝 Тестирование кадетов/SA' },
+                    { id: 'subsystem-actions', name: '📊 Система баллов (IAD)' }
                 ], 
                 webhooks: { report: "Отчеты", promotion: "Повышения", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, 
                 roles: { iid: "Роли IID", sa: "Роли SA" }, 
@@ -2351,10 +2363,11 @@
             gov: { 
                 subsystems: [
                     { id: 'subsystem-general', name: '⚖️ Основные настройки' }, 
-                    { id: 'subsystem-testing', name: '📝 Тестирование адвокатов' }
+                    { id: 'subsystem-testing', name: '📝 Тестирование адвокатов' },
+                    { id: 'subsystem-actions', name: '📊 Система баллов (Отчеты)' }
                 ], 
-                webhooks: { test: "Тест адвокатов" }, 
-                roles: { test: "Пинги" }, 
+                webhooks: { test: "Тест адвокатов", report: "Еженедельные отчеты" }, 
+                roles: { test: "Пинги тестов", report: "Пинги отчетов" }, 
                 hasTest: true 
             },
             ems: { 
@@ -2654,6 +2667,56 @@
                 stdSettingsBox.style.display = 'none'; 
                 document.getElementById('questions-list').innerHTML = ''; 
             }
+
+            if (schema.subsystems.some(s => s.id === 'subsystem-actions')) {
+                factionActions = config.actions ? JSON.parse(JSON.stringify(config.actions)) : [];
+                renderActionsList();
+            }
+        }
+
+        function renderActionsList() {
+            var list = document.getElementById('actions-list');
+            if(!list) return;
+            list.innerHTML = '';
+            for(var i=0; i<factionActions.length; i++) {
+                var act = factionActions[i];
+                var html = '<div class="q-card">' +
+                    '<div class="q-header">' +
+                    '<span>Действие #' + (i+1) + '</span>' +
+                    '<button class="btn-danger btn-sm" onclick="removeActionCriteria(' + i + ')">🗑 Удалить</button>' +
+                    '</div>' +
+                    '<div class="form-grid">' +
+                    '<div><label>ID (англ, без пробелов):</label><input type="text" class="act-id" value="' + (act.id||'').replace(/"/g, '&quot;') + '" placeholder="например: arrest"></div>' +
+                    '<div><label>Название (для формы отчета):</label><input type="text" class="act-name" value="' + (act.name||'').replace(/"/g, '&quot;') + '" placeholder="Например: Проведение экзамена"></div>' +
+                    '<div><label>Кол-во баллов:</label><input type="number" class="act-points" value="' + (act.points||0) + '"></div>' +
+                    '</div></div>';
+                list.insertAdjacentHTML('beforeend', html);
+            }
+        }
+
+        function syncActionsToState() {
+            var cards = document.querySelectorAll('#actions-list .q-card');
+            var newActions = [];
+            for(var i=0; i<cards.length; i++) {
+                newActions.push({
+                    id: cards[i].querySelector('.act-id').value.trim(),
+                    name: cards[i].querySelector('.act-name').value.trim(),
+                    points: parseInt(cards[i].querySelector('.act-points').value) || 0
+                });
+            }
+            factionActions = newActions;
+        }
+
+        function addActionCriteria() {
+            syncActionsToState();
+            factionActions.push({ id: 'new_action_' + Date.now(), name: '', points: 1 });
+            renderActionsList();
+        }
+
+        function removeActionCriteria(idx) {
+            syncActionsToState();
+            factionActions.splice(idx, 1);
+            renderActionsList();
         }
 
         function toggleRankSelection(qIdx, rankVal) { 
@@ -2745,6 +2808,8 @@
             var newUnified = [];
             for (var qIndex = 0; qIndex < qCards.length; qIndex++) {
                 var card = qCards[qIndex];
+                if (card.querySelector('.act-id')) continue;
+
                 var oldQ = unifiedQuestions[qIndex] ? unifiedQuestions[qIndex] : {}; 
                 var q = { 
                     options: [], 
@@ -2934,6 +2999,11 @@
                     config.testSettings.durationMinutes = parseInt(document.getElementById('test-duration-minutes').value) || 15; 
                     config.testSettings.questions = processedQuestions; 
                 }
+            }
+
+            if (schema.subsystems.some(s => s.id === 'subsystem-actions')) {
+                syncActionsToState();
+                config.actions = factionActions;
             }
             
             apiCall('/api/settings', { 
