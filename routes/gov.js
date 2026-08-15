@@ -68,7 +68,6 @@ router.post('/submit', async (req, res) => {
         if (q) {
             if (q.type !== 'text') {
                 if (q.isBonus) {
-                    // Бонусные вопросы прибавляют баллы, но не увеличивают максимум
                     if (ans.correct) score += q.points;
                 } else {
                     maxScore += q.points;
@@ -131,7 +130,6 @@ router.get('/questions', (req, res) => {
     const testConfig = govConfig.testSettings || {};
     const questions = testConfig.questions || [];
     
-    // Не отправляем правильные ответы на клиент
     const safeQuestions = questions.map(q => {
         const safeQ = {
             id: q.id,
@@ -154,6 +152,62 @@ router.get('/questions', (req, res) => {
         passingScore: testConfig.passingScore || 0,
         questions: safeQuestions
     });
+});
+
+router.get('/config', (req, res) => {
+    const settings = getSettings();
+    const govConfig = settings.gov || {};
+    res.json({
+        success: true,
+        actions: govConfig.actions || []
+    });
+});
+
+router.post('/report', async (req, res) => {
+    try {
+        const { employee, discordTag, startDate, endDate, actions, totalPoints } = req.body;
+        const settings = getSettings();
+        const govConfig = settings.gov || {};
+        
+        let whUrl = govConfig.webhooks?.report;
+        if (!whUrl) {
+            whUrl = 'https://discord.com/api/webhooks/1536769098380484618/rJjpmT8trPIPdiSHBMJ-j791gWCgRdlyQ0AP6_G-y5lZCQdnYRM9_AWAQy95jBvnZAeb';
+        }
+        
+        const pingRole = govConfig.roles?.report;
+
+        let actionsText = '';
+        if (actions && actions.length > 0) {
+            actionsText = actions.map(a => `- ${a.name} (x${a.quantity}): ${a.points} баллов\n  Док-ва: ${a.evidence}`).join('\n\n');
+        } else {
+            actionsText = 'Нет действий';
+        }
+        
+        if (actionsText.length > 2048) actionsText = actionsText.substring(0, 2040) + '...';
+
+        const embed = {
+            title: '📊 Еженедельный отчет адвоката (GOV)',
+            color: 0xD4AF37,
+            fields: [
+                { name: '👤 Адвокат', value: employee || 'Не указан', inline: true },
+                { name: '💬 Discord', value: discordTag || 'Не указан', inline: true },
+                { name: '📅 Период', value: `${startDate} — ${endDate}`, inline: false },
+                { name: '💯 Итого баллов', value: `${totalPoints || 0}`, inline: false },
+                { name: '📋 Проделанная работа', value: actionsText, inline: false }
+            ],
+            timestamp: new Date().toISOString()
+        };
+
+        const payload = {
+            content: pingRole ? `<@&${pingRole}>` : null,
+            embeds: [embed]
+        };
+
+        await sendWebhook(whUrl, payload);
+        res.json({ success: true, message: 'Отчет успешно отправлен!' });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
 });
 
 module.exports = router;
