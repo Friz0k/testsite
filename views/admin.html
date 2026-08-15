@@ -681,7 +681,6 @@
             border: 1px solid #ef4444; 
         }
 
-        /* Адаптация под телефоны */
         @media (max-width: 768px) {
             body { 
                 flex-direction: column; 
@@ -2363,12 +2362,11 @@
             gov: { 
                 subsystems: [
                     { id: 'subsystem-general', name: '⚖️ Основные настройки' }, 
-                    { id: 'subsystem-testing', name: '📝 Тестирование адвокатов' },
                     { id: 'subsystem-actions', name: '📊 Система баллов (Отчеты)' }
                 ], 
-                webhooks: { test: "Тест адвокатов", report: "Еженедельные отчеты" }, 
-                roles: { test: "Пинги тестов", report: "Пинги отчетов" }, 
-                hasTest: true 
+                webhooks: { report: "Еженедельные отчеты" }, 
+                roles: { report: "Пинги отчетов" }, 
+                hasTest: false 
             },
             ems: { 
                 subsystems: [
@@ -2582,10 +2580,6 @@
                         passingScore = config.testPassingScore ? config.testPassingScore : 0; 
                         durationMinutes = config.testDurationMinutes ? config.testDurationMinutes : 15; 
                         rawQuestions = config.testQuestions ? config.testQuestions : []; 
-                    } else if (currentFaction === 'gov') { 
-                        passingScore = (config.testSettings && config.testSettings.passingScore) ? config.testSettings.passingScore : 0; 
-                        durationMinutes = (config.testSettings && config.testSettings.durationMinutes) ? config.testSettings.durationMinutes : 15; 
-                        rawQuestions = (config.testSettings && config.testSettings.questions) ? config.testSettings.questions : []; 
                     }
                     
                     document.getElementById('test-passing-score').value = passingScore; 
@@ -2649,15 +2643,6 @@
                             uq.options.push({ text: pOpts[s], isCorrect: pCorrects.indexOf(pOpts[s]) !== -1 });
                         }
                         uq.type = q.type ? q.type : (pCorrects.length > 1 ? 'multiple' : 'single'); 
-                    } else if (currentFaction === 'gov') { 
-                        uq.text = q.question ? q.question : ''; 
-                        uq.type = q.type ? q.type : 'single'; 
-                        uq.points = q.points ? q.points : 1; 
-                        uq.isBonus = q.isBonus ? q.isBonus : false; 
-                        var gOpts = q.options ? q.options : [];
-                        for (var t = 0; t < gOpts.length; t++) {
-                            uq.options.push({ text: gOpts[t].text ? gOpts[t].text : '', isCorrect: !!gOpts[t].correct });
-                        }
                     }
                     unifiedQuestions.push(uq);
                 }
@@ -2756,7 +2741,6 @@
                     '<select class="q-type" onchange="syncDOMToState(); renderQuestions();">' +
                     '<option value="single" ' + (q.type==='single'?'selected':'') + '>Один правильный вариант</option>' +
                     '<option value="multiple" ' + (q.type==='multiple'?'selected':'') + '>Несколько вариантов</option>' +
-                    (currentFaction === 'gov' ? '<option value="text" ' + (q.type==='text'?'selected':'') + '>Развернутый текст</option>' : '') +
                     '</select>' +
                     '</div>';
                 
@@ -2769,17 +2753,6 @@
                         '<div class="rank-badge ' + (r5 ? 'active' : '') + '" onclick="toggleRankSelection(' + qIndex + ', 5)">5 РАНГ</div>' +
                         '<div class="rank-badge ' + (r7 ? 'active' : '') + '" onclick="toggleRankSelection(' + qIndex + ', 7)">7 РАНГ</div>' +
                         '</div></div>'; 
-                }
-                
-                if (currentFaction === 'gov') { 
-                    html += '<div>' +
-                        '<label>Баллы за вопрос:</label>' +
-                        '<input type="number" class="q-points" value="' + (q.points ? q.points : 1) + '" min="1" style="width:100px;">' +
-                        '</div>' +
-                        '<div style="display: flex; align-items: center; height: 42px;">' +
-                        '<label style="margin-bottom: 0; display: flex; align-items: center; gap: 8px; cursor: pointer;">' +
-                        '<input type="checkbox" class="q-bonus" ' + (q.isBonus?'checked':'') + ' style="width:18px; height:18px; margin:0;"> Бонусный вопрос' +
-                        '</label></div>'; 
                 }
                 
                 html += '</div>';
@@ -2818,13 +2791,6 @@
                 
                 q.text = card.querySelector('.q-text').value; 
                 q.type = card.querySelector('.q-type').value;
-                
-                if (currentFaction === 'gov') { 
-                    var qp = card.querySelector('.q-points');
-                    q.points = qp ? (parseInt(qp.value) || 1) : 1; 
-                    var qb = card.querySelector('.q-bonus');
-                    q.isBonus = qb ? qb.checked : false; 
-                }
                 
                 if (q.type !== 'text') { 
                     var optDivs = card.querySelectorAll('.q-opt');
@@ -2879,6 +2845,7 @@
 
         function saveFactionSettings() {
             var schema = factionSchemas[currentFaction]; 
+            
             if (!globalConfig[currentFaction]) {
                 globalConfig[currentFaction] = { webhooks: {}, roles: {} }; 
             }
@@ -2891,131 +2858,114 @@
                 config.roles = {};
             }
             
-            var whKeys = Object.keys(schema.webhooks || {});
-            for (var w = 0; w < whKeys.length; w++) { 
-                var wKey = whKeys[w];
-                var wEl = document.getElementById('wh_' + wKey); 
-                if (wEl) {
-                    config.webhooks[wKey] = wEl.value.trim(); 
-                }
-            }
-            
-            var rlKeys = Object.keys(schema.roles || {});
-            for (var r = 0; r < rlKeys.length; r++) { 
-                var rKey = rlKeys[r];
-                var rEl = document.getElementById('rl_' + rKey); 
-                if (rEl) {
-                    config.roles[rKey] = rEl.value.trim(); 
-                }
-            }
-            
-            if (schema.hasTest) {
-                syncDOMToState();
-                var processedQuestions = [];
-                for (var u = 0; u < unifiedQuestions.length; u++) {
-                    var uq = unifiedQuestions[u];
-                    var correctOpts = [];
-                    for (var c = 0; c < uq.options.length; c++) {
-                        if (uq.options[c].isCorrect) correctOpts.push(uq.options[c].text);
-                    }
-                    
-                    if (currentFaction === 'fib') { 
-                        var fOpts = [];
-                        for(var fo=0; fo<uq.options.length; fo++) fOpts.push(uq.options[fo].text);
-                        processedQuestions.push({ 
-                            id: u + 1, 
-                            text: uq.text, 
-                            type: uq.type, 
-                            ranks: uq.ranks ? uq.ranks : [5, 7], 
-                            options: fOpts, 
-                            correctAnswers: correctOpts, 
-                            correctAnswer: correctOpts[0] ? correctOpts[0] : '' 
-                        }); 
-                    } else if (currentFaction === 'lssd') { 
-                        var lCorrectIndices = [];
-                        var lOpts2 = [];
-                        for(var lo=0; lo<uq.options.length; lo++) {
-                            lOpts2.push(uq.options[lo].text);
-                            if (uq.options[lo].isCorrect) lCorrectIndices.push(lo);
-                        }
-                        processedQuestions.push({ 
-                            id: u + 1, 
-                            question: uq.text, 
-                            type: uq.type, 
-                            options: lOpts2, 
-                            correctIndices: lCorrectIndices, 
-                            correctIndex: lCorrectIndices[0] !== undefined ? lCorrectIndices[0] : 0 
-                        }); 
-                    } else if (currentFaction === 'lspd') { 
-                        var lsOpts = [];
-                        for(var lso=0; lso<uq.options.length; lso++) lsOpts.push(uq.options[lso].text);
-                        processedQuestions.push({ 
-                            id: u + 1, 
-                            question: uq.text, 
-                            type: uq.type, 
-                            options: lsOpts, 
-                            correct: correctOpts 
-                        }); 
-                    } else if (currentFaction === 'gov') { 
-                        var gOpts = [];
-                        if (uq.type !== 'text') {
-                            for(var go=0; go<uq.options.length; go++) {
-                                gOpts.push({ text: uq.options[go].text, correct: uq.options[go].isCorrect });
-                            }
-                        }
-                        processedQuestions.push({ 
-                            id: u + 1, 
-                            question: uq.text, 
-                            type: uq.type, 
-                            points: uq.points, 
-                            isBonus: uq.isBonus, 
-                            options: gOpts 
-                        }); 
+            try {
+                var whKeys = Object.keys(schema.webhooks || {});
+                for (var w = 0; w < whKeys.length; w++) { 
+                    var wKey = whKeys[w];
+                    var wEl = document.getElementById('wh_' + wKey); 
+                    if (wEl) {
+                        config.webhooks[wKey] = wEl.value.trim(); 
                     }
                 }
                 
-                if (currentFaction === 'fib') { 
-                    if (!config.testSettings) {
-                        config.testSettings = {}; 
+                var rlKeys = Object.keys(schema.roles || {});
+                for (var r = 0; r < rlKeys.length; r++) { 
+                    var rKey = rlKeys[r];
+                    var rEl = document.getElementById('rl_' + rKey); 
+                    if (rEl) {
+                        config.roles[rKey] = rEl.value.trim(); 
                     }
-                    config.testSettings.durationMinutesRank5 = parseInt(document.getElementById('fib-timer-rank5').value) || 5; 
-                    config.testSettings.durationMinutesRank7 = parseInt(document.getElementById('fib-timer-rank7').value) || 10; 
-                    config.testSettings.passingScoreRank5 = parseInt(document.getElementById('fib-score-rank5').value) || 6; 
-                    config.testSettings.passingScoreRank7 = parseInt(document.getElementById('fib-score-rank7').value) || 15; 
-                    config.testSettings.questionCountRank5 = parseInt(document.getElementById('fib-count-rank5').value) || 10; 
-                    config.testSettings.questionCountRank7 = parseInt(document.getElementById('fib-count-rank7').value) || 20; 
-                    delete config.testSettings.durationMinutesRank3; 
-                    delete config.testSettings.passingScoreRank3; 
-                    config.testSettings.questions = processedQuestions; 
-                } else if (currentFaction === 'lssd' || currentFaction === 'lspd') { 
-                    config.testPassingScore = parseInt(document.getElementById('test-passing-score').value) || 0; 
-                    config.testDurationMinutes = parseInt(document.getElementById('test-duration-minutes').value) || 15; 
-                    config.testQuestions = processedQuestions; 
-                } else if (currentFaction === 'gov') { 
-                    if (!config.testSettings) {
-                        config.testSettings = {}; 
-                    }
-                    config.testSettings.passingScore = parseInt(document.getElementById('test-passing-score').value) || 0; 
-                    config.testSettings.durationMinutes = parseInt(document.getElementById('test-duration-minutes').value) || 15; 
-                    config.testSettings.questions = processedQuestions; 
                 }
-            }
+                
+                if (schema.hasTest) {
+                    syncDOMToState();
+                    var processedQuestions = [];
+                    for (var u = 0; u < unifiedQuestions.length; u++) {
+                        var uq = unifiedQuestions[u];
+                        var correctOpts = [];
+                        for (var c = 0; c < uq.options.length; c++) {
+                            if (uq.options[c].isCorrect) correctOpts.push(uq.options[c].text);
+                        }
+                        
+                        if (currentFaction === 'fib') { 
+                            var fOpts = [];
+                            for(var fo=0; fo<uq.options.length; fo++) fOpts.push(uq.options[fo].text);
+                            processedQuestions.push({ 
+                                id: u + 1, 
+                                text: uq.text, 
+                                type: uq.type, 
+                                ranks: uq.ranks ? uq.ranks : [5, 7], 
+                                options: fOpts, 
+                                correctAnswers: correctOpts, 
+                                correctAnswer: correctOpts[0] ? correctOpts[0] : '' 
+                            }); 
+                        } else if (currentFaction === 'lssd') { 
+                            var lCorrectIndices = [];
+                            var lOpts2 = [];
+                            for(var lo=0; lo<uq.options.length; lo++) {
+                                lOpts2.push(uq.options[lo].text);
+                                if (uq.options[lo].isCorrect) lCorrectIndices.push(lo);
+                            }
+                            processedQuestions.push({ 
+                                id: u + 1, 
+                                question: uq.text, 
+                                type: uq.type, 
+                                options: lOpts2, 
+                                correctIndices: lCorrectIndices, 
+                                correctIndex: lCorrectIndices[0] !== undefined ? lCorrectIndices[0] : 0 
+                            }); 
+                        } else if (currentFaction === 'lspd') { 
+                            var lsOpts = [];
+                            for(var lso=0; lso<uq.options.length; lso++) lsOpts.push(uq.options[lso].text);
+                            processedQuestions.push({ 
+                                id: u + 1, 
+                                question: uq.text, 
+                                type: uq.type, 
+                                options: lsOpts, 
+                                correct: correctOpts 
+                            }); 
+                        }
+                    }
+                    
+                    if (currentFaction === 'fib') { 
+                        if (!config.testSettings) {
+                            config.testSettings = {}; 
+                        }
+                        config.testSettings.durationMinutesRank5 = parseInt(document.getElementById('fib-timer-rank5').value) || 5; 
+                        config.testSettings.durationMinutesRank7 = parseInt(document.getElementById('fib-timer-rank7').value) || 10; 
+                        config.testSettings.passingScoreRank5 = parseInt(document.getElementById('fib-score-rank5').value) || 6; 
+                        config.testSettings.passingScoreRank7 = parseInt(document.getElementById('fib-score-rank7').value) || 15; 
+                        config.testSettings.questionCountRank5 = parseInt(document.getElementById('fib-count-rank5').value) || 10; 
+                        config.testSettings.questionCountRank7 = parseInt(document.getElementById('fib-count-rank7').value) || 20; 
+                        delete config.testSettings.durationMinutesRank3; 
+                        delete config.testSettings.passingScoreRank3; 
+                        config.testSettings.questions = processedQuestions; 
+                    } else if (currentFaction === 'lssd' || currentFaction === 'lspd') { 
+                        config.testPassingScore = parseInt(document.getElementById('test-passing-score').value) || 0; 
+                        config.testDurationMinutes = parseInt(document.getElementById('test-duration-minutes').value) || 15; 
+                        config.testQuestions = processedQuestions; 
+                    }
+                }
 
-            if (schema.subsystems.some(s => s.id === 'subsystem-actions')) {
-                syncActionsToState();
-                config.actions = factionActions;
-            }
-            
-            apiCall('/api/settings', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(globalConfig) 
-            }).then(function(res) {
-                if (res && res.success) { 
-                    alert('Настройки сохранены!'); 
-                    loadFactionUI(); 
+                if (schema.subsystems.some(s => s.id === 'subsystem-actions')) {
+                    syncActionsToState();
+                    config.actions = factionActions;
                 }
-            });
+                
+                apiCall('/api/settings', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(globalConfig) 
+                }).then(function(res) {
+                    if (res && res.success) { 
+                        alert('Настройки сохранены!'); 
+                        loadFactionUI(); 
+                    }
+                });
+            } catch (err) {
+                alert('Ошибка при сохранении: ' + err.message);
+                console.error(err);
+            }
         }
 
         function loadTokensUI() { 
