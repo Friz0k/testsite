@@ -29,12 +29,17 @@ async function sendToDiscord(webhook, payload) {
     } catch (err) {}
 }
 
+const formatRoles = (roleStr) => {
+    if (!roleStr) return '';
+    return roleStr.split(/[\s,]+/).map(r => r.match(/^\d+$/) ? `<@&${r}>` : r).join(' ');
+};
+
 router.post('/application', async (req, res) => {
     try {
         const data = req.body;
         const config = getConfig();
         const webhook = config.deadly.webhooks.application;
-        const roleStr = config.deadly.roles.ping;
+        const roleMentions = formatRoles(config.deadly.roles.ping);
 
         const dbData = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
         dbData.push({
@@ -43,8 +48,6 @@ router.post('/application', async (req, res) => {
             ...data
         });
         fs.writeFileSync(DB_FILE, JSON.stringify(dbData, null, 2));
-
-        const roleMentions = roleStr ? roleStr.split(' ').map(id => `<@&${id}>`).join(' ') : '';
 
         const payload = {
             content: roleMentions,
