@@ -273,114 +273,123 @@
                         <button type="button" onclick="saveFactionSettings()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ВСЕ НАСТРОЙКИ ФРАКЦИИ</button>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div id="subsystem-iad" class="subsystem-content">
-                    <div class="subsystem-tabs" id="iad-tabs" style="margin-top: 15px;">
-                        <button type="button" class="iad-tab-btn active" onclick="switchIadTab('iad-main', this)">Основное</button>
-                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-rules', this)">Правила и Задачи</button>
-                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-punish', this)">Взыскания</button>
-                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-others', this)">Прочее и Парковка</button>
-                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-legis', this)">Законодательство</button>
-                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-tutorials', this)">Туториалы и Медиа</button>
-                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-macros', this)">Макросы</button>
-                    </div>
+        <div id="iad_memo" class="tab-content">
+            <div class="admin-section">
+                <h3>Управление памяткой IAD</h3>
+                <div class="subsystem-tabs" id="iad-tabs" style="margin-top: 15px;">
+                    <button type="button" class="iad-tab-btn active" onclick="switchIadTab('iad-main', this)">Основное</button>
+                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-rules', this)">Правила и Задачи</button>
+                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-punish', this)">Взыскания</button>
+                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-others', this)">Прочее и Парковка</button>
+                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-legis', this)">Законодательство</button>
+                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-tutorials', this)">Туториалы и Медиа</button>
+                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-macros', this)">Макросы</button>
+                </div>
 
-                    <div id="iad-main" class="iad-content-pane" style="display: block;">
-                        <div class="form-grid">
-                            <div>
-                                <label>Главный заголовок</label>
-                                <input type="text" id="iad_title" placeholder="Памятка IAD">
-                            </div>
-                            <div>
-                                <label>Подзаголовок</label>
-                                <input type="text" id="iad_subtitle" placeholder="ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ.">
-                            </div>
-                            <div class="full-width">
-                                <label>Что такое IAD? (Описание)</label>
-                                <textarea id="iad_whatis" rows="4"></textarea>
-                            </div>
-                            <div class="full-width">
-                                <label>Чем заниматься в отделе? (Деятельность)</label>
-                                <textarea id="iad_activities" rows="4"></textarea>
-                            </div>
+                <div id="iad-main" class="iad-content-pane" style="display: block;">
+                    <div class="form-grid">
+                        <div>
+                            <label>Главный заголовок</label>
+                            <input type="text" id="iad_title" placeholder="Памятка IAD">
+                        </div>
+                        <div>
+                            <label>Подзаголовок</label>
+                            <input type="text" id="iad_subtitle" placeholder="ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ.">
+                        </div>
+                        <div class="full-width">
+                            <label>Что такое IAD? (Описание)</label>
+                            <textarea id="iad_whatis" rows="4"></textarea>
+                        </div>
+                        <div class="full-width">
+                            <label>Чем заниматься в отделе? (Деятельность)</label>
+                            <textarea id="iad_activities" rows="4"></textarea>
                         </div>
                     </div>
+                </div>
 
-                    <div id="iad-rules" class="iad-content-pane" style="display: none;">
-                        <h4>Задачи отдела</h4>
-                        <div class="iad-list-container" id="iad_tasks_list"></div>
-                        <button class="btn-sm" onclick="addIadItem('iad_tasks_list')">➕ Добавить задачу</button>
+                <div id="iad-rules" class="iad-content-pane" style="display: none;">
+                    <h4>Задачи отдела</h4>
+                    <div class="iad-list-container" id="iad_tasks_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_tasks_list')">➕ Добавить задачу</button>
 
-                        <h4 style="margin-top: 30px;">Требования к сотруднику</h4>
-                        <div class="iad-list-container" id="iad_reqs_list"></div>
-                        <button class="btn-sm" onclick="addIadItem('iad_reqs_list', true)">➕ Добавить требование</button>
+                    <h4 style="margin-top: 30px;">Требования к сотруднику</h4>
+                    <div class="iad-list-container" id="iad_reqs_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_reqs_list', true)">➕ Добавить требование</button>
 
-                        <h4 style="margin-top: 30px;">Права сотрудников</h4>
-                        <div class="iad-list-container" id="iad_rights_list"></div>
-                        <button class="btn-sm" onclick="addIadItem('iad_rights_list')">➕ Добавить право</button>
+                    <h4 style="margin-top: 30px;">Права сотрудников</h4>
+                    <div class="iad-list-container" id="iad_rights_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_rights_list')">➕ Добавить право</button>
+                </div>
+
+                <div id="iad-punish" class="iad-content-pane" style="display: none;">
+                    <h4>Как выдать дисциплинарное взыскание (Пошагово)</h4>
+                    <div class="iad-list-container" id="iad_howissue_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_howissue_list')">➕ Добавить шаг</button>
+
+                    <h4 style="margin-top: 30px;">Виды дисциплинарных взысканий</h4>
+                    <div class="iad-list-container" id="iad_punishments_list" style="background: transparent; border: none; padding: 0;"></div>
+                    <button class="btn-sm btn-success" onclick="addIadPunishment()">➕ Добавить вид взыскания</button>
+
+                    <h4 style="margin-top: 30px;">Кому нельзя выдавать взыскания (Отделы)</h4>
+                    <div class="iad-list-container" id="iad_forbidden_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_forbidden_list')">➕ Добавить отдел</button>
+                </div>
+
+                <div id="iad-others" class="iad-content-pane" style="display: none;">
+                    <h4>Нарушения устава (Статья | Наказание)</h4>
+                    <div class="iad-list-container" id="iad_violations_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_violations_list')">➕ Добавить нарушение</button>
+
+                    <h4 style="margin-top: 30px;">Вопросы для переаттестации</h4>
+                    <div class="iad-list-container" id="iad_recert_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_recert_list')">➕ Добавить вопрос</button>
+
+                    <h4 style="margin-top: 30px;">Правила парковки</h4>
+                    <div class="iad-list-container" id="iad_parking_list"></div>
+                    <button class="btn-sm" onclick="addIadItem('iad_parking_list')">➕ Добавить правило</button>
+                    
+                    <div style="margin-top: 15px;">
+                        <label>Загрузить фото/схему парковки</label>
+                        <img id="iad_parking_preview" class="preview-img" src="" style="display:none;">
+                        <input type="file" id="iad_parking_file" accept="image/*">
+                        <input type="hidden" id="iad_parking_image" value="">
                     </div>
+                </div>
 
-                    <div id="iad-punish" class="iad-content-pane" style="display: none;">
-                        <h4>Как выдать дисциплинарное взыскание (Пошагово)</h4>
-                        <div class="iad-list-container" id="iad_howissue_list"></div>
-                        <button class="btn-sm" onclick="addIadItem('iad_howissue_list')">➕ Добавить шаг</button>
+                <div id="iad-legis" class="iad-content-pane" style="display: none;">
+                    <h4>Законодательная база</h4>
+                    <div class="iad-list-container" id="iad_legis_list" style="background: transparent; border: none; padding: 0;"></div>
+                    <button class="btn-sm btn-success" onclick="addIadLegislation()">➕ Добавить ссылку на закон</button>
+                </div>
 
-                        <h4 style="margin-top: 30px;">Виды дисциплинарных взысканий</h4>
-                        <div class="iad-list-container" id="iad_punishments_list" style="background: transparent; border: none; padding: 0;"></div>
-                        <button class="btn-sm btn-success" onclick="addIadPunishment()">➕ Добавить вид взыскания</button>
+                <div id="iad-tutorials" class="iad-content-pane" style="display: none;">
+                    <h4>Обучающие материалы (Туториалы и медиа)</h4>
+                    <div class="iad-list-container" id="iad_tutors_list" style="background: transparent; border: none; padding: 0;"></div>
+                    <button class="btn-sm btn-success" onclick="addIadTutor()">➕ Добавить карточку туториала</button>
+                </div>
 
-                        <h4 style="margin-top: 30px;">Кому нельзя выдавать взыскания (Отделы)</h4>
-                        <div class="iad-list-container" id="iad_forbidden_list"></div>
-                        <button class="btn-sm" onclick="addIadItem('iad_forbidden_list')">➕ Добавить отдел</button>
-                    </div>
+                <div id="iad-macros" class="iad-content-pane" style="display: none;">
+                    <h4>Макросы и Биндеры</h4>
+                    <div class="iad-list-container" id="iad_macros_list" style="background: transparent; border: none; padding: 0;"></div>
+                    <button class="btn-sm btn-success" onclick="addIadMacro()">➕ Добавить карточку макроса</button>
+                </div>
 
-                    <div id="iad-others" class="iad-content-pane" style="display: none;">
-                        <h4>Нарушения устава (Статья | Наказание)</h4>
-                        <div class="iad-list-container" id="iad_violations_list"></div>
-                        <button class="btn-sm" onclick="addIadItem('iad_violations_list')">➕ Добавить нарушение</button>
-
-                        <h4 style="margin-top: 30px;">Вопросы для переаттестации</h4>
-                        <div class="iad-list-container" id="iad_recert_list"></div>
-                        <button class="btn-sm" onclick="addIadItem('iad_recert_list')">➕ Добавить вопрос</button>
-
-                        <h4 style="margin-top: 30px;">Правила парковки</h4>
-                        <div class="iad-list-container" id="iad_parking_list"></div>
-                        <button class="btn-sm" onclick="addIadItem('iad_parking_list')">➕ Добавить правило</button>
-                        
-                        <div style="margin-top: 15px;">
-                            <label>Загрузить фото/схему парковки</label>
-                            <img id="iad_parking_preview" class="preview-img" src="" style="display:none;">
-                            <input type="file" id="iad_parking_file" accept="image/*">
-                            <input type="hidden" id="iad_parking_image" value="">
-                        </div>
-                    </div>
-
-                    <div id="iad-legis" class="iad-content-pane" style="display: none;">
-                        <h4>Законодательная база</h4>
-                        <div class="iad-list-container" id="iad_legis_list" style="background: transparent; border: none; padding: 0;"></div>
-                        <button class="btn-sm btn-success" onclick="addIadLegislation()">➕ Добавить ссылку на закон</button>
-                    </div>
-
-                    <div id="iad-tutorials" class="iad-content-pane" style="display: none;">
-                        <h4>Обучающие материалы (Туториалы и медиа)</h4>
-                        <div class="iad-list-container" id="iad_tutors_list" style="background: transparent; border: none; padding: 0;"></div>
-                        <button class="btn-sm btn-success" onclick="addIadTutor()">➕ Добавить карточку туториала</button>
-                    </div>
-
-                    <div id="iad-macros" class="iad-content-pane" style="display: none;">
-                        <h4>Макросы и Биндеры</h4>
-                        <div class="iad-list-container" id="iad_macros_list" style="background: transparent; border: none; padding: 0;"></div>
-                        <button class="btn-sm btn-success" onclick="addIadMacro()">➕ Добавить карточку макроса</button>
-                    </div>
-
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                        <button type="button" class="btn-success" onclick="saveIadMemo()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ПАМЯТКУ IAD</button>
-                    </div>
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn-success" onclick="saveIadMemo()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ПАМЯТКУ IAD</button>
                 </div>
             </div>
         </div>
 
         <div id="projects" class="tab-content active">
+            <div class="admin-section" style="background: linear-gradient(135deg, #18181b, #2a0a2a); border: 1px solid var(--border-color); margin-bottom: 25px;">
+                <h3 style="border: none; margin-bottom: 15px;">⚡ Быстрый доступ</h3>
+                <button class="btn-success" onclick="switchTab('iad_memo', document.querySelector('#siteNavLinks li:nth-child(2)'))" style="font-size: 16px; padding: 15px 30px; width: 100%; box-shadow: 0 0 20px rgba(34,197,94,0.3); text-transform: uppercase; letter-spacing: 1px;">
+                    <i class="fas fa-bolt"></i> Редактор Памятки IAD
+                </button>
+            </div>
             <div class="admin-section">
                 <h3>Карточки проектов</h3>
                 <label>Выберите проект</label>
@@ -639,7 +648,11 @@
             document.querySelectorAll('.nav-links li').forEach(function(el) {
                 el.classList.remove('active');
             });
-            document.getElementById(tabId).classList.add('active');
+            
+            var targetTab = document.getElementById(tabId);
+            if(targetTab) {
+                targetTab.classList.add('active');
+            }
             
             if (element) {
                 element.classList.add('active');
@@ -1105,7 +1118,7 @@
                 if (!data) return;
                 allProjects = data;
                 var select = document.getElementById('projectSelect');
-                select.innerHTML = '<option value="">➕ Создать новый проект</option>';
+                select.innerHTML = '<option value="">➕ Создать новый project</option>';
                 for (var i = 0; i < allProjects.length; i++) {
                     var pTitle = allProjects[i].title ? allProjects[i].title : 'Проект ' + (i + 1);
                     select.innerHTML += '<option value="' + i + '">' + pTitle + '</option>';
@@ -2169,7 +2182,7 @@
                     '<select class="q-type" onchange="syncDOMToState(); renderQuestions();">' +
                     '<option value="single" ' + (q.type==='single'?'selected':'') + '>Один правильный вариант</option>' +
                     '<option value="multiple" ' + (q.type==='multiple'?'selected':'') + '>Несколько вариантов</option>' +
-                    (currentFaction === 'gov' ? '<option value="text" ' + (q.type==='text'?'selected':'') + '>Развернутый текст</option>' : '') +
+                    '<option value="text" ' + (q.type==='text'?'selected':'') + '>Развернутый текст</option>' +
                     '</select>' +
                     '</div>';
                 
