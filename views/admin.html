@@ -168,7 +168,6 @@
         <div class="nav-category" id="siteNavCat">Сайт</div>
         <ul class="nav-links" id="siteNavLinks">
             <li class="active" onclick="switchTab('projects', this)">📦 Проекты</li>
-            <li onclick="switchTab('iad_memo', this)">📋 Редактор Памятки IAD</li>
             <li onclick="switchTab('illustration', this)">🎨 Арт на главной</li>
             <li onclick="switchTab('sessions', this)">🌐 Карточки IP и Устройств</li>
             <li onclick="switchTab('backups', this)">💾 Бэкапы и Восстановление</li>
@@ -273,123 +272,115 @@
                         <button type="button" onclick="saveFactionSettings()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ВСЕ НАСТРОЙКИ ФРАКЦИИ</button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div id="iad_memo" class="tab-content">
-            <div class="admin-section">
-                <h3>Управление памяткой IAD</h3>
-                <div class="subsystem-tabs" id="iad-tabs" style="margin-top: 15px;">
-                    <button type="button" class="iad-tab-btn active" onclick="switchIadTab('iad-main', this)">Основное</button>
-                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-rules', this)">Правила и Задачи</button>
-                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-punish', this)">Взыскания</button>
-                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-others', this)">Прочее и Парковка</button>
-                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-legis', this)">Законодательство</button>
-                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-tutorials', this)">Туториалы и Медиа</button>
-                    <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-macros', this)">Макросы</button>
-                </div>
+                <!-- IAD MEMO EDITOR (INSIDE LSPD) -->
+                <div id="subsystem-iad" class="subsystem-content">
+                    <div class="subsystem-tabs" id="iad-tabs" style="margin-top: 15px;">
+                        <button type="button" class="iad-tab-btn active" onclick="switchIadTab('iad-main', this)">Основное</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-rules', this)">Правила и Задачи</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-punish', this)">Взыскания</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-others', this)">Прочее и Парковка</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-legis', this)">Законодательство</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-tutorials', this)">Туториалы и Медиа</button>
+                        <button type="button" class="iad-tab-btn" onclick="switchIadTab('iad-macros', this)">Макросы</button>
+                    </div>
 
-                <div id="iad-main" class="iad-content-pane" style="display: block;">
-                    <div class="form-grid">
-                        <div>
-                            <label>Главный заголовок</label>
-                            <input type="text" id="iad_title" placeholder="Памятка IAD">
-                        </div>
-                        <div>
-                            <label>Подзаголовок</label>
-                            <input type="text" id="iad_subtitle" placeholder="ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ.">
-                        </div>
-                        <div class="full-width">
-                            <label>Что такое IAD? (Описание)</label>
-                            <textarea id="iad_whatis" rows="4"></textarea>
-                        </div>
-                        <div class="full-width">
-                            <label>Чем заниматься в отделе? (Деятельность)</label>
-                            <textarea id="iad_activities" rows="4"></textarea>
+                    <div id="iad-main" class="iad-content-pane" style="display: block;">
+                        <div class="form-grid">
+                            <div>
+                                <label>Главный заголовок</label>
+                                <input type="text" id="iad_title" placeholder="Памятка IAD">
+                            </div>
+                            <div>
+                                <label>Подзаголовок</label>
+                                <input type="text" id="iad_subtitle" placeholder="ЧЕСТНОСТЬ. КОНТРОЛЬ. СПРАВЕДЛИВОСТЬ.">
+                            </div>
+                            <div class="full-width">
+                                <label>Что такое IAD? (Описание)</label>
+                                <textarea id="iad_whatis" rows="4"></textarea>
+                            </div>
+                            <div class="full-width">
+                                <label>Чем заниматься в отделе? (Деятельность)</label>
+                                <textarea id="iad_activities" rows="4"></textarea>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="iad-rules" class="iad-content-pane" style="display: none;">
-                    <h4>Задачи отдела</h4>
-                    <div class="iad-list-container" id="iad_tasks_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_tasks_list')">➕ Добавить задачу</button>
+                    <div id="iad-rules" class="iad-content-pane" style="display: none;">
+                        <h4>Задачи отдела</h4>
+                        <div class="iad-list-container" id="iad_tasks_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_tasks_list')">➕ Добавить задачу</button>
 
-                    <h4 style="margin-top: 30px;">Требования к сотруднику</h4>
-                    <div class="iad-list-container" id="iad_reqs_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_reqs_list', true)">➕ Добавить требование</button>
+                        <h4 style="margin-top: 30px;">Требования к сотруднику</h4>
+                        <div class="iad-list-container" id="iad_reqs_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_reqs_list', true)">➕ Добавить требование</button>
 
-                    <h4 style="margin-top: 30px;">Права сотрудников</h4>
-                    <div class="iad-list-container" id="iad_rights_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_rights_list')">➕ Добавить право</button>
-                </div>
-
-                <div id="iad-punish" class="iad-content-pane" style="display: none;">
-                    <h4>Как выдать дисциплинарное взыскание (Пошагово)</h4>
-                    <div class="iad-list-container" id="iad_howissue_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_howissue_list')">➕ Добавить шаг</button>
-
-                    <h4 style="margin-top: 30px;">Виды дисциплинарных взысканий</h4>
-                    <div class="iad-list-container" id="iad_punishments_list" style="background: transparent; border: none; padding: 0;"></div>
-                    <button class="btn-sm btn-success" onclick="addIadPunishment()">➕ Добавить вид взыскания</button>
-
-                    <h4 style="margin-top: 30px;">Кому нельзя выдавать взыскания (Отделы)</h4>
-                    <div class="iad-list-container" id="iad_forbidden_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_forbidden_list')">➕ Добавить отдел</button>
-                </div>
-
-                <div id="iad-others" class="iad-content-pane" style="display: none;">
-                    <h4>Нарушения устава (Статья | Наказание)</h4>
-                    <div class="iad-list-container" id="iad_violations_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_violations_list')">➕ Добавить нарушение</button>
-
-                    <h4 style="margin-top: 30px;">Вопросы для переаттестации</h4>
-                    <div class="iad-list-container" id="iad_recert_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_recert_list')">➕ Добавить вопрос</button>
-
-                    <h4 style="margin-top: 30px;">Правила парковки</h4>
-                    <div class="iad-list-container" id="iad_parking_list"></div>
-                    <button class="btn-sm" onclick="addIadItem('iad_parking_list')">➕ Добавить правило</button>
-                    
-                    <div style="margin-top: 15px;">
-                        <label>Загрузить фото/схему парковки</label>
-                        <img id="iad_parking_preview" class="preview-img" src="" style="display:none;">
-                        <input type="file" id="iad_parking_file" accept="image/*">
-                        <input type="hidden" id="iad_parking_image" value="">
+                        <h4 style="margin-top: 30px;">Права сотрудников</h4>
+                        <div class="iad-list-container" id="iad_rights_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_rights_list')">➕ Добавить право</button>
                     </div>
-                </div>
 
-                <div id="iad-legis" class="iad-content-pane" style="display: none;">
-                    <h4>Законодательная база</h4>
-                    <div class="iad-list-container" id="iad_legis_list" style="background: transparent; border: none; padding: 0;"></div>
-                    <button class="btn-sm btn-success" onclick="addIadLegislation()">➕ Добавить ссылку на закон</button>
-                </div>
+                    <div id="iad-punish" class="iad-content-pane" style="display: none;">
+                        <h4>Как выдать дисциплинарное взыскание (Пошагово)</h4>
+                        <div class="iad-list-container" id="iad_howissue_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_howissue_list')">➕ Добавить шаг</button>
 
-                <div id="iad-tutorials" class="iad-content-pane" style="display: none;">
-                    <h4>Обучающие материалы (Туториалы и медиа)</h4>
-                    <div class="iad-list-container" id="iad_tutors_list" style="background: transparent; border: none; padding: 0;"></div>
-                    <button class="btn-sm btn-success" onclick="addIadTutor()">➕ Добавить карточку туториала</button>
-                </div>
+                        <h4 style="margin-top: 30px;">Виды дисциплинарных взысканий</h4>
+                        <div class="iad-list-container" id="iad_punishments_list" style="background: transparent; border: none; padding: 0;"></div>
+                        <button class="btn-sm btn-success" onclick="addIadPunishment()">➕ Добавить вид взыскания</button>
 
-                <div id="iad-macros" class="iad-content-pane" style="display: none;">
-                    <h4>Макросы и Биндеры</h4>
-                    <div class="iad-list-container" id="iad_macros_list" style="background: transparent; border: none; padding: 0;"></div>
-                    <button class="btn-sm btn-success" onclick="addIadMacro()">➕ Добавить карточку макроса</button>
-                </div>
+                        <h4 style="margin-top: 30px;">Кому нельзя выдавать взыскания (Отделы)</h4>
+                        <div class="iad-list-container" id="iad_forbidden_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_forbidden_list')">➕ Добавить отдел</button>
+                    </div>
 
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                    <button type="button" class="btn-success" onclick="saveIadMemo()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ПАМЯТКУ IAD</button>
+                    <div id="iad-others" class="iad-content-pane" style="display: none;">
+                        <h4>Нарушения устава (Статья | Наказание)</h4>
+                        <div class="iad-list-container" id="iad_violations_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_violations_list')">➕ Добавить нарушение</button>
+
+                        <h4 style="margin-top: 30px;">Вопросы для переаттестации</h4>
+                        <div class="iad-list-container" id="iad_recert_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_recert_list')">➕ Добавить вопрос</button>
+
+                        <h4 style="margin-top: 30px;">Правила парковки</h4>
+                        <div class="iad-list-container" id="iad_parking_list"></div>
+                        <button class="btn-sm" onclick="addIadItem('iad_parking_list')">➕ Добавить правило</button>
+                        
+                        <div style="margin-top: 15px;">
+                            <label>Загрузить фото/схему парковки</label>
+                            <img id="iad_parking_preview" class="preview-img" src="" style="display:none;">
+                            <input type="file" id="iad_parking_file" accept="image/*">
+                            <input type="hidden" id="iad_parking_image" value="">
+                        </div>
+                    </div>
+
+                    <div id="iad-legis" class="iad-content-pane" style="display: none;">
+                        <h4>Законодательная база</h4>
+                        <div class="iad-list-container" id="iad_legis_list" style="background: transparent; border: none; padding: 0;"></div>
+                        <button class="btn-sm btn-success" onclick="addIadLegislation()">➕ Добавить ссылку на закон</button>
+                    </div>
+
+                    <div id="iad-tutorials" class="iad-content-pane" style="display: none;">
+                        <h4>Обучающие материалы (Туториалы и медиа)</h4>
+                        <div class="iad-list-container" id="iad_tutors_list" style="background: transparent; border: none; padding: 0;"></div>
+                        <button class="btn-sm btn-success" onclick="addIadTutor()">➕ Добавить карточку туториала</button>
+                    </div>
+
+                    <div id="iad-macros" class="iad-content-pane" style="display: none;">
+                        <h4>Макросы и Биндеры</h4>
+                        <div class="iad-list-container" id="iad_macros_list" style="background: transparent; border: none; padding: 0;"></div>
+                        <button class="btn-sm btn-success" onclick="addIadMacro()">➕ Добавить карточку макроса</button>
+                    </div>
+
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                        <button type="button" class="btn-success" onclick="saveIadMemo()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ПАМЯТКУ IAD</button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="projects" class="tab-content active">
-            <div class="admin-section" style="background: linear-gradient(135deg, #18181b, #2a0a2a); border: 1px solid var(--border-color); margin-bottom: 25px;">
-                <h3 style="border: none; margin-bottom: 15px;">⚡ Быстрый доступ</h3>
-                <button class="btn-success" onclick="switchTab('iad_memo', document.querySelector('#siteNavLinks li:nth-child(2)'))" style="font-size: 16px; padding: 15px 30px; width: 100%; box-shadow: 0 0 20px rgba(34,197,94,0.3); text-transform: uppercase; letter-spacing: 1px;">
-                    <i class="fas fa-bolt"></i> Редактор Памятки IAD
-                </button>
-            </div>
             <div class="admin-section">
                 <h3>Карточки проектов</h3>
                 <label>Выберите проект</label>
@@ -1110,812 +1101,17 @@
             });
         }
 
-        var allProjects = []; 
-        var currentProjImageUrl = '';
-        
-        function loadProjects() {
-            apiCall('/api/projects').then(function(data) {
-                if (!data) return;
-                allProjects = data;
-                var select = document.getElementById('projectSelect');
-                select.innerHTML = '<option value="">➕ Создать новый project</option>';
-                for (var i = 0; i < allProjects.length; i++) {
-                    var pTitle = allProjects[i].title ? allProjects[i].title : 'Проект ' + (i + 1);
-                    select.innerHTML += '<option value="' + i + '">' + pTitle + '</option>';
-                }
-                selectProject();
-            });
-        }
-        
-        function selectProject() {
-            var idx = document.getElementById('projectSelect').value;
-            var img = document.getElementById('projImgPreview');
-            if (idx === "") {
-                document.getElementById('projTitle').value = ''; 
-                document.getElementById('projPath').value = ''; 
-                document.getElementById('projShortDesc').value = ''; 
-                document.getElementById('projFullDesc').value = ''; 
-                currentProjImageUrl = '';
-                img.style.display = 'none'; 
-                document.getElementById('deleteBtn').style.display = 'none';
-            } else {
-                var p = allProjects[idx];
-                document.getElementById('projTitle').value = p.title ? p.title : ''; 
-                document.getElementById('projPath').value = p.path ? p.path : ''; 
-                document.getElementById('projShortDesc').value = p.shortDesc ? p.shortDesc : ''; 
-                document.getElementById('projFullDesc').value = p.fullDesc ? p.fullDesc : ''; 
-                currentProjImageUrl = p.imageUrl ? p.imageUrl : '';
-                
-                if (currentProjImageUrl) { 
-                    img.src = currentProjImageUrl; 
-                    img.style.display = 'block'; 
-                } else { 
-                    img.style.display = 'none'; 
-                }
-                
-                document.getElementById('deleteBtn').style.display = 'inline-block';
-            }
-        }
-
-        function saveProjectWithImage() {
-            var fileInput = document.getElementById('projImageFile');
-            if (fileInput.files.length > 0) {
-                var formData = new FormData();
-                formData.append('image', fileInput.files[0]);
-                fetch('/api/upload', { method: 'POST', body: formData }).then(function(res) {
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    return res.json();
-                }).then(function(data) {
-                    if (data && data.success) { 
-                        currentProjImageUrl = data.url; 
-                        saveProjectData(); 
-                    } else {
-                        alert('Ошибка загрузки картинки проекта');
-                    }
-                }).catch(function(e) {
-                    alert('Сбой при загрузке картинки проекта: ' + e.message);
-                });
-            } else {
-                saveProjectData();
-            }
-        }
-
-        function saveProjectData() {
-            var idx = document.getElementById('projectSelect').value;
-            var projData = { 
-                title: document.getElementById('projTitle').value, 
-                path: document.getElementById('projPath').value, 
-                shortDesc: document.getElementById('projShortDesc').value, 
-                fullDesc: document.getElementById('projFullDesc').value, 
-                imageUrl: currentProjImageUrl 
-            };
-            
-            if (idx === "") {
-                allProjects.push(projData); 
-            } else {
-                allProjects[idx] = projData;
-            }
-            
-            apiCall('/api/projects', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(allProjects) 
-            }).then(function(data) {
-                if (data && data.success) { 
-                    alert('Проект сохранен!'); 
-                    loadProjects(); 
-                }
-            });
-        }
-        
-        function deleteProject() {
-            var idx = document.getElementById('projectSelect').value;
-            if (idx === "" || !confirm('Точно удалить проект?')) {
+        window.addRoleInput = function(rKey) {
+            var wrap = document.getElementById('role_wrap_' + rKey);
+            if (wrap.children.length >= 10) {
+                alert('Максимальное количество ролей для тега: 10');
                 return;
             }
-            allProjects.splice(idx, 1);
-            apiCall('/api/projects', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(allProjects) 
-            }).then(function(data) {
-                if (data && data.success) { 
-                    document.getElementById('projectSelect').value = ""; 
-                    loadProjects(); 
-                }
-            });
-        }
-
-        function uploadIllustration() {
-            var fileInput = document.getElementById('illustrationFile');
-            if (fileInput.files.length === 0) {
-                alert('Выберите файл!');
-                return;
-            }
-            
-            var formData = new FormData();
-            formData.append('image', fileInput.files[0]);
-
-            fetch('/api/upload', { method: 'POST', body: formData }).then(function(res) {
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.json();
-            }).then(function(upRes) {
-                if (upRes && upRes.success) {
-                    globalConfig.illustrationUrl = upRes.url;
-                    apiCall('/api/settings', { 
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify(globalConfig) 
-                    }).then(function() {
-                        document.getElementById('currentIllustration').src = upRes.url; 
-                        document.getElementById('currentIllustration').style.display = 'block'; 
-                        alert('Арт обновлен!');
-                    });
-                } else {
-                    alert('Ошибка загрузки арта');
-                }
-            }).catch(function(e) {
-                alert('Сбой при загрузке: ' + e.message);
-            });
-        }
-
-        var rawSessions = {}; 
-        var rawNotes = {}; 
-        var activeModalIp = null;
-        
-        function loadSessionsUI() {
-            apiCall('/api/user-sessions').then(function(res) {
-                if (res && res.success) { 
-                    rawSessions = res.sessions || {}; 
-                    rawNotes = res.notes || {}; 
-                    renderUserSessions(); 
-                }
-            });
-        }
-
-        function renderUserSessions() {
-            var container = document.getElementById('sessionsListContainer');
-            var searchInput = document.getElementById('ipSearchInput');
-            var search = searchInput ? searchInput.value.toLowerCase() : '';
-            var hideBotsCheckbox = document.getElementById('hideBotsCheckbox');
-            var hideBots = hideBotsCheckbox ? hideBotsCheckbox.checked : false;
-            container.innerHTML = '';
-
-            var sessionsArray = [];
-            for (var key in rawSessions) {
-                sessionsArray.push(rawSessions[key]);
-            }
-            
-            sessionsArray.sort(function(a, b) {
-                var tsA = a.lastSeenTimestamp || 0;
-                var tsB = b.lastSeenTimestamp || 0;
-                return tsB - tsA;
-            });
-
-            var filtered = [];
-            for (var i = 0; i < sessionsArray.length; i++) {
-                var s = sessionsArray[i];
-                var searchData = s.ip.toLowerCase() + ' ' + JSON.stringify(s.history).toLowerCase();
-                var matchesSearch = searchData.indexOf(search) !== -1;
-                var matchesBotFilter = hideBots ? !s.isBot : true;
-                if (matchesSearch && matchesBotFilter) {
-                    filtered.push(s);
-                }
-            }
-
-            if (filtered.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted);">Сессии пользователей не найдены.</p>'; 
-                return;
-            }
-
-            for (var j = 0; j < filtered.length; j++) {
-                var sObj = filtered[j];
-                var note = rawNotes[sObj.ip] || '';
-                var botBadge = sObj.isBot 
-                    ? '<span style="background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:10px;">🤖 БОТ (' + (sObj.botReason ? sObj.botReason : 'Автодетект') + ')</span>' 
-                    : '<span style="background:rgba(34,197,94,0.2); color:#22c55e; border:1px solid #22c55e; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:10px;">👤 Человек</span>';
-                
-                var card = document.createElement('div'); 
-                card.className = 'ip-card'; 
-                card.style.borderColor = sObj.isBot ? '#7f1d1d' : 'var(--border-color)';
-                
-                var cardHtml = '<div class="ip-header">' +
-                    '<div class="ip-title">🌐 ' + sObj.ip + ' ' + botBadge + '</div>' +
-                    '<div>' +
-                    '<button class="btn-success btn-sm" onclick="openIpModal(\'' + sObj.ip + '\')">🔍 Логи</button>' +
-                    '<button class="btn-danger btn-sm" onclick="quickBan(\'' + sObj.ip + '\')">🚫 Бан</button>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div class="ip-device"><strong>Устройство:</strong> ' + sObj.userAgent + '</div>' +
-                    '<div style="font-size:12px; color:var(--text-muted); display:flex; gap:20px; margin-bottom:10px;">' +
-                    '<span>Первый визит: ' + sObj.firstSeen + '</span>' +
-                    '<span style="color:#38bdf8; font-weight:bold;">Последний визит: ' + sObj.lastSeen + '</span>' +
-                    '<span>Запросов: ' + sObj.requestsCount + '</span>' +
-                    '</div>';
-                    
-                if (note) {
-                    cardHtml += '<div style="background:#18181b; border-left:3px solid var(--accent-color); padding:8px 12px; border-radius:4px; font-size:13px; color:#22c55e;"><strong>Заметка:</strong> ' + note + '</div>';
-                }
-                card.innerHTML = cardHtml;
-                container.appendChild(card);
-            }
-        }
-
-        function openIpModal(ip) {
-            activeModalIp = ip; 
-            var s = rawSessions[ip]; 
-            if (!s) {
-                return;
-            }
-            
-            document.getElementById('modalIpTitle').innerText = 'Карточка пользователя [IP: ' + ip + ']';
-            document.getElementById('modalIpNote').value = rawNotes[ip] || '';
-            var timeline = document.getElementById('modalTimeline'); 
-            timeline.innerHTML = '';
-            
-            var historyArr = s.history || [];
-            for (var i = 0; i < historyArr.length; i++) {
-                var item = historyArr[i];
-                var isCopyAction = false;
-                var copyText = '';
-                
-                if (item.data && item.data.body && item.data.body.action === 'copy') {
-                    isCopyAction = true;
-                    copyText = item.data.body.text;
-                }
-                
-                var dataStr = (item.data && !isCopyAction) ? JSON.stringify(item.data, null, 2) : '';
-                var el = document.createElement('div'); 
-                el.className = 'timeline-item';
-                
-                var methodColor = item.method === 'POST' ? '#f59e0b' : '#38bdf8';
-                var statusColor = item.status < 400 ? '#22c55e' : '#ef4444';
-                
-                var innerContent = '<div class="timeline-head">' +
-                    '<span class="timeline-time">[' + item.time + ']</span>' +
-                    '<span style="font-weight:bold; color:' + methodColor + '">' + item.method + '</span>' +
-                    '<span class="timeline-url">' + item.url + '</span>' +
-                    '<span style="color:' + statusColor + '">(' + item.status + ')</span>' +
-                    '</div>';
-                    
-                if (isCopyAction) {
-                    innerContent += '<div class="timeline-copy-action">СКОПИРОВАЛ ТЕКСТ:\n' + copyText + '</div>';
-                } else if (dataStr) {
-                    innerContent += '<div class="timeline-data">' + dataStr + '</div>';
-                }
-                
-                el.innerHTML = innerContent;
-                timeline.appendChild(el);
-            }
-            
-            document.getElementById('ipModal').style.display = 'flex';
-        }
-
-        function closeIpModal() { 
-            document.getElementById('ipModal').style.display = 'none'; 
-        }
-        
-        function saveIpNoteFromModal() {
-            if (!activeModalIp) {
-                return;
-            }
-            var note = document.getElementById('modalIpNote').value.trim();
-            apiCall('/api/ip-notes', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ ip: activeModalIp, note: note }) 
-            }).then(function(res) {
-                if (res && res.success) { 
-                    rawNotes = res.notes || {}; 
-                    alert('Заметка сохранена!'); 
-                    renderUserSessions(); 
-                }
-            });
-        }
-
-        var rawDiscordLogs = [];
-        
-        function loadDiscordMonitorUI() {
-            apiCall('/api/discord-monitor').then(function(res) {
-                if (!res || !res.success) {
-                    return;
-                }
-                
-                document.getElementById('statSuccessCount').innerText = res.health.successCount || 0;
-                document.getElementById('statRateLimitCount').innerText = res.health.rateLimitCount || 0;
-                document.getElementById('statErrorCount').innerText = res.health.errorCount || 0;
-                document.getElementById('statRamUsage').innerText = (res.health.rssMb || 0) + ' MB';
-                rawDiscordLogs = res.logs || []; 
-                renderDiscordLogs();
-            });
-        }
-
-        function renderDiscordLogs() {
-            var container = document.getElementById('discordLogsContainer'); 
-            container.innerHTML = '';
-            
-            if (rawDiscordLogs.length === 0) { 
-                container.innerHTML = '<p style="color:var(--text-muted);">Записи отсутствуют.</p>'; 
-                return; 
-            }
-            
-            for (var i = 0; i < rawDiscordLogs.length; i++) {
-                var l = rawDiscordLogs[i];
-                var badgeClass = 'status-success'; 
-                var statusText = l.status;
-                
-                if (l.status === 204 || l.status === 200) {
-                    statusText += ' OK'; 
-                } else if (l.status === 202) {
-                    statusText += ' Accepted'; 
-                } else if (l.status === 429) { 
-                    badgeClass = 'status-warning'; 
-                    statusText += ' Rate Limit'; 
-                } else { 
-                    badgeClass = 'status-danger'; 
-                    statusText += ' Error'; 
-                }
-                
-                var el = document.createElement('div'); 
-                el.className = 'backup-card'; 
-                el.style.borderColor = l.status === 429 ? '#f59e0b' : (l.status >= 400 ? '#ef4444' : 'var(--border-color)');
-                
-                var html = '<div>' +
-                    '<div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">' +
-                    '<span class="status-badge ' + badgeClass + '">' + statusText + '</span>' +
-                    '<span style="color:#71717a; font-size:12px;">[' + l.time + ']</span>' +
-                    '<span style="color:#38bdf8; font-size:12px; font-family:monospace;">' + l.duration + 'ms</span>' +
-                    '</div>' +
-                    '<div style="font-family:monospace; color:#a855f7; font-size:13px; word-break:break-all;">' + l.url + '</div>';
-                
-                if (l.error) {
-                    html += '<div style="color:#f87171; font-size:12px; margin-top:4px;">Сбой: ' + l.error + '</div>';
-                }
-                html += '</div><button class="btn-sm" style="background:#27272a; color:#fff;" onclick="openDiscordModal(\'' + l.id + '\')">📋 Детали</button>';
-                
-                el.innerHTML = html;
-                container.appendChild(el);
-            }
-        }
-
-        function openDiscordModal(id) {
-            var l = null;
-            for (var i = 0; i < rawDiscordLogs.length; i++) {
-                if (rawDiscordLogs[i].id === id) {
-                    l = rawDiscordLogs[i];
-                    break;
-                }
-            }
-            if (!l) {
-                return;
-            }
-            document.getElementById('modalDiscordTitle').innerText = 'Отправка [Статус: ' + l.status + '] - ' + l.time;
-            document.getElementById('modalDiscordPayload').innerText = l.payload ? JSON.stringify(l.payload, null, 2) : 'Пустой запрос';
-            var respText = l.response ? JSON.stringify(l.response, null, 2) : (l.error ? String(l.error) : 'Нет ответа от сервера');
-            document.getElementById('modalDiscordResponse').innerText = respText;
-            document.getElementById('discordModal').style.display = 'flex';
-        }
-        
-        function closeDiscordModal() { 
-            document.getElementById('discordModal').style.display = 'none'; 
-        }
-        
-        function sendTestWebhook() {
-            var urlInput = document.getElementById('testWebhookUrlInput').value.trim(); 
-            var payloadInput = document.getElementById('testWebhookPayloadInput').value.trim(); 
-            var resultBox = document.getElementById('testWebhookResultBox');
-            
-            if (!urlInput) {
-                alert('Введите URL вебхука');
-                return;
-            }
-            
-            resultBox.style.display = 'block'; 
-            resultBox.innerHTML = '<span style="color:#38bdf8;">⏳ Отправка запроса...</span>';
-            
-            apiCall('/api/discord-monitor/test', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ webhookUrl: urlInput, payloadText: payloadInput }) 
-            }).then(function(res) {
-                if (res && res.success) {
-                    var badgeClass = res.status < 400 ? 'status-success' : (res.status === 429 ? 'status-warning' : 'status-danger');
-                    resultBox.innerHTML = '<div style="background:#121214; padding:15px; border-radius:8px; border:1px solid #27272a;">' +
-                        '<div style="margin-bottom:8px;">' +
-                        '<span class="status-badge ' + badgeClass + '">HTTP ' + res.status + ' ' + (res.statusText || '') + '</span>' +
-                        '</div>' +
-                        '<div style="font-family:monospace; font-size:12px; color:#fbbf24;">Ответ: ' + (res.responseBody ? JSON.stringify(res.responseBody) : 'Успешно') + '</div>' +
-                        '</div>';
-                    loadDiscordMonitorUI();
-                } else if (res && res.error) { 
-                    resultBox.innerHTML = '<div style="color:#ef4444;">❌ Ошибка: ' + res.error + '</div>'; 
-                }
-            });
-        }
-        
-        function clearDiscordLogs() {
-            if (!confirm('Очистить весь журнал отслеживания Discord?')) {
-                return;
-            }
-            apiCall('/api/discord-monitor/clear', { method: 'DELETE' }).then(function(res) {
-                if (res && res.success) {
-                    loadDiscordMonitorUI();
-                }
-            });
-        }
-
-        function loadBackupsUI() {
-            apiCall('/api/backups').then(function(res) {
-                var container = document.getElementById('backupsListContainer');
-                
-                if (!res || !res.backups || res.backups.length === 0) { 
-                    container.innerHTML = '<p style="color:var(--text-muted);">Резервные копии отсутствуют.</p>'; 
-                    return; 
-                }
-                
-                var html = '';
-                for (var i = 0; i < res.backups.length; i++) {
-                    var b = res.backups[i];
-                    html += '<div class="backup-card">' +
-                        '<div>' +
-                        '<strong style="color:#a855f7; font-family:monospace; font-size:15px;">📦 ' + b.name + '</strong>' +
-                        '<div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Дата создания: ' + b.date + '</div>' +
-                        '</div>' +
-                        '<div>' +
-                        '<button class="btn-success btn-sm" onclick="restoreBackup(\'' + b.name + '\')">↺ Восстановить</button>' +
-                        '<a href="/api/backups/download/' + encodeURIComponent(b.name) + '" class="btn-sm" style="background:#27272a; color:#fff; text-decoration:none; display:inline-block; border-radius:6px; padding:8px 15px;">📥 Скачать</a>' +
-                        '</div>' +
-                        '</div>';
-                }
-                container.innerHTML = html;
-            });
-        }
-        
-        function createNewBackup() { 
-            apiCall('/api/backups/create', { method: 'POST' }).then(function(res) {
-                if (res && res.success) { 
-                    alert('Бэкап создан!'); 
-                    loadBackupsUI(); 
-                } 
-            });
-        }
-        
-        function restoreBackup(name) {
-            if (!confirm('ВНИМАНИЕ! Восстановить базу из [' + name + ']? Текущие данные будут заменены.')) {
-                return;
-            }
-            apiCall('/api/backups/restore', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ name: name }) 
-            }).then(function(res) {
-                if (res && res.success) { 
-                    alert('Система успешно восстановлена!'); 
-                    location.reload(); 
-                }
-            });
-        }
-        
-        function uploadBackupFile() {
-            var fileInput = document.getElementById('uploadBackupFileInput'); 
-            if (fileInput.files.length === 0) {
-                alert('Выберите файл!');
-                return;
-            }
-            
-            var formData = new FormData(); 
-            formData.append('backupFile', fileInput.files[0]);
-            
-            fetch('/api/backups/upload', { method: 'POST', body: formData }).then(function(res) {
-                return res.json();
-            }).then(function(data) {
-                if (data && data.success) { 
-                    alert('Бэкап загружен!'); 
-                    loadBackupsUI(); 
-                } 
-            }).catch(function(e) {
-                alert('Ошибка загрузки');
-            });
-        }
-
-        function loadBansUI() {
-            apiCall('/api/bans').then(function(res) {
-                var container = document.getElementById('bannedListContainer');
-                
-                if (!res || !res.banned || res.banned.length === 0) { 
-                    container.innerHTML = '<p style="color:var(--text-muted);">Черный список пуст.</p>'; 
-                    return; 
-                }
-                
-                var html = '';
-                for (var i = 0; i < res.banned.length; i++) {
-                    var item = res.banned[i];
-                    html += '<div class="backup-card" style="border-color:var(--danger-color);">' +
-                        '<div>' +
-                        '<span style="font-family:monospace; color:#f87171; font-weight:bold;">🚫 ' + item.ip + '</span>' +
-                        '<div style="color:var(--text-muted); font-size:12px; margin-top:4px;">Причина: ' + (item.reason ? item.reason : 'Не указана') + '</div>' +
-                        '</div>' +
-                        '<button class="btn-success btn-sm" onclick="unbanIp(\'' + item.ip + '\')">✔️ Разблокировать</button>' +
-                        '</div>';
-                }
-                container.innerHTML = html;
-            });
-        }
-        
-        function manualBanIp() {
-            var ip = document.getElementById('banIpInput').value.trim(); 
-            var reason = document.getElementById('banReasonInput').value.trim(); 
-            
-            if (!ip) {
-                alert('Введите IP!');
-                return;
-            }
-            
-            apiCall('/api/bans', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ ip: ip, reason: reason }) 
-            }).then(function(res) {
-                if (res && res.success) { 
-                    document.getElementById('banIpInput').value = ''; 
-                    document.getElementById('banReasonInput').value = ''; 
-                    loadBansUI(); 
-                }
-            });
-        }
-        
-        function quickBan(ip) { 
-            if (!confirm('Заблокировать IP: ' + ip + '?')) {
-                return;
-            }
-            apiCall('/api/bans', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ ip: ip, reason: 'Быстрая блокировка' }) 
-            }).then(function(res) {
-                if (res && res.success) {
-                    alert('IP забанен!'); 
-                }
-            });
-        }
-        
-        function unbanIp(ip) { 
-            if (!confirm('Разблокировать IP: ' + ip + '?')) {
-                return;
-            }
-            apiCall('/api/bans/' + encodeURIComponent(ip), { method: 'DELETE' }).then(function(res) {
-                if (res && res.success) {
-                    loadBansUI(); 
-                }
-            });
-        }
-
-        function loadFileList() { 
-            apiCall('/api/list-files').then(function(files) {
-                if (!files) return;
-                var select = document.getElementById('fileSelect'); 
-                select.innerHTML = '<option value="">-- Выберите файл --</option>'; 
-                for (var i = 0; i < files.length; i++) {
-                    select.innerHTML += '<option value="' + files[i] + '">' + files[i] + '</option>'; 
-                }
-            });
-        }
-        
-        function loadFileCode() { 
-            var file = document.getElementById('fileSelect').value; 
-            if (!file) { 
-                document.getElementById('codeEditor').value = ''; 
-                return; 
-            } 
-            apiCall('/api/file?path=' + encodeURIComponent(file)).then(function(data) {
-                if (data) {
-                    document.getElementById('codeEditor').value = data.content ? data.content : ''; 
-                }
-            });
-        }
-        
-        function saveFileCode() {
-            var file = document.getElementById('fileSelect').value; 
-            var content = document.getElementById('codeEditor').value; 
-            
-            if (!file) {
-                alert('Файл не выбран!');
-                return;
-            }
-            
-            apiCall('/api/file', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ filePath: file, content: content }) 
-            }).then(function(data) {
-                if (data && data.success) {
-                    alert('Код сохранен!');
-                }
-            });
-        }
-
-        var globalConfig = {}; 
-        var currentFaction = ''; 
-        var unifiedQuestions = []; 
-        var factionActions = [];
-        var userAuth = null;
-        
-        var DEFAULT_GOV_ACTIONS = [
-            { id: 'assist_arrest', name: 'Помощь при задержании', points: 2, isCurator: false },
-            { id: 'bail_release', name: 'Выпуск под залог', points: 1, isCurator: false },
-            { id: 'lawsuit', name: 'Написание иска (одобренный)', points: 10, isCurator: false },
-            { id: 'court_rep', name: 'Представление в суде', points: 15, isCurator: false },
-            { id: 'practice', name: 'Проведение практики', points: 10, isCurator: false },
-            { id: 'exam', name: 'Проведение экзамена (для Курирующих)', points: 10, isCurator: true },
-            { id: 'exam_plus', name: 'Проведение экзамен+ (для Курирующих)', points: 8, isCurator: true },
-            { id: 'recruitment', name: 'Участие в наборе (для Курирующих)', points: 15, isCurator: true }
-        ];
-
-        var factionSchemas = {
-            fib: { 
-                subsystems: [
-                    { id: 'subsystem-general', name: '🕵️ Улики CID' }, 
-                    { id: 'subsystem-testing', name: '📝 Переаттестация FIB' }
-                ], 
-                webhooks: { main: "Переаттестация FIB", cid_evidence: "Улики CID" }, 
-                roles: { ping: "Пинг FIB", cid_evidence: "Пинг CID" }, 
-                hasTest: true 
-            },
-            lssd: { 
-                subsystems: [
-                    { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' }, 
-                    { id: 'subsystem-testing', name: '📝 Тестирование кадетов/SA' },
-                    { id: 'subsystem-actions', name: '📊 Система баллов (IAD)' }
-                ], 
-                webhooks: { report: "Отчеты", promotion: "Повышения", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, 
-                roles: { iid: "Роли IID", sa: "Роли SA" }, 
-                hasTest: true 
-            },
-            lspd: { 
-                subsystems: [
-                    { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' }, 
-                    { id: 'subsystem-testing', name: '📝 Тестирование и аттестация' },
-                    { id: 'subsystem-iad', name: '📋 Памятка IAD' }
-                ], 
-                webhooks: { application: "Заявления", badge: "Жетоны", cadet: "Отчеты кадетов", test: "Тесты" }, 
-                roles: { application: "Заявления", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, 
-                hasTest: true 
-            },
-            gov: { 
-                subsystems: [
-                    { id: 'subsystem-general', name: '⚖️ Основные настройки' }, 
-                    { id: 'subsystem-actions', name: '📊 Система баллов (Отчеты)' }
-                ], 
-                webhooks: { report: "Еженедельные отчеты" }, 
-                roles: { report: "Пинги отчетов" }, 
-                hasTest: false 
-            },
-            ems: { 
-                subsystems: [
-                    { id: 'subsystem-general', name: '🚑 Отчетность EMS' }
-                ], 
-                webhooks: { main: "Основной вебхук отчетов", medical: "Регистрация медикаментов" }, 
-                roles: { main: "Пинг руководства EMS" }, 
-                hasTest: false 
-            },
-            deadly: { 
-                subsystems: [
-                    { id: 'subsystem-general', name: '💀 Настройки семьи' }
-                ], 
-                webhooks: { application: "Заявки в семью" }, 
-                roles: { ping: "Пинги" }, 
-                hasTest: false 
-            }
-        };
-
-        function switchSubsystem(targetId, btnEl) {
-            document.querySelectorAll('.subsystem-content').forEach(function(el) {
-                el.classList.remove('active');
-            });
-            document.querySelectorAll('#subsystem-nav .subsystem-btn').forEach(function(el) {
-                el.classList.remove('active');
-            });
-            document.getElementById(targetId).classList.add('active');
-            btnEl.classList.add('active');
-        }
-
-        function initAdmin() {
-            apiCall('/api/me').then(function(authData) {
-                if (!authData) return;
-                userAuth = authData;
-                
-                if (!userAuth.isSuperAdmin) {
-                    var siteLinks = document.querySelectorAll('#siteNavLinks li');
-                    for (var i = 0; i < siteLinks.length; i++) {
-                        var li = siteLinks[i];
-                        var attr = li.getAttribute('onclick');
-                        if (attr && (attr.indexOf('projects') !== -1 || attr.indexOf('illustration') !== -1 || attr.indexOf('sessions') !== -1 || attr.indexOf('backups') !== -1 || attr.indexOf('bans') !== -1)) {
-                            li.style.display = 'none';
-                        }
-                        if (attr && attr.indexOf('code') !== -1 && !userAuth.permissions.includes('files') && !userAuth.permissions.includes('all')) {
-                            li.style.display = 'none';
-                        }
-                    }
-                    
-                    var sysLinks = document.querySelectorAll('#systemsNavLinks li');
-                    for (var j = 0; j < sysLinks.length; j++) {
-                        var sli = sysLinks[j];
-                        var sattr = sli.getAttribute('onclick');
-                        if (sattr && sattr.indexOf('tokens_manager') !== -1) {
-                            sli.style.display = 'none';
-                        }
-                        if (sattr && sattr.indexOf('discord_monitor') !== -1 && !userAuth.permissions.includes('settings') && !userAuth.permissions.includes('all')) {
-                            sli.style.display = 'none';
-                        }
-                    }
-                    
-                    var selector = document.getElementById('factionSelector');
-                    for (var k = selector.options.length - 1; k >= 0; k--) {
-                        var opt = selector.options[k];
-                        if (!userAuth.systems.includes(opt.value) && !userAuth.systems.includes('all')) {
-                            opt.remove();
-                        }
-                    }
-                    
-                    var anySiteVisible = false;
-                    for (var m = 0; m < siteLinks.length; m++) {
-                        if (siteLinks[m].style.display !== 'none') anySiteVisible = true;
-                    }
-                    if (!anySiteVisible) {
-                        document.getElementById('siteNavCat').style.display = 'none';
-                    }
-                    
-                    document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
-                    document.querySelectorAll('.nav-links li').forEach(function(el) { el.classList.remove('active'); });
-                    
-                    var factionBtn = null;
-                    for (var n = 0; n < sysLinks.length; n++) {
-                        var fattr = sysLinks[n].getAttribute('onclick');
-                        if (fattr && fattr.indexOf('faction_manager') !== -1 && sysLinks[n].style.display !== 'none') {
-                            factionBtn = sysLinks[n];
-                            break;
-                        }
-                    }
-                    
-                    if (factionBtn) {
-                        switchTab('faction_manager', factionBtn);
-                    } else { 
-                        var codeBtn = null;
-                        for (var p = 0; p < siteLinks.length; p++) {
-                            if (siteLinks[p].style.display !== 'none') { codeBtn = siteLinks[p]; break; }
-                        }
-                        if (codeBtn) {
-                            switchTab('code', codeBtn); 
-                        }
-                    }
-                }
-
-                apiCall('/api/settings').then(function(data) {
-                    if (data) { 
-                        globalConfig = data; 
-                        if (data.illustrationUrl) { 
-                            var ill = document.getElementById('currentIllustration'); 
-                            if (ill) { 
-                                ill.src = data.illustrationUrl; 
-                                ill.style.display = 'block'; 
-                            } 
-                        } 
-                        loadFactionUI(); 
-                    }
-                });
-
-                if (userAuth.isSuperAdmin || (userAuth.systems && (userAuth.systems.includes('lspd') || userAuth.systems.includes('all')))) {
-                    loadIadMemoUI();
-                }
-
-                if (userAuth.isSuperAdmin) { 
-                    loadProjects(); 
-                    loadFileList(); 
-                    loadSessionsUI(); 
-                } else if (userAuth.permissions.includes('files') || userAuth.permissions.includes('all')) { 
-                    loadFileList(); 
-                }
-            });
+            var div = document.createElement('div');
+            div.style.cssText = 'display:flex; gap:5px; margin-bottom:5px;';
+            div.innerHTML = '<input type="text" placeholder="ID роли" style="margin-bottom:0;">' +
+                            '<button type="button" class="btn-danger btn-sm" onclick="this.parentElement.remove()" style="padding:0 10px;">❌</button>';
+            wrap.appendChild(div);
         }
 
         function loadFactionUI() {
@@ -1964,12 +1160,26 @@
             whHtml += '</div>'; 
             document.getElementById('faction-webhooks').innerHTML = whHtml;
             
-            var rlHtml = '<h4>Роли</h4><div class="form-grid">'; 
+            var rlHtml = '<h4>Роли (от 1 до 10 для каждого пункта)</h4><div class="form-grid" id="faction-roles-grid">'; 
             var rlKeys = Object.keys(schema.roles || {});
             for (var k = 0; k < rlKeys.length; k++) { 
                 var rKey = rlKeys[k];
                 var rLabel = schema.roles[rKey];
-                rlHtml += '<div><label>' + rLabel + '</label><input type="text" id="rl_' + rKey + '" value="' + ((config.roles && config.roles[rKey]) ? config.roles[rKey] : '') + '"></div>'; 
+                var rVal = (config.roles && config.roles[rKey]) ? config.roles[rKey] : '';
+                var rTokens = rVal.split(/[\s,]+/).filter(Boolean);
+                if(rTokens.length === 0) rTokens = [''];
+                
+                rlHtml += '<div class="role-group" data-key="' + rKey + '" style="background:#121214; padding:15px; border-radius:8px; border:1px solid #3f3f46;"><label>' + rLabel + '</label>';
+                rlHtml += '<div class="role-inputs-wrapper" id="role_wrap_' + rKey + '">';
+                for(var t=0; t<rTokens.length; t++) {
+                    rlHtml += '<div style="display:flex; gap:5px; margin-bottom:5px;">' +
+                              '<input type="text" value="' + rTokens[t] + '" placeholder="ID роли" style="margin-bottom:0;">' +
+                              '<button type="button" class="btn-danger btn-sm" onclick="this.parentElement.remove()" style="padding:0 10px;">❌</button>' +
+                              '</div>';
+                }
+                rlHtml += '</div>';
+                rlHtml += '<button type="button" class="btn-success btn-sm" onclick="addRoleInput(\'' + rKey + '\')" style="margin-top:10px; width:100%;">➕ Добавить роль</button>';
+                rlHtml += '</div>';
             } 
             rlHtml += '</div>'; 
             document.getElementById('faction-roles').innerHTML = rlHtml;
@@ -2182,7 +1392,7 @@
                     '<select class="q-type" onchange="syncDOMToState(); renderQuestions();">' +
                     '<option value="single" ' + (q.type==='single'?'selected':'') + '>Один правильный вариант</option>' +
                     '<option value="multiple" ' + (q.type==='multiple'?'selected':'') + '>Несколько вариантов</option>' +
-                    '<option value="text" ' + (q.type==='text'?'selected':'') + '>Развернутый текст</option>' +
+                    (currentFaction === 'gov' ? '<option value="text" ' + (q.type==='text'?'selected':'') + '>Развернутый текст</option>' : '') +
                     '</select>' +
                     '</div>';
                 
@@ -2331,9 +1541,15 @@
                 var rlKeys = Object.keys(schema.roles || {});
                 for (var r = 0; r < rlKeys.length; r++) { 
                     var rKey = rlKeys[r];
-                    var rEl = document.getElementById('rl_' + rKey); 
-                    if (rEl) {
-                        config.roles[rKey] = rEl.value.trim(); 
+                    var wrap = document.getElementById('role_wrap_' + rKey);
+                    if (wrap) {
+                        var inputs = wrap.querySelectorAll('input');
+                        var vals = [];
+                        for(var i=0; i<inputs.length; i++) {
+                            var v = inputs[i].value.trim();
+                            if(v) vals.push(v);
+                        }
+                        config.roles[rKey] = vals.join(' ');
                     }
                 }
                 
