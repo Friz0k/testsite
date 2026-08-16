@@ -45,6 +45,11 @@ const sendDiscordWebhook = (webhookUrl, payload) => {
     });
 };
 
+const formatRoles = (roleStr) => {
+    if (!roleStr) return '';
+    return roleStr.split(/[\s,]+/).map(r => r.match(/^\d+$/) ? `<@&${r}>` : r).join(' ');
+};
+
 router.post('/application', async (req, res) => {
     const config = getConfig();
     const { fullname, passport, age, years, docs, body, about, experience, why, division, discord, phone } = req.body;
@@ -54,7 +59,7 @@ router.post('/application', async (req, res) => {
     }
 
     const webhookUrl = config.webhooks?.application;
-    const pingRole = config.roles?.application ? `<@&${config.roles.application}>` : '';
+    const pingRole = formatRoles(config.roles?.application);
 
     if (!webhookUrl) {
         return res.json({ success: true, message: 'Заявка принята (вебхук не настроен)' });
@@ -116,7 +121,7 @@ router.post('/submit', async (req, res) => {
     const config = getConfig();
     const rawQuestions = config.testQuestions || [];
     const passingScore = config.testPassingScore || 8;
-    const { nickname, discordTag, questions, questionTimes, leaveCount } = req.body;
+    const { nickname, discordTag, questions, leaveCount } = req.body;
 
     let totalScore = 0;
     let maxPossibleScore = rawQuestions.length;
@@ -140,7 +145,7 @@ router.post('/submit', async (req, res) => {
 
     const passed = totalScore >= passingScore;
     const webhookUrl = config.webhooks?.test;
-    const pingRole = config.roles?.test ? `<@&${config.roles.test}>` : '';
+    const pingRole = formatRoles(config.roles?.test);
 
     if (webhookUrl) {
         const embedColor = passed ? 0x22c55e : 0xef4444;
