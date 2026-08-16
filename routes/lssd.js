@@ -45,6 +45,11 @@ const sendDiscordWebhook = (webhookUrl, payload) => {
     });
 };
 
+const formatRoles = (roleStr) => {
+    if (!roleStr) return '';
+    return roleStr.split(/[\s,]+/).map(r => r.match(/^\d+$/) ? `<@&${r}>` : r).join(' ');
+};
+
 router.post('/badge', async (req, res) => {
     const config = getConfig();
     const data = req.body;
@@ -77,7 +82,7 @@ router.post('/cadet', async (req, res) => {
     const config = getConfig();
     const data = req.body;
     const webhookUrl = config.webhooks?.cadet;
-    const pingRole = config.roles?.sa ? `<@&${config.roles.sa}>` : '';
+    const pingRole = formatRoles(config.roles?.sa);
 
     if (!webhookUrl) return res.json({ success: true, message: 'Отчет сохранен (вебхук не настроен)' });
 
@@ -184,7 +189,7 @@ router.post('/submitTest', async (req, res) => {
 
     const passed = totalScore >= passingScore;
     const webhookUrl = config.webhooks?.test;
-    const pingRole = config.roles?.sa ? `<@&${config.roles.sa}>` : '';
+    const pingRole = formatRoles(config.roles?.sa);
 
     if (webhookUrl) {
         const embedColor = passed ? 0x22c55e : 0xef4444;
