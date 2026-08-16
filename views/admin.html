@@ -306,6 +306,7 @@
             margin-bottom: 25px; 
             border: 1px solid #3f3f46; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+            border-left: 4px solid #fff;
         }
 
         .q-header { 
@@ -392,7 +393,7 @@
 
         .rank-badge.active { 
             background: var(--accent-color); 
-            color: #fff; 
+            color: #000; 
             border-color: var(--accent-color); 
         }
 
@@ -448,9 +449,9 @@
         }
 
         .badge.system { 
-            background: rgba(124, 58, 237, 0.2); 
-            color: #c084fc; 
-            border-color: var(--accent-color); 
+            background: rgba(255, 255, 255, 0.1); 
+            color: #fff; 
+            border-color: #fff; 
         }
 
         .badge.perm { 
@@ -485,7 +486,7 @@
             width: 18px; 
             height: 18px; 
             margin-bottom: 0; 
-            accent-color: var(--accent-color); 
+            accent-color: #fff; 
         }
 
         .ip-card { 
@@ -558,7 +559,7 @@
 
         .timeline-url { 
             font-family: monospace; 
-            color: #c084fc; 
+            color: #fff; 
             font-weight: bold; 
         }
 
@@ -575,13 +576,13 @@
         }
         
         .timeline-copy-action {
-            background: rgba(124, 58, 237, 0.15);
-            border-left: 3px solid var(--accent-color);
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid #fff;
             padding: 8px;
             border-radius: 6px;
             font-family: monospace;
             font-size: 12px;
-            color: #e9d5ff;
+            color: #fff;
             margin-top: 5px;
             white-space: pre-wrap;
             word-break: break-all;
@@ -1220,6 +1221,23 @@
     </div>
 
     <script>
+        var globalConfig = {}; 
+        var currentFaction = ''; 
+        var unifiedQuestions = []; 
+        var userAuth = null;
+        
+        var factionActions = [];
+        var DEFAULT_GOV_ACTIONS = [
+            { id: 'assist_arrest', name: 'Помощь при задержании', points: 2, isCurator: false },
+            { id: 'bail_release', name: 'Выпуск под залог', points: 1, isCurator: false },
+            { id: 'lawsuit', name: 'Написание иска (одобренный)', points: 10, isCurator: false },
+            { id: 'court_rep', name: 'Представление в суде', points: 15, isCurator: false },
+            { id: 'practice', name: 'Проведение практики', points: 10, isCurator: false },
+            { id: 'exam', name: 'Проведение экзамена (для Курирующих)', points: 10, isCurator: true },
+            { id: 'exam_plus', name: 'Проведение экзамен+ (для Курирующих)', points: 8, isCurator: true },
+            { id: 'recruitment', name: 'Участие в наборе (для Курирующих)', points: 15, isCurator: true }
+        ];
+
         window.addRoleInput = function(rKey) {
             var wrap = document.getElementById('role_wrap_' + rKey);
             if (wrap.children.length >= 10) {
@@ -2342,11 +2360,6 @@
             });
         }
 
-        var globalConfig = {}; 
-        var currentFaction = ''; 
-        var unifiedQuestions = []; 
-        var userAuth = null;
-        
         var factionSchemas = {
             fib: { 
                 subsystems: [
@@ -2360,7 +2373,8 @@
             lssd: { 
                 subsystems: [
                     { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' }, 
-                    { id: 'subsystem-testing', name: '📝 Тестирование кадетов/SA' }
+                    { id: 'subsystem-testing', name: '📝 Тестирование кадетов/SA' },
+                    { id: 'subsystem-actions', name: '📊 Система баллов (IID)' }
                 ], 
                 webhooks: { report: "Отчеты", promotion: "Повышения", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, 
                 roles: { iid: "Роли IID", sa: "Роли SA" }, 
@@ -2379,11 +2393,11 @@
             gov: { 
                 subsystems: [
                     { id: 'subsystem-general', name: '⚖️ Основные настройки' }, 
-                    { id: 'subsystem-testing', name: '📝 Тестирование адвокатов' }
+                    { id: 'subsystem-actions', name: '📊 Система баллов (Отчеты)' }
                 ], 
-                webhooks: { test: "Тест адвокатов" }, 
-                roles: { test: "Пинги" }, 
-                hasTest: true 
+                webhooks: { report: "Еженедельные отчеты" }, 
+                roles: { report: "Пинги отчетов" }, 
+                hasTest: false 
             },
             ems: { 
                 subsystems: [
