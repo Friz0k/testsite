@@ -35,6 +35,11 @@ const sendWebhook = async (url, data) => {
     } catch (err) {}
 };
 
+const formatRoles = (roleStr) => {
+    if (!roleStr) return '';
+    return roleStr.split(/[\s,]+/).map(r => r.match(/^\d+$/) ? `<@&${r}>` : r).join(' ');
+};
+
 router.get('/settings', (req, res) => {
     const settings = getSettings();
     const fibConfig = settings.fib || {};
@@ -135,11 +140,9 @@ router.post('/submit', async (req, res) => {
 
     const isPassed = score >= passingScore;
     
-    // Округление времени до 10
     const roundedTimeSeconds = Math.round((timeSpent || 0) / 10) * 10;
     const timeStr = timeSpent ? `${Math.floor(roundedTimeSeconds / 60)} мин ${roundedTimeSeconds % 60} сек` : 'Не передано клиентом';
 
-    // 1. Формируем красивые данные для Google Таблицы
     const sheetPayload = {
         "Дата": getMskTime(),
         "Ник-нейм": nickname,
@@ -150,10 +153,9 @@ router.post('/submit', async (req, res) => {
         "Ответы на вопросы": answersLog.trim()
     };
 
-    // 2. Прямая отправка в Google Таблицу
     try {
         await googleLogger('fib', 'Переаттестация', sheetPayload);
-        req.body = {}; // Очищаем req.body, чтобы server.js не отправил сырой дубликат
+        req.body = {}; 
     } catch (e) {
         console.error('[FIB] Ошибка логирования в Google Sheets:', e);
     }
@@ -172,8 +174,8 @@ router.post('/submit', async (req, res) => {
             ],
             footer: { text: `Время по МСК: ${getMskTime()}` }
         };
-        const pingRole = fibConfig.roles?.ping;
-        await sendWebhook(whUrl, { content: pingRole ? `<@&${pingRole}>` : '', embeds: [embed] });
+        const pingRole = formatRoles(fibConfig.roles?.ping);
+        await sendWebhook(whUrl, { content: pingRole ? pingRole : '', embeds: [embed] });
     }
 
     res.json({ success: true, score, passingScore, passed: isPassed });
@@ -200,8 +202,8 @@ router.post('/evidence', async (req, res) => {
         timestamp: new Date().toISOString()
     };
 
-    const pingRole = fibConfig.roles?.cid_evidence;
-    await sendWebhook(whUrl, { content: pingRole ? `<@&${pingRole}>` : '', embeds: [embed] });
+    const pingRole = formatRoles(fibConfig.roles?.cid_evidence);
+    await sendWebhook(whUrl, { content: pingRole ? pingRole : '', embeds: [embed] });
     res.json({ success: true });
 });
 
