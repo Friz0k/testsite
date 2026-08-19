@@ -103,12 +103,30 @@ router.post('/report', async (req, res) => {
         });
 
         if (actions && actions.length > 0) {
-            const chunkSize = 10;
+            const chunkSize = 5; 
             for (let i = 0; i < actions.length; i += chunkSize) {
                 const chunk = actions.slice(i, i + chunkSize);
                 const chunkFields = chunk.map((a, idx) => {
-                    let evStr = a.evidence || 'Нет док-в';
-                    if (evStr.length > 1000) evStr = evStr.substring(0, 1000) + '...';
+                    let evStr = 'Нет док-в';
+                    
+                    if (a.evidence) {
+                        // Разбиваем текст доказательств по строкам
+                        let lines = a.evidence.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                        
+                        // Если ссылок (строк) больше 5, оставляем 5 и добавляем "и дальше..."
+                        if (lines.length > 5) {
+                            lines = lines.slice(0, 5);
+                            lines.push("и дальше...");
+                        }
+                        
+                        evStr = lines.join('\n');
+                        
+                        // Запасная проверка на 900 символов, если сами ссылки оказались слишком длинными
+                        if (evStr.length > 900) {
+                            evStr = evStr.substring(0, 900) + '... [обрезано]';
+                        }
+                    }
+
                     return {
                         name: `${i + idx + 1}. 🛡️ ${a.name}`,
                         value: `x${a.quantity} → **${a.points} баллов**\n📎 Доказательства:\n${evStr}`,
