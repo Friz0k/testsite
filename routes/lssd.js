@@ -105,25 +105,14 @@ router.post('/cadet', async (req, res) => {
             timestamp: new Date().toISOString()
         };
     } else if (data.type === '2-3') {
-        let actionsText = '';
-        if (data.actions && data.actions.length > 0) {
-            actionsText = data.actions.map(a => `- ${a.name} (x${a.quantity}): ${a.points} баллов\n  Док-ва: ${a.evidence}`).join('\n\n');
-        } else {
-            actionsText = 'Нет действий';
-        }
-        
-        if (actionsText.length > 1024) actionsText = actionsText.substring(0, 1020) + '...';
-
         embed = {
             title: '🎓 Отчет кадета LSSD (2 ➔ 3 ранг)',
             color: 0xffb6e6,
             fields: [
                 { name: '👤 Ник', value: data.nick || 'Не указан', inline: true },
                 { name: '💬 Discord', value: data.discord || 'Не указан', inline: true },
-                { name: '💯 Баллы', value: `${data.totalPoints || 0} / 50`, inline: true },
                 { name: '📑 Экзамен 2-3', value: data.exam || 'Нет ссылки', inline: false },
-                { name: '🚓 Патруль / СО', value: data.patrolEvidence || 'Нет ссылки', inline: false },
-                { name: '📋 Действия', value: actionsText, inline: false }
+                { name: '🛡️ Участие в 2-х СО', value: data.soEvidence || 'Нет ссылки', inline: false }
             ],
             timestamp: new Date().toISOString()
         };
