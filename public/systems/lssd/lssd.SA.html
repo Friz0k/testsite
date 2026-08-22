@@ -635,7 +635,7 @@
                 '<input type="number" class="promo-act-qty" value="1" min="1" placeholder="Кол-во" oninput="updatePromoTotal()" style="width: 80px; padding: 8px; font-size: 13px;">' +
                 '<input type="text" class="promo-act-points" readonly style="width: 80px; text-align:center; background:#0a0a0a; font-weight:bold; color:var(--pai-color); padding: 8px; border: 1px solid #333; font-size: 13px;">' +
                 '</div>' +
-                '<textarea class="promo-act-evidence" placeholder="Вставьте ссылки на доказательства" rows="2" style="width: 100%; padding: 8px; font-size: 13px;"></textarea>' +
+                '<textarea class="promo-act-evidence" oninput="updatePromoTotal()" placeholder="Вставьте ссылки на доказательства" rows="2" style="width: 100%; padding: 8px; font-size: 13px;"></textarea>' +
                 '</div>';
             container.insertAdjacentHTML('beforeend', html);
             updatePromoTotal();
@@ -800,6 +800,8 @@
 
         var cadetSubmit23Btn = document.getElementById('cadet-submit-23');
         cadetSubmit23Btn.addEventListener('click', function() {
+            updatePromoTotal();
+
             var nick = document.getElementById('cadetNick23').value.trim();
             var discord = document.getElementById('cadetDiscord23').value.trim();
             var exam = document.getElementById('cadetExam23').value.trim();
