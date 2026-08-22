@@ -12,9 +12,9 @@ const getConfig = () => {
         if (!fs.existsSync(FILE_SETTINGS)) return {};
         const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
         const json = JSON.parse(data);
-        return json.lssd || { webhooks: {}, roles: {}, testQuestions: [], actions: [] };
+        return json.lssd || { webhooks: {}, roles: {}, testQuestions: [], actions: [], sa_actions: [] };
     } catch (e) {
-        return { webhooks: {}, roles: {}, testQuestions: [], actions: [] };
+        return { webhooks: {}, roles: {}, testQuestions: [], actions: [], sa_actions: [] };
     }
 };
 
@@ -54,7 +54,8 @@ router.get('/config', (req, res) => {
     const config = getConfig();
     res.json({
         success: true,
-        actions: config.actions || []
+        actions: config.actions || [],
+        sa_actions: config.sa_actions || []
     });
 });
 
