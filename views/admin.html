@@ -682,7 +682,6 @@
             border: 1px solid #ef4444; 
         }
 
-        /* Адаптация под телефоны */
         @media (max-width: 768px) {
             body { 
                 flex-direction: column; 
@@ -852,7 +851,7 @@
                 </div>
 
                 <div id="subsystem-actions" class="subsystem-content">
-                    <h4>Настройка критериев отчета и баллов</h4>
+                    <h4>Настройка критериев отчета и баллов (IID / GOV)</h4>
                     <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Эти критерии будут отображаться при заполнении еженедельного отчета или заявки на повышение.</p>
                     <div id="actions-list" style="margin-top: 20px;"></div>
                     <button type="button" class="btn-success" onclick="addActionCriteria()" style="margin-top: 15px;">➕ Добавить критерий</button>
@@ -862,7 +861,16 @@
                     </div>
                 </div>
 
-                <!-- IAD MEMO EDITOR (INSIDE LSPD) -->
+                <div id="subsystem-sa-actions" class="subsystem-content">
+                    <h4>Настройка критериев баллов (SA 2→3 ранг)</h4>
+                    <div id="sa-actions-list" style="margin-top: 20px;"></div>
+                    <button type="button" class="btn-success" onclick="addSaActionCriteria()" style="margin-top: 15px;">➕ Добавить критерий</button>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                        <button type="button" onclick="saveFactionSettings()" style="width: 100%; padding: 15px; font-size: 16px;">💾 СОХРАНИТЬ ВСЕ НАСТРОЙКИ ФРАКЦИИ</button>
+                    </div>
+                </div>
+
                 <div id="subsystem-iad" class="subsystem-content">
                     <div class="subsystem-tabs" id="iad-tabs" style="margin-top: 15px;">
                         <button type="button" class="iad-tab-btn active" onclick="switchIadTab('iad-main', this)">Основное</button>
@@ -1227,6 +1235,8 @@
         var userAuth = null;
         
         var factionActions = [];
+        var saActions = [];
+
         var DEFAULT_GOV_ACTIONS = [
             { id: 'assist_arrest', name: 'Помощь при задержании', points: 2, isCurator: false },
             { id: 'bail_release', name: 'Выпуск под залог', points: 1, isCurator: false },
@@ -2374,7 +2384,8 @@
                 subsystems: [
                     { id: 'subsystem-general', name: '⚙️ Вебхуки и роли' }, 
                     { id: 'subsystem-testing', name: '📝 Тестирование кадетов/SA' },
-                    { id: 'subsystem-actions', name: '📊 Система баллов (IID)' }
+                    { id: 'subsystem-actions', name: '📊 Система баллов (IID)' },
+                    { id: 'subsystem-sa-actions', name: '🎓 Система баллов (SA)' }
                 ], 
                 webhooks: { report: "Отчеты", promotion: "Повышения", badge: "Жетоны", cadet: "Кадеты", test: "Тесты" }, 
                 roles: { iid: "Роли IID", sa: "Роли SA" }, 
@@ -2395,9 +2406,9 @@
                     { id: 'subsystem-general', name: '⚖️ Основные настройки' }, 
                     { id: 'subsystem-actions', name: '📊 Система баллов (Отчеты)' }
                 ], 
-                webhooks: { report: "Еженедельные отчеты" }, 
-                roles: { report: "Пинги отчетов" }, 
-                hasTest: false 
+                webhooks: { report: "Еженедельные отчеты", test: "Экзамены/Тесты" }, 
+                roles: { report: "Пинги отчетов", test: "Пинг экзаменов" }, 
+                hasTest: true 
             },
             ems: { 
                 subsystems: [
@@ -2719,6 +2730,28 @@
                 }
                 renderActionsList();
             }
+
+            if (schema.subsystems.some(s => s.id === 'subsystem-sa-actions')) {
+                var DEFAULT_SA_ACTIONS = [
+                    { id: 'arrest_assist', name: 'Помощь в аресте', points: 5 },
+                    { id: 'arrest', name: 'Арест', points: 5 },
+                    { id: 'fine', name: 'Штраф', points: 2 },
+                    { id: 'car_return', name: 'Сдача угнанного автомобиля', points: 5 },
+                    { id: 'butterfly', name: 'Сдача бабочки', points: 5 },
+                    { id: 'supply', name: 'Участие в поставке (NG, EMS, Аналитик)', points: 10 },
+                    { id: 'dopl', name: 'Участие в допле', points: 5 },
+                    { id: 'train_defense', name: 'Участие в отбитии поезда', points: 10 },
+                    { id: 'raid', name: 'Участие в рейде', points: 15 },
+                    { id: 'ft_fz_gs', name: 'Участие в отбитии ФТ/ФЗ/ГШ', points: 10 },
+                    { id: 'racket', name: 'Участие в отбитии рэкета', points: 10 },
+                    { id: 'black_market', name: 'Участие в отбитии Черного Рынка', points: 15 },
+                    { id: 'license_check', name: 'Проверка лицензий на охоту/рыбалку', points: 2 },
+                    { id: 'med_proc_check', name: 'Участие в мед/прок проверке', points: 10 },
+                    { id: 'bank_cordon', name: 'Участие в оцеплении банка/гос.структуры', points: 10 }
+                ];
+                saActions = (config.sa_actions && config.sa_actions.length > 0) ? JSON.parse(JSON.stringify(config.sa_actions)) : JSON.parse(JSON.stringify(DEFAULT_SA_ACTIONS));
+                renderSaActionsList();
+            }
         }
 
         function renderActionsList() {
@@ -2766,6 +2799,50 @@
             syncActionsToState();
             factionActions.splice(idx, 1);
             renderActionsList();
+        }
+
+        function renderSaActionsList() {
+            var list = document.getElementById('sa-actions-list');
+            if(!list) return;
+            list.innerHTML = '';
+            for(var i=0; i<saActions.length; i++) {
+                var act = saActions[i];
+                var html = '<div class="q-card">' +
+                    '<div class="q-header">' +
+                    '<span>Критерий SA #' + (i+1) + '</span>' +
+                    '<button class="btn-danger btn-sm" onclick="removeSaActionCriteria(' + i + ')">🗑 Удалить</button>' +
+                    '</div>' +
+                    '<div class="form-grid">' +
+                    '<div><label>Название (для отчета):</label><input type="text" class="sa-act-name" value="' + (act.name||'').replace(/"/g, '&quot;') + '" placeholder="Например: Помощь в аресте"></div>' +
+                    '<div><label>Кол-во баллов:</label><input type="number" class="sa-act-points" value="' + (act.points||0) + '"></div>' +
+                    '</div></div>';
+                list.insertAdjacentHTML('beforeend', html);
+            }
+        }
+
+        function syncSaActionsToState() {
+            var cards = document.querySelectorAll('#sa-actions-list .q-card');
+            var newActions = [];
+            for(var i=0; i<cards.length; i++) {
+                newActions.push({
+                    id: 'sa_act_' + Date.now() + '_' + i,
+                    name: cards[i].querySelector('.sa-act-name').value.trim(),
+                    points: parseInt(cards[i].querySelector('.sa-act-points').value) || 0
+                });
+            }
+            saActions = newActions;
+        }
+
+        function addSaActionCriteria() {
+            syncSaActionsToState();
+            saActions.push({ id: 'sa_act_' + Date.now(), name: '', points: 1 });
+            renderSaActionsList();
+        }
+
+        function removeSaActionCriteria(idx) {
+            syncSaActionsToState();
+            saActions.splice(idx, 1);
+            renderSaActionsList();
         }
 
         function toggleRankSelection(qIdx, rankVal) { 
@@ -2857,7 +2934,7 @@
             var newUnified = [];
             for (var qIndex = 0; qIndex < qCards.length; qIndex++) {
                 var card = qCards[qIndex];
-                if (card.querySelector('.act-id')) continue;
+                if (card.querySelector('.act-id') || card.querySelector('.sa-act-name')) continue;
 
                 var oldQ = unifiedQuestions[qIndex] ? unifiedQuestions[qIndex] : {}; 
                 var q = { 
@@ -3061,6 +3138,11 @@
                 if (schema.subsystems.some(s => s.id === 'subsystem-actions')) {
                     syncActionsToState();
                     config.actions = factionActions;
+                }
+
+                if (schema.subsystems.some(s => s.id === 'subsystem-sa-actions')) {
+                    syncSaActionsToState();
+                    config.sa_actions = saActions;
                 }
                 
                 apiCall('/api/settings', { 
