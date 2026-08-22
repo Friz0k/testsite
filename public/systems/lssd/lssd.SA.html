@@ -402,7 +402,7 @@
                     <h3>📈 Повышение 2 → 3</h3>
                     <ul>
                         <li>Сдача экзамена (2→3)</li>
-                        <li>Участие в 2-х любых СО</li>
+                        <li>Набрать 25 баллов активности</li>
                     </ul>
                 </div>
             </div>
@@ -498,11 +498,16 @@
                     <div class="field-hint"><i class="fab fa-discord"></i> Скопируйте ссылку на сообщение из канала #результаты-экзаменов</div>
                 </div>
                 <div class="form-group" style="margin-top: 20px; padding: 15px; background: var(--light-gray); border-radius: 8px;">
-                    <label style="font-weight: 600; color: var(--pai-color);"><i class="fas fa-shield-alt"></i> Участие в 2-х любых СО</label>
-                    <div class="form-group" style="margin-bottom: 0; margin-top: 10px;">
-                        <label for="soEvidence" class="required"><i class="fab fa-discord"></i> Ссылка на подтверждение (отчеты с СО):</label>
-                        <input type="text" id="soEvidence" placeholder="https://discord.com/channels/...">
-                        <div class="field-hint">Вставьте ссылку на ваше сообщение в канале с отчетами о спец. операциях</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <label style="font-weight: 600; color: var(--pai-color); margin: 0;"><i class="fas fa-camera"></i> Доказательства работы (Мин. 25 баллов)</label>
+                        <button type="button" style="background: #2a2a2a; color: #fff; border: 1px solid #444; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px;" onclick="addPromoAction()"><i class="fas fa-plus"></i> Добавить</button>
+                    </div>
+                    <div id="promoActions"></div>
+                    <div style="text-align: center; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-top: 15px;">
+                        <div style="font-size: 14px; color: #888; margin-bottom: 5px;">Собрано баллов</div>
+                        <div style="font-size: 24px; font-weight: 700;">
+                            <span id="promoTotal" style="color: #ef4444;">0</span> <span style="font-size: 18px; color: #666;">/ 25</span>
+                        </div>
                     </div>
                 </div>
                 <div class="buttons">
@@ -571,6 +576,103 @@
         }
         window.addEventListener('resize', function() { resizeCanvas(); initParticles(); });
         resizeCanvas(); initParticles(); animateParticles();
+
+        var DEFAULT_ACTIONS = [
+            { id: 'arrest_assist', name: 'Помощь в аресте', points: 5 },
+            { id: 'arrest', name: 'Арест', points: 5 },
+            { id: 'fine', name: 'Штраф', points: 2 },
+            { id: 'car_return', name: 'Сдача угнанного автомобиля', points: 5 },
+            { id: 'butterfly', name: 'Сдача бабочки', points: 5 },
+            { id: 'supply', name: 'Участие в поставке (NG, EMS, Аналитик)', points: 10 },
+            { id: 'dopl', name: 'Участие в допле', points: 5 },
+            { id: 'train_defense', name: 'Участие в отбитии поезда', points: 10 },
+            { id: 'raid', name: 'Участие в рейде', points: 15 },
+            { id: 'ft_fz_gs', name: 'Участие в отбитии ФТ/ФЗ/ГШ', points: 10 },
+            { id: 'racket', name: 'Участие в отбитии рэкета', points: 10 },
+            { id: 'black_market', name: 'Участие в отбитии Черного Рынка', points: 15 },
+            { id: 'license_check', name: 'Проверка лицензий на охоту/рыбалку', points: 2 },
+            { id: 'med_proc_check', name: 'Участие в мед/прок проверке', points: 10 },
+            { id: 'bank_cordon', name: 'Участие в оцеплении банка/гос.структуры', points: 10 }
+        ];
+        var ALL_ACTIONS = [];
+        var promoActions = [];
+        var promoCounter = 0;
+
+        function fetchSystemData() {
+            fetch('/lssd/config', {
+                method: 'GET',
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
+                ALL_ACTIONS = (data.actions && data.actions.length > 0) ? data.actions : DEFAULT_ACTIONS;
+            }).catch(function() {
+                ALL_ACTIONS = DEFAULT_ACTIONS;
+            });
+        }
+        window.addEventListener('load', fetchSystemData);
+
+        window.addPromoAction = function() {
+            if (!ALL_ACTIONS || ALL_ACTIONS.length === 0) return;
+            var id = 'promoAct_' + Date.now() + '_' + (++promoCounter);
+            var container = document.getElementById('promoActions');
+            var optionsHtml = '';
+            for (var j = 0; j < ALL_ACTIONS.length; j++) {
+                optionsHtml += '<option value="' + ALL_ACTIONS[j].id + '">' + ALL_ACTIONS[j].name + ' (' + ALL_ACTIONS[j].points + ' б.)</option>';
+            }
+            var html = '<div class="action-item" id="' + id + '" style="background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #333;">' +
+                '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">' +
+                '<span style="font-weight: 600; color: var(--pai-color); font-size: 13px;">Действие #' + promoCounter + '</span>' +
+                '<button type="button" style="background: #ef4444; color: #fff; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 11px;" onclick="document.getElementById(\'' + id + '\').remove(); updatePromoTotal();"><i class="fas fa-times"></i> Удалить</button>' +
+                '</div>' +
+                '<div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">' +
+                '<select class="promo-act-type" onchange="updatePromoTotal()" style="flex: 1; min-width: 150px; padding: 8px; font-size: 13px;">' + optionsHtml + '</select>' +
+                '<input type="number" class="promo-act-qty" value="1" min="1" placeholder="Кол-во" oninput="updatePromoTotal()" style="width: 80px; padding: 8px; font-size: 13px;">' +
+                '<input type="text" class="promo-act-points" readonly style="width: 80px; text-align:center; background:#0a0a0a; font-weight:bold; color:var(--pai-color); padding: 8px; border: 1px solid #333; font-size: 13px;">' +
+                '</div>' +
+                '<textarea class="promo-act-evidence" placeholder="Вставьте ссылки на доказательства" rows="2" style="width: 100%; padding: 8px; font-size: 13px;"></textarea>' +
+                '</div>';
+            container.insertAdjacentHTML('beforeend', html);
+            updatePromoTotal();
+        }
+
+        window.updatePromoTotal = function() {
+            var total = 0;
+            var actions = [];
+            var items = document.querySelectorAll('#promoActions .action-item');
+            for (var i = 0; i < items.length; i++) {
+                var el = items[i];
+                var sel = el.querySelector('.promo-act-type');
+                var qtyVal = parseInt(el.querySelector('.promo-act-qty').value);
+                var qty = isNaN(qtyVal) ? 1 : Math.max(1, qtyVal);
+                if (sel && sel.value) {
+                    var act = null;
+                    for (var k = 0; k < ALL_ACTIONS.length; k++) {
+                        if (ALL_ACTIONS[k].id === sel.value) { act = ALL_ACTIONS[k]; break; }
+                    }
+                    if (act) {
+                        var points = act.points * qty;
+                        el.querySelector('.promo-act-points').value = points + ' б.';
+                        total += points;
+                        var ev = el.querySelector('.promo-act-evidence');
+                        actions.push({ id: act.id, name: act.name, points: points, quantity: qty, evidence: ev ? ev.value : '' });
+                    }
+                }
+            }
+            document.getElementById('promoTotal').innerText = total;
+            var totalSpan = document.getElementById('promoTotal');
+            if(total >= 25) {
+                totalSpan.style.color = '#22c55e';
+            } else {
+                totalSpan.style.color = '#ef4444';
+            }
+            promoActions = actions;
+        }
 
         var tabs = document.querySelectorAll('.tab-btn');
         var containers = { badge: document.getElementById('badge-container'), cadet: document.getElementById('cadet-container'), test: document.getElementById('test-container') };
@@ -701,7 +803,6 @@
             var nick = document.getElementById('cadetNick23').value.trim();
             var discord = document.getElementById('cadetDiscord23').value.trim();
             var exam = document.getElementById('cadetExam23').value.trim();
-            var soEvidence = document.getElementById('soEvidence').value.trim();
 
             if (!nick || !discord) {
                 alert('Заполните ник и Discord');
@@ -711,13 +812,27 @@
                 alert('Укажите ссылку на экзамен');
                 return;
             }
-            if (!soEvidence) {
-                alert('Укажите ссылку на подтверждение участия в 2 СО');
+            if (promoActions.length === 0) {
+                alert('Добавьте хотя бы одно действие');
+                return;
+            }
+
+            for (var i = 0; i < promoActions.length; i++) {
+                var a = promoActions[i];
+                if (!a.evidence || a.evidence.trim() === '') {
+                    alert('Для пункта "' + a.name + '" отсутствуют доказательства.');
+                    return;
+                }
+            }
+
+            var total = parseInt(document.getElementById('promoTotal').innerText);
+            if(total < 25) {
+                alert('Не хватает баллов для повышения! Собрано: ' + total + ' из 25.');
                 return;
             }
 
             var payload = {
-                type: '2-3', nick: nick, discord: discord, exam: exam, soEvidence: soEvidence
+                type: '2-3', nick: nick, discord: discord, exam: exam, actions: promoActions, totalPoints: total
             };
             
             cadetLoading.style.display = 'block'; cadetResult.style.display = 'none';
@@ -750,7 +865,8 @@
                 document.getElementById('cadetNick23').value = '';
                 document.getElementById('cadetDiscord23').value = '';
                 document.getElementById('cadetExam23').value = '';
-                document.getElementById('soEvidence').value = '';
+                document.getElementById('promoActions').innerHTML = '';
+                updatePromoTotal();
                 cadetResult.style.display = 'none';
             }
         });
