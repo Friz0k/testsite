@@ -12,9 +12,9 @@ const getConfig = () => {
         if (!fs.existsSync(FILE_SETTINGS)) return {};
         const data = fs.readFileSync(FILE_SETTINGS, 'utf8');
         const json = JSON.parse(data);
-        return json.lssd || { webhooks: {}, roles: {}, testQuestions: [] };
+        return json.lssd || { webhooks: {}, roles: {}, testQuestions: [], actions: [] };
     } catch (e) {
-        return { webhooks: {}, roles: {}, testQuestions: [] };
+        return { webhooks: {}, roles: {}, testQuestions: [], actions: [] };
     }
 };
 
@@ -49,6 +49,14 @@ const formatRoles = (roleStr) => {
     if (!roleStr) return '';
     return roleStr.split(/[\s,]+/).map(r => r.match(/^\d+$/) ? `<@&${r}>` : r).join(' ');
 };
+
+router.get('/config', (req, res) => {
+    const config = getConfig();
+    res.json({
+        success: true,
+        actions: config.actions || []
+    });
+});
 
 router.post('/badge', async (req, res) => {
     const config = getConfig();
@@ -105,6 +113,25 @@ router.post('/cadet', async (req, res) => {
             timestamp: new Date().toISOString()
         };
     } else if (data.type === '2-3') {
+        let actionFields = [];
+        if (data.actions && data.actions.length > 0) {
+            const maxActions = data.actions.slice(0, 15);
+            maxActions.forEach((a, idx) => {
+                let evStr = a.evidence || 'Нет док-в';
+                if (evStr.length > 300) evStr = evStr.substring(0, 300) + '...';
+                actionFields.push({
+                    name: `${idx + 1}. ${a.name}`,
+                    value: `x${a.quantity} → **${a.points} баллов**\n📎 Док-ва: ${evStr}`,
+                    inline: false
+                });
+            });
+            if (data.actions.length > 15) {
+                actionFields.push({ name: '...', value: `И еще ${data.actions.length - 15} действий`, inline: false });
+            }
+        } else {
+            actionFields.push({ name: 'Действия', value: 'Отсутствуют', inline: false });
+        }
+
         embed = {
             title: '🎓 Отчет кадета LSSD (2 ➔ 3 ранг)',
             color: 0xffb6e6,
@@ -112,7 +139,8 @@ router.post('/cadet', async (req, res) => {
                 { name: '👤 Ник', value: data.nick || 'Не указан', inline: true },
                 { name: '💬 Discord', value: data.discord || 'Не указан', inline: true },
                 { name: '📑 Экзамен 2-3', value: data.exam || 'Нет ссылки', inline: false },
-                { name: '🛡️ Участие в 2-х СО', value: data.soEvidence || 'Нет ссылки', inline: false }
+                { name: '💯 Итого баллов', value: `${data.totalPoints || 0} / 25`, inline: false },
+                ...actionFields
             ],
             timestamp: new Date().toISOString()
         };
