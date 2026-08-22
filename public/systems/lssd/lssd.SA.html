@@ -610,7 +610,7 @@
             }).then(function(res) {
                 return res.json();
             }).then(function(data) {
-                ALL_ACTIONS = (data.actions && data.actions.length > 0) ? data.actions : DEFAULT_ACTIONS;
+                ALL_ACTIONS = (data.sa_actions && data.sa_actions.length > 0) ? data.sa_actions : DEFAULT_ACTIONS;
             }).catch(function() {
                 ALL_ACTIONS = DEFAULT_ACTIONS;
             });
