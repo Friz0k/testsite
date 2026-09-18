@@ -3,152 +3,314 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НГТУ (НЭТИ) | ДТ-660</title>
+    <title>События | ДТ-660</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { scrollbar-width: none; }
         ::-webkit-scrollbar { display: none; }
-        body { background-color: #050505; color: #fff; }
-        .glass-card { background: rgba(18, 18, 20, 0.8); backdrop-filter: blur(12px); border: 1px solid #27272a; border-radius: 16px; }
-        .checkbox-custom { accent-color: #7c3aed; width: 22px; height: 22px; cursor: pointer; transition: 0.3s; }
-        .item-row { transition: all 0.3s ease; }
-        .item-row:hover { background: rgba(255, 255, 255, 0.03); }
-        .checked-text { text-decoration: line-through; color: #71717a; }
+        body { background-color: #0f0f11; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #27272a;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .calendar-header {
+            background-color: #18181b;
+            text-align: center;
+            padding: 12px 0;
+            font-size: 11px;
+            font-weight: 600;
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .calendar-day {
+            background-color: #121214;
+            min-height: 140px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+        .calendar-day:hover { background-color: #18181b; }
+        .calendar-day.empty { background-color: #0f0f11; }
+        .calendar-day.today .day-number {
+            background-color: #10b981;
+            color: #000;
+            border-radius: 6px;
+            padding: 2px 8px;
+            display: inline-block;
+        }
+        .day-number {
+            text-align: right;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e4e4e7;
+            margin-bottom: 4px;
+        }
+        
+        .event-block {
+            background-color: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-left: 3px solid #10b981;
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .event-block:hover {
+            background-color: rgba(16, 185, 129, 0.15);
+            transform: translateY(-1px);
+        }
+        .event-block.task {
+            border-left-color: #f43f5e;
+            background-color: rgba(244, 63, 94, 0.05);
+            border-color: rgba(244, 63, 94, 0.2);
+        }
+        .event-block.task:hover { background-color: rgba(244, 63, 94, 0.15); }
+        
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: #18181b; border: 1px solid #27272a; border-radius: 16px; width: 100%; max-width: 450px; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .avatar-circle {
+            width: 32px; height: 32px; border-radius: 50%; background: #3f3f46; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #fff;
+        }
+        .tag-pill {
+            border: 1px solid #3f3f46; border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 600; color: #e4e4e7;
+        }
     </style>
 </head>
-<body class="min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white pb-20">
-    
-    <nav class="glass-card m-4 p-5 sticky top-4 z-50 shadow-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div>
-            <h1 class="text-2xl font-black tracking-widest uppercase text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600">ДТ-660</h1>
-            <p class="text-xs text-gray-400 font-mono mt-1">Учебный портал НГТУ</p>
-        </div>
-        
-        <div class="flex items-center gap-4 bg-black/50 p-2 rounded-xl border border-zinc-800">
-            <button onclick="changeWeek(-1)" class="p-2 hover:bg-zinc-800 rounded-lg transition text-gray-400 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-            </button>
-            <div class="text-center min-w-[150px]">
-                <div class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-0.5">Неделя</div>
-                <div id="weekTitle" class="font-bold text-purple-400 font-mono">--.-- - --.--</div>
-            </div>
-            <button onclick="changeWeek(1)" class="p-2 hover:bg-zinc-800 rounded-lg transition text-gray-400 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-            </button>
-        </div>
-        
-        <div id="progressBox" class="text-sm font-mono text-zinc-400">
-            Прогресс: <span id="progressCount" class="text-purple-400 font-bold">0%</span>
-        </div>
-    </nav>
+<body class="p-6 max-w-[1400px] mx-auto">
 
-    <main class="max-w-[1600px] mx-auto px-4 mt-8">
-        <div id="contentGrid" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <header class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">События</h1>
+            <div class="mt-2 inline-flex items-center gap-2 bg-green-900/30 text-green-400 border border-green-800/50 px-3 py-1 rounded-lg text-xs font-semibold">
+                ДТ-660
+            </div>
         </div>
-    </main>
+        
+        <div class="flex items-center gap-6">
+            <button onclick="changeMonth(-1)" class="text-gray-400 hover:text-white transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <div id="currentMonthYear" class="text-lg font-bold w-40 text-center capitalize"></div>
+            <button onclick="changeMonth(1)" class="text-gray-400 hover:text-white transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="calendar-grid">
+        <div class="calendar-header">ПН</div>
+        <div class="calendar-header">ВТ</div>
+        <div class="calendar-header">СР</div>
+        <div class="calendar-header">ЧТ</div>
+        <div class="calendar-header">ПТ</div>
+        <div class="calendar-header">СБ</div>
+        <div class="calendar-header">ВС</div>
+    </div>
+    <div id="calendarDays" class="calendar-grid mt-[1px]"></div>
+
+    <div id="eventModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-start mb-6">
+                <div id="modalBadge" class="inline-flex items-center gap-1.5 bg-green-900/20 text-green-400 border border-green-800/40 px-3 py-1.5 rounded-lg text-xs font-semibold">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                    <span>Вебинар</span>
+                </div>
+                <button onclick="closeModal(true)" class="text-gray-500 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div id="modalDate" class="text-gray-400 text-sm font-medium mb-1"></div>
+            <div id="modalTime" class="text-2xl font-bold mb-4"></div>
+            <h2 id="modalTitle" class="text-xl font-bold mb-3"></h2>
+            
+            <div id="modalDesc" class="text-gray-400 text-sm leading-relaxed mb-6 whitespace-pre-wrap"></div>
+            
+            <div id="modalTeacherBox" class="flex items-center gap-3 mb-6">
+                <div id="modalAvatar" class="avatar-circle"></div>
+                <div id="modalTeacherName" class="text-sm font-medium text-gray-200"></div>
+            </div>
+
+            <div id="modalTaskBox" class="mb-6 hidden bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl">
+                <div class="text-xs font-bold text-rose-400 uppercase mb-2 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Задание к выполнению
+                </div>
+                <div id="modalTaskDesc" class="text-sm text-gray-300 whitespace-pre-wrap"></div>
+            </div>
+
+            <div id="modalVideoBox" class="mb-6 hidden">
+                <a id="modalVideoLink" href="#" target="_blank" class="flex items-center justify-center gap-2 w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-lg font-semibold transition text-sm">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path></svg>
+                    Перейти к записи
+                </a>
+            </div>
+
+            <div id="modalTags" class="flex flex-wrap gap-2 pt-2 border-t border-zinc-800"></div>
+        </div>
+    </div>
 
     <script>
-        let db = { weeks: [] };
-        let currentIdx = 0;
-        const STORAGE_KEY = 'dt660_student_progress';
+        let db = { events: [] };
+        let currentDate = new Date();
+        const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 
-        function loadProgress() {
-            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) { return {}; }
+        function getInitials(name) {
+            if (!name) return 'П';
+            let parts = name.trim().split(' ');
+            if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+            return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
         }
 
-        function saveProgress(prog) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(prog));
+        function formatEventDate(dateStr) {
+            let d = new Date(dateStr);
+            let m = ['Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня', 'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'];
+            return `${d.getDate()} ${m[d.getMonth()]}`;
         }
 
-        function toggleTask(id) {
-            let prog = loadProgress();
-            prog[id] = !prog[id];
-            saveProgress(prog);
-            renderWeek();
+        function changeMonth(dir) {
+            currentDate.setMonth(currentDate.getMonth() + dir);
+            renderCalendar();
         }
 
-        function changeWeek(dir) {
-            if (db.weeks.length === 0) return;
-            let newIdx = currentIdx + dir;
-            if (newIdx >= 0 && newIdx < db.weeks.length) {
-                currentIdx = newIdx;
-                renderWeek();
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            document.getElementById('currentMonthYear').innerText = `${months[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+
+            const today = new Date();
+            const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+            for (let i = 0; i < startOffset; i++) {
+                calendarDays.innerHTML += `<div class="calendar-day empty"></div>`;
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                let cellDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                let isToday = isCurrentMonth && day === today.getDate() ? 'today' : '';
+                
+                let dayEvents = db.events.filter(e => e.date === cellDate).sort((a, b) => a.timeStart.localeCompare(b.timeStart));
+                
+                let eventsHtml = dayEvents.map(e => {
+                    let isTask = e.type === 'task' || e.hasTask;
+                    let truncateTitle = e.title.length > 15 ? e.title.substring(0, 15) + '...' : e.title;
+                    return `
+                        <div class="event-block ${isTask ? 'task' : ''}" onclick="openModal('${e.id}')">
+                            <span class="font-bold">${e.timeStart}</span>
+                            <span class="truncate text-gray-300">${truncateTitle}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                calendarDays.innerHTML += `
+                    <div class="calendar-day ${isToday}">
+                        <div class="day-number"><span>${day}</span></div>
+                        ${eventsHtml}
+                    </div>
+                `;
+            }
+
+            const totalCells = startOffset + daysInMonth;
+            const remainingCells = Math.ceil(totalCells / 7) * 7 - totalCells;
+            for (let i = 0; i < remainingCells; i++) {
+                calendarDays.innerHTML += `<div class="calendar-day empty"></div>`;
             }
         }
 
-        function renderColumn(title, items, prog, colorClass, iconHtml) {
-            let html = `
-            <div class="glass-card p-6 flex flex-col h-full border-t-4 border-t-${colorClass}">
-                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-zinc-800">
-                    <div class="text-${colorClass}">${iconHtml}</div>
-                    <h2 class="text-xl font-bold uppercase tracking-wide">${title}</h2>
-                </div>
-                <div class="flex-1 space-y-4">`;
+        function openModal(eventId) {
+            let e = db.events.find(ev => ev.id === eventId);
+            if (!e) return;
 
-            if (!items || items.length === 0) {
-                html += `<div class="text-center text-zinc-600 font-mono text-sm py-10">Нет записей</div>`;
+            let isWebinar = e.type === 'webinar';
+            let badgeHtml = isWebinar ? 
+                `<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg><span>Вебинар</span>` : 
+                `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg><span>Практика / Задание</span>`;
+            
+            let badgeEl = document.getElementById('modalBadge');
+            badgeEl.innerHTML = badgeHtml;
+            if(isWebinar) {
+                badgeEl.className = "inline-flex items-center gap-1.5 bg-green-900/20 text-green-400 border border-green-800/40 px-3 py-1.5 rounded-lg text-xs font-semibold";
             } else {
-                items.forEach(item => {
-                    let isDone = prog[item.id] === true;
-                    let textClass = isDone ? 'checked-text' : 'text-zinc-200';
-                    html += `
-                    <div class="item-row bg-black/40 p-4 rounded-xl border border-zinc-800/50">
-                        <label class="flex items-start gap-4 cursor-pointer">
-                            <input type="checkbox" class="checkbox-custom mt-1" ${isDone ? 'checked' : ''} onchange="toggleTask('${item.id}')">
-                            <div class="flex-1">
-                                <div class="font-bold text-base ${textClass}">${item.title}</div>
-                                ${item.text ? `<div class="mt-2 text-sm text-zinc-400 leading-relaxed whitespace-pre-wrap">${item.text}</div>` : ''}
-                                ${item.videoUrl ? `<a href="${item.videoUrl}" target="_blank" class="inline-block mt-3 px-4 py-2 bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white border border-purple-500/30 rounded-lg text-xs font-bold uppercase tracking-wider transition">Смотреть запись</a>` : ''}
-                            </div>
-                        </label>
-                    </div>`;
-                });
+                badgeEl.className = "inline-flex items-center gap-1.5 bg-rose-900/20 text-rose-400 border border-rose-800/40 px-3 py-1.5 rounded-lg text-xs font-semibold";
             }
-            html += `</div></div>`;
-            return html;
+
+            document.getElementById('modalDate').innerText = formatEventDate(e.date);
+            document.getElementById('modalTime').innerText = e.timeEnd ? `${e.timeStart} – ${e.timeEnd}` : e.timeStart;
+            document.getElementById('modalTitle').innerText = e.title;
+            
+            let descEl = document.getElementById('modalDesc');
+            descEl.innerText = e.description || '';
+            descEl.style.display = e.description ? 'block' : 'none';
+
+            let tBox = document.getElementById('modalTeacherBox');
+            if (e.teacher) {
+                document.getElementById('modalAvatar').innerText = getInitials(e.teacher);
+                document.getElementById('modalTeacherName').innerText = e.teacher;
+                tBox.style.display = 'flex';
+            } else {
+                tBox.style.display = 'none';
+            }
+
+            let taskBox = document.getElementById('modalTaskBox');
+            if (e.hasTask && e.taskDescription) {
+                document.getElementById('modalTaskDesc').innerText = e.taskDescription;
+                taskBox.style.display = 'block';
+            } else {
+                taskBox.style.display = 'none';
+            }
+
+            let videoBox = document.getElementById('modalVideoBox');
+            if (e.videoUrl) {
+                document.getElementById('modalVideoLink').href = e.videoUrl;
+                videoBox.style.display = 'block';
+            } else {
+                videoBox.style.display = 'none';
+            }
+
+            let tagsHtml = (e.tags || []).map(t => `<div class="tag-pill">${t}</div>`).join('');
+            document.getElementById('modalTags').innerHTML = tagsHtml;
+
+            document.getElementById('eventModal').style.display = 'flex';
         }
 
-        function renderWeek() {
-            let grid = document.getElementById('contentGrid');
-            if (db.weeks.length === 0) {
-                document.getElementById('weekTitle').innerText = 'Нет данных';
-                grid.innerHTML = '<div class="col-span-3 text-center text-zinc-500 py-20 font-mono">Администратор еще не добавил недели.</div>';
-                return;
+        function closeModal(force) {
+            if (force === true || (force && force.target && force.target.id === 'eventModal')) {
+                document.getElementById('eventModal').style.display = 'none';
             }
-
-            let w = db.weeks[currentIdx];
-            document.getElementById('weekTitle').innerText = w.date;
-
-            let prog = loadProgress();
-            
-            let totalTasks = (w.webinars?.length || 0) + (w.tasks?.length || 0) + (w.works?.length || 0);
-            let doneTasks = 0;
-            
-            [...(w.webinars||[]), ...(w.tasks||[]), ...(w.works||[])].forEach(i => {
-                if (prog[i.id]) doneTasks++;
-            });
-            
-            let perc = totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100);
-            document.getElementById('progressCount').innerText = perc + '%';
-
-            let iconWeb = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
-            let iconTask = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>`;
-            let iconWork = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>`;
-
-            grid.innerHTML = 
-                renderColumn('Вебинары (Записи)', w.webinars, prog, 'purple-500', iconWeb) +
-                renderColumn('Задания (Выполнить)', w.tasks, prog, 'pink-500', iconTask) +
-                renderColumn('Работы', w.works, prog, 'indigo-500', iconWork);
         }
 
         async function init() {
             let res = await fetch('/api/ntsu');
             if (res.ok) {
-                db = await res.json();
-                if (db.weeks && db.weeks.length > 0) {
-                    currentIdx = db.weeks.length - 1;
-                }
-                renderWeek();
+                let data = await res.json();
+                db.events = data.events || [];
+                renderCalendar();
             }
         }
         init();
