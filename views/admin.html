@@ -1347,22 +1347,23 @@
                 <div>
                     <label>Тип</label>
                     <select id="ntsuEvType">
-                        <option value="webinar">Вебинар</option>
+                        <option value="webinar">Лекция / Вебинар</option>
                         <option value="task">Практика / Задание</option>
                     </select>
                 </div>
                 <div class="full-width"><label>Заголовок (Название)</label><input type="text" id="ntsuEvTitle" required placeholder="Собрание студентов..."></div>
                 <div class="full-width"><label>Преподаватель</label><input type="text" id="ntsuEvTeacher" placeholder="Иванов И. И."></div>
-                <div class="full-width"><label>Теги (через запятую)</label><input type="text" id="ntsuEvTags" placeholder="ДГ-620, ПР-11"></div>
-                <div class="full-width"><label>Описание / Конспект</label><textarea id="ntsuEvDesc" rows="3"></textarea></div>
-                <div class="full-width"><label>Ссылка на запись</label><input type="text" id="ntsuEvVideo" placeholder="https://..."></div>
+                <div class="full-width"><label>Описание / Конспект</label><textarea id="ntsuEvDesc" rows="12" placeholder="Вставьте текст лекции..."></textarea></div>
+                <div class="full-width"><label>Фото для конспекта/лекции (необязательно)</label><input type="file" id="ntsuEvConspectusFile" accept="image/*"></div>
+                <div class="full-width"><label>Ссылка на запись (YouTube/Drive)</label><input type="text" id="ntsuEvVideo" placeholder="https://..."></div>
                 <div class="full-width">
                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; text-transform:none;">
-                        <input type="checkbox" id="ntsuEvHasTask" style="width:18px;height:18px;margin:0;" onchange="document.getElementById('taskDescBlock').style.display = this.checked ? 'block' : 'none'">
+                        <input type="checkbox" id="ntsuEvHasTask" style="width:18px;height:18px;margin:0;" onchange="document.getElementById('taskDescBlock').style.display = this.checked ? 'block' : 'none'; document.getElementById('taskImgBlock').style.display = this.checked ? 'block' : 'none';">
                         Есть задание к выполнению
                     </label>
                 </div>
-                <div class="full-width" id="taskDescBlock" style="display:none;"><label>Описание задания</label><textarea id="ntsuEvTaskDesc" rows="3"></textarea></div>
+                <div class="full-width" id="taskDescBlock" style="display:none;"><label>Описание задания</label><textarea id="ntsuEvTaskDesc" rows="8"></textarea></div>
+                <div class="full-width" id="taskImgBlock" style="display:none;"><label>Фото для задания (необязательно)</label><input type="file" id="ntsuEvTaskFile" accept="image/*"></div>
             `;
             document.getElementById('ntsuModalInputs').innerHTML = html;
             document.getElementById('ntsuModal').style.display = 'flex';
@@ -1376,28 +1377,39 @@
                     alert('Заполните дату, время начала и заголовок');
                     return;
                 }
-                
-                var tagsStr = document.getElementById('ntsuEvTags').value.trim();
-                var tagsArr = tagsStr ? tagsStr.split(',').map(s=>s.trim()).filter(Boolean) : [];
 
-                var newEvent = {
-                    id: Date.now().toString(),
-                    date: d,
-                    timeStart: ts,
-                    timeEnd: document.getElementById('ntsuEvTimeE').value,
-                    type: document.getElementById('ntsuEvType').value,
-                    title: title,
-                    teacher: document.getElementById('ntsuEvTeacher').value.trim(),
-                    tags: tagsArr,
-                    description: document.getElementById('ntsuEvDesc').value.trim(),
-                    videoUrl: document.getElementById('ntsuEvVideo').value.trim(),
-                    hasTask: document.getElementById('ntsuEvHasTask').checked,
-                    taskDescription: document.getElementById('ntsuEvTaskDesc').value.trim()
-                };
+                var fConspectus = document.getElementById('ntsuEvConspectusFile');
+                var fTask = document.getElementById('ntsuEvTaskFile');
 
-                rawNtsuData.events.push(newEvent);
-                saveNtsuData();
-                closeNtsuModal();
+                document.getElementById('ntsuModalInputs').style.opacity = '0.5';
+
+                Promise.all([
+                    uploadFileHelper(fConspectus),
+                    uploadFileHelper(fTask)
+                ]).then(function(urls) {
+                    var newEvent = {
+                        id: Date.now().toString(),
+                        date: d,
+                        timeStart: ts,
+                        timeEnd: document.getElementById('ntsuEvTimeE').value,
+                        type: document.getElementById('ntsuEvType').value,
+                        title: title,
+                        teacher: document.getElementById('ntsuEvTeacher').value.trim(),
+                        description: document.getElementById('ntsuEvDesc').value.trim(),
+                        conspectusImageUrl: urls[0] || '',
+                        videoUrl: document.getElementById('ntsuEvVideo').value.trim(),
+                        hasTask: document.getElementById('ntsuEvHasTask').checked,
+                        taskDescription: document.getElementById('ntsuEvTaskDesc').value.trim(),
+                        taskImageUrl: urls[1] || ''
+                    };
+
+                    rawNtsuData.events.push(newEvent);
+                    saveNtsuData();
+                    closeNtsuModal();
+                }).catch(function(e) {
+                    alert('Ошибка загрузки файлов');
+                    document.getElementById('ntsuModalInputs').style.opacity = '1';
+                });
             };
         }
 
