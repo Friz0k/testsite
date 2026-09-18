@@ -37,6 +37,7 @@ const FILE_BANS = path.join(DIR_DATA, 'banned_ips.json');
 const FILE_SESSIONS = path.join(DIR_DATA, 'user_sessions.json');
 const FILE_NOTES = path.join(DIR_DATA, 'ip_notes.json');
 const FILE_DISCORD_LOGS = path.join(DIR_DATA, 'discord_logs.json');
+const FILE_NTSU = path.join(DIR_DATA, 'ntsu.json');
 
 const LOG_RETENTION_DAYS = 14;
 
@@ -60,6 +61,7 @@ const ensureFilesExist = () => {
     if (!fs.existsSync(FILE_SESSIONS)) fs.writeFileSync(FILE_SESSIONS, '{}', 'utf8');
     if (!fs.existsSync(FILE_NOTES)) fs.writeFileSync(FILE_NOTES, '{}', 'utf8');
     if (!fs.existsSync(FILE_DISCORD_LOGS)) fs.writeFileSync(FILE_DISCORD_LOGS, '[]', 'utf8');
+    if (!fs.existsSync(FILE_NTSU)) fs.writeFileSync(FILE_NTSU, '{"weeks":[]}', 'utf8');
 };
 
 ensureDirectoriesExist();
@@ -1030,6 +1032,7 @@ loadModularRoute('/fib', 'fib.js');
 loadModularRoute('/cid', 'cid.js');
 loadModularRoute('/deadly', 'deadly.js');
 loadModularRoute('/ems', 'ems.js');
+loadModularRoute('/api/ntsu', 'ntsu.js');
 
 app.get('/.well-known/discord', (req, res) => {
     res.send('dh=75f9bccb8e869da9a291dced7b5409976c12495b');
