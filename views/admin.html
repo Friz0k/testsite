@@ -183,7 +183,7 @@
             text-transform: uppercase; 
         }
 
-        input[type="text"], input[type="number"], input[type="file"], select, textarea { 
+        input[type="text"], input[type="number"], input[type="file"], select, textarea, input[type="date"], input[type="time"] { 
             width: 100%; 
             padding: 12px; 
             margin-bottom: 15px; 
@@ -779,8 +779,13 @@
         <div id="ntsu_manager" class="tab-content">
             <div class="admin-section">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; border: none; padding: 0;">Управление порталом ДТ-660</h3>
-                    <button type="button" class="btn-success" onclick="addNtsuWeek()">➕ Добавить неделю</button>
+                    <h3 style="margin: 0; border: none; padding: 0;">Академический календарь ДТ-660</h3>
+                    <button type="button" class="btn-success" onclick="addNtsuEvent()">➕ Добавить событие</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
+                    <button type="button" class="btn-sm" onclick="changeAdminMonth(-1)">⬅ Назад</button>
+                    <h4 id="ntsuAdminMonthLabel" style="margin:0;"></h4>
+                    <button type="button" class="btn-sm" onclick="changeAdminMonth(1)">Вперед ➡</button>
                 </div>
                 <div id="ntsuListContainer">Загрузка...</div>
             </div>
@@ -1259,13 +1264,19 @@
         var factionActions = [];
         var saActions = [];
 
-        var rawNtsuData = { weeks: [] };
-        var ntsuModalAction = null;
+        var rawNtsuData = { events: [] };
+        var ntsuAdminDate = new Date();
+        const ntsuMonths = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 
         function loadNtsuUI() {
             apiCall('/api/ntsu').then(function(res) {
                 if (res) {
-                    rawNtsuData = res;
+                    if (res.weeks && (!res.events || res.events.length === 0)) {
+                        rawNtsuData = { events: [] };
+                    } else {
+                        rawNtsuData = res;
+                    }
+                    if (!rawNtsuData.events) rawNtsuData.events = [];
                     renderNtsuUI();
                 }
             });
@@ -1283,51 +1294,116 @@
             });
         }
 
-        function addNtsuWeek() {
-            document.getElementById('ntsuModalTitle').innerText = 'Создать новую неделю';
-            document.getElementById('ntsuModalInputs').innerHTML = '<div><label>Период (например, 18.09 - 24.09)</label><input type="text" id="ntsuInpDate" placeholder="Введите даты"></div>';
-            document.getElementById('ntsuModal').style.display = 'flex';
-            ntsuModalAction = function() {
-                var d = document.getElementById('ntsuInpDate').value.trim();
-                if (d) {
-                    rawNtsuData.weeks.push({ id: Date.now().toString(), date: d, webinars: [], tasks: [], works: [] });
-                    saveNtsuData();
-                    closeNtsuModal();
-                }
-            };
+        function changeAdminMonth(dir) {
+            ntsuAdminDate.setMonth(ntsuAdminDate.getMonth() + dir);
+            renderNtsuUI();
         }
 
-        function addNtsuItem(wIdx, type) {
-            document.getElementById('ntsuModalTitle').innerText = 'Добавить материал';
-            let extra = type === 'webinars' ? '<div><label>Ссылка на видео (YouTube/Drive)</label><input type="text" id="ntsuInpUrl" placeholder="https://..."></div>' : '';
-            document.getElementById('ntsuModalInputs').innerHTML = '<div><label>Заголовок</label><input type="text" id="ntsuInpTitle"></div>' + extra + '<div><label>Описание/Текст</label><textarea id="ntsuInpDesc" rows="4"></textarea></div>';
-            document.getElementById('ntsuModal').style.display = 'flex';
-            ntsuModalAction = function() {
-                var title = document.getElementById('ntsuInpTitle').value.trim();
-                var text = document.getElementById('ntsuInpDesc').value.trim();
-                if (title) {
-                    var item = { id: Date.now().toString(), title: title, text: text };
-                    if (type === 'webinars') {
-                        var url = document.getElementById('ntsuInpUrl').value.trim();
-                        if (url) item.videoUrl = url;
-                    }
-                    rawNtsuData.weeks[wIdx][type].push(item);
-                    saveNtsuData();
-                    closeNtsuModal();
-                }
-            };
-        }
+        function renderNtsuUI() {
+            var y = ntsuAdminDate.getFullYear();
+            var m = ntsuAdminDate.getMonth();
+            document.getElementById('ntsuAdminMonthLabel').innerText = ntsuMonths[m] + ' ' + y;
 
-        function deleteNtsuWeek(wIdx) {
-            if (confirm('Удалить неделю со всем содержимым?')) {
-                rawNtsuData.weeks.splice(wIdx, 1);
-                saveNtsuData();
+            var container = document.getElementById('ntsuListContainer');
+            var monthEvents = rawNtsuData.events.filter(function(e) {
+                var d = new Date(e.date);
+                return d.getFullYear() === y && d.getMonth() === m;
+            });
+
+            if (monthEvents.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">Нет событий в этом месяце.</p>';
+                return;
             }
+
+            monthEvents.sort(function(a, b) {
+                if (a.date !== b.date) return a.date.localeCompare(b.date);
+                return a.timeStart.localeCompare(b.timeStart);
+            });
+
+            var html = '<div class="form-grid" style="grid-template-columns: 1fr;">';
+            for (var i = 0; i < monthEvents.length; i++) {
+                var ev = monthEvents[i];
+                html += '<div style="background:#121214; border:1px solid #27272a; padding:15px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">';
+                html += '<div>';
+                html += '<div style="color:#10b981; font-weight:bold; font-size:16px; margin-bottom:5px;">' + ev.date + ' | ' + ev.timeStart + (ev.timeEnd ? ' - ' + ev.timeEnd : '') + '</div>';
+                html += '<div style="font-size:15px; font-weight:bold;">' + ev.title + '</div>';
+                html += '<div style="color:#a1a1aa; font-size:12px; margin-top:3px;">Тип: ' + ev.type + ' | Преподаватель: ' + (ev.teacher || 'Не указан') + '</div>';
+                html += '</div>';
+                html += '<div>';
+                html += '<button type="button" class="btn-danger btn-sm" onclick="deleteNtsuEvent(\'' + ev.id + '\')">Удалить</button>';
+                html += '</div>';
+                html += '</div>';
+            }
+            html += '</div>';
+            container.innerHTML = html;
         }
 
-        function deleteNtsuItem(wIdx, type, iIdx) {
-            if (confirm('Удалить этот элемент?')) {
-                rawNtsuData.weeks[wIdx][type].splice(iIdx, 1);
+        function addNtsuEvent() {
+            document.getElementById('ntsuModalTitle').innerText = 'Добавить событие';
+            var html = `
+                <div><label>Дата</label><input type="date" id="ntsuEvDate" required></div>
+                <div><label>Время начала</label><input type="time" id="ntsuEvTimeS" required></div>
+                <div><label>Время окончания (необяз.)</label><input type="time" id="ntsuEvTimeE"></div>
+                <div>
+                    <label>Тип</label>
+                    <select id="ntsuEvType">
+                        <option value="webinar">Вебинар</option>
+                        <option value="task">Практика / Задание</option>
+                    </select>
+                </div>
+                <div class="full-width"><label>Заголовок (Название)</label><input type="text" id="ntsuEvTitle" required placeholder="Собрание студентов..."></div>
+                <div class="full-width"><label>Преподаватель</label><input type="text" id="ntsuEvTeacher" placeholder="Иванов И. И."></div>
+                <div class="full-width"><label>Теги (через запятую)</label><input type="text" id="ntsuEvTags" placeholder="ДГ-620, ПР-11"></div>
+                <div class="full-width"><label>Описание / Конспект</label><textarea id="ntsuEvDesc" rows="3"></textarea></div>
+                <div class="full-width"><label>Ссылка на запись</label><input type="text" id="ntsuEvVideo" placeholder="https://..."></div>
+                <div class="full-width">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; text-transform:none;">
+                        <input type="checkbox" id="ntsuEvHasTask" style="width:18px;height:18px;margin:0;" onchange="document.getElementById('taskDescBlock').style.display = this.checked ? 'block' : 'none'">
+                        Есть задание к выполнению
+                    </label>
+                </div>
+                <div class="full-width" id="taskDescBlock" style="display:none;"><label>Описание задания</label><textarea id="ntsuEvTaskDesc" rows="3"></textarea></div>
+            `;
+            document.getElementById('ntsuModalInputs').innerHTML = html;
+            document.getElementById('ntsuModal').style.display = 'flex';
+            
+            ntsuModalAction = function() {
+                var d = document.getElementById('ntsuEvDate').value;
+                var ts = document.getElementById('ntsuEvTimeS').value;
+                var title = document.getElementById('ntsuEvTitle').value.trim();
+                
+                if (!d || !ts || !title) {
+                    alert('Заполните дату, время начала и заголовок');
+                    return;
+                }
+                
+                var tagsStr = document.getElementById('ntsuEvTags').value.trim();
+                var tagsArr = tagsStr ? tagsStr.split(',').map(s=>s.trim()).filter(Boolean) : [];
+
+                var newEvent = {
+                    id: Date.now().toString(),
+                    date: d,
+                    timeStart: ts,
+                    timeEnd: document.getElementById('ntsuEvTimeE').value,
+                    type: document.getElementById('ntsuEvType').value,
+                    title: title,
+                    teacher: document.getElementById('ntsuEvTeacher').value.trim(),
+                    tags: tagsArr,
+                    description: document.getElementById('ntsuEvDesc').value.trim(),
+                    videoUrl: document.getElementById('ntsuEvVideo').value.trim(),
+                    hasTask: document.getElementById('ntsuEvHasTask').checked,
+                    taskDescription: document.getElementById('ntsuEvTaskDesc').value.trim()
+                };
+
+                rawNtsuData.events.push(newEvent);
+                saveNtsuData();
+                closeNtsuModal();
+            };
+        }
+
+        function deleteNtsuEvent(id) {
+            if (confirm('Удалить это событие?')) {
+                rawNtsuData.events = rawNtsuData.events.filter(e => e.id !== id);
                 saveNtsuData();
             }
         }
@@ -1339,58 +1415,6 @@
 
         function confirmNtsuModal() {
             if (ntsuModalAction) ntsuModalAction();
-        }
-
-        function renderNtsuUI() {
-            var container = document.getElementById('ntsuListContainer');
-            if (rawNtsuData.weeks.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted);">Недели не добавлены.</p>';
-                return;
-            }
-            var html = '';
-            for (var i = rawNtsuData.weeks.length - 1; i >= 0; i--) {
-                var w = rawNtsuData.weeks[i];
-                html += '<div style="background:#18181b; border:1px solid #3f3f46; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">';
-                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #27272a; padding-bottom:12px;">';
-                html += '<h4 style="margin:0; font-size:20px; color:#c084fc;">Неделя: ' + w.date + '</h4>';
-                html += '<button type="button" class="btn-danger btn-sm" onclick="deleteNtsuWeek(' + i + ')">🗑 Удалить неделю</button>';
-                html += '</div>';
-
-                html += '<div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">';
-
-                html += '<div style="background:#121214; padding:15px; border-radius:8px; border:1px solid #27272a;">';
-                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><b style="color:#a78bfa;">Вебинары</b><button type="button" class="btn-success btn-sm" onclick="addNtsuItem(' + i + ',\'webinars\')">➕</button></div>';
-                for (var wj = 0; wj < w.webinars.length; wj++) {
-                    html += '<div style="background:#09090b; padding:12px; border-radius:6px; margin-bottom:8px; position:relative; border:1px solid #3f3f46;">';
-                    html += '<div style="font-size:14px; font-weight:bold; padding-right:25px;">' + w.webinars[wj].title + '</div>';
-                    html += '<button type="button" class="btn-danger btn-sm" style="position:absolute; top:8px; right:8px; padding:2px 8px;" onclick="deleteNtsuItem(' + i + ',\'webinars\',' + wj + ')">×</button>';
-                    html += '</div>';
-                }
-                html += '</div>';
-
-                html += '<div style="background:#121214; padding:15px; border-radius:8px; border:1px solid #27272a;">';
-                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><b style="color:#f472b6;">Задания</b><button type="button" class="btn-success btn-sm" onclick="addNtsuItem(' + i + ',\'tasks\')">➕</button></div>';
-                for (var tj = 0; tj < w.tasks.length; tj++) {
-                    html += '<div style="background:#09090b; padding:12px; border-radius:6px; margin-bottom:8px; position:relative; border:1px solid #3f3f46;">';
-                    html += '<div style="font-size:14px; font-weight:bold; padding-right:25px;">' + w.tasks[tj].title + '</div>';
-                    html += '<button type="button" class="btn-danger btn-sm" style="position:absolute; top:8px; right:8px; padding:2px 8px;" onclick="deleteNtsuItem(' + i + ',\'tasks\',' + tj + ')">×</button>';
-                    html += '</div>';
-                }
-                html += '</div>';
-
-                html += '<div style="background:#121214; padding:15px; border-radius:8px; border:1px solid #27272a;">';
-                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><b style="color:#818cf8;">Работы</b><button type="button" class="btn-success btn-sm" onclick="addNtsuItem(' + i + ',\'works\')">➕</button></div>';
-                for (var rj = 0; rj < w.works.length; rj++) {
-                    html += '<div style="background:#09090b; padding:12px; border-radius:6px; margin-bottom:8px; position:relative; border:1px solid #3f3f46;">';
-                    html += '<div style="font-size:14px; font-weight:bold; padding-right:25px;">' + w.works[rj].title + '</div>';
-                    html += '<button type="button" class="btn-danger btn-sm" style="position:absolute; top:8px; right:8px; padding:2px 8px;" onclick="deleteNtsuItem(' + i + ',\'works\',' + rj + ')">×</button>';
-                    html += '</div>';
-                }
-                html += '</div>';
-
-                html += '</div></div>';
-            }
-            container.innerHTML = html;
         }
 
         var DEFAULT_GOV_ACTIONS = [
