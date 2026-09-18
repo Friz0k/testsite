@@ -765,6 +765,7 @@
 
         <div class="nav-category">Системы</div>
         <ul class="nav-links" id="systemsNavLinks">
+            <li onclick="switchTab('ntsu_manager', this)">🎓 ДТ-660 (ВУЗ)</li>
             <li onclick="switchTab('faction_manager', this)">💼 Управление фракциями</li>
             <li onclick="switchTab('discord_monitor', this)">📡 Мониторинг Discord</li>
             <li onclick="switchTab('tokens_manager', this)">🔑 Токены доступа</li>
@@ -774,6 +775,16 @@
     </div>
 
     <div class="content-area">
+
+        <div id="ntsu_manager" class="tab-content">
+            <div class="admin-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; border: none; padding: 0;">Управление порталом ДТ-660</h3>
+                    <button type="button" class="btn-success" onclick="addNtsuWeek()">➕ Добавить неделю</button>
+                </div>
+                <div id="ntsuListContainer">Загрузка...</div>
+            </div>
+        </div>
         
         <div id="faction_manager" class="tab-content">
             <div class="admin-section">
@@ -1191,6 +1202,17 @@
 
     </div>
 
+    <div id="ntsuModal" class="modal-overlay">
+        <div class="modal-body">
+            <h3 id="ntsuModalTitle" style="margin-bottom:15px; color:var(--text-main);"></h3>
+            <div id="ntsuModalInputs" class="form-grid" style="grid-template-columns: 1fr;"></div>
+            <div class="btn-group" style="margin-top:20px;">
+                <button type="button" class="btn-success" onclick="confirmNtsuModal()">Сохранить</button>
+                <button type="button" class="btn-danger" onclick="closeNtsuModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
     <div id="ipModal" class="modal-overlay">
         <div class="modal-body">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
@@ -1236,6 +1258,140 @@
         
         var factionActions = [];
         var saActions = [];
+
+        var rawNtsuData = { weeks: [] };
+        var ntsuModalAction = null;
+
+        function loadNtsuUI() {
+            apiCall('/api/ntsu').then(function(res) {
+                if (res) {
+                    rawNtsuData = res;
+                    renderNtsuUI();
+                }
+            });
+        }
+
+        function saveNtsuData() {
+            apiCall('/api/ntsu', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(rawNtsuData)
+            }).then(function(res) {
+                if (res && res.success) {
+                    loadNtsuUI();
+                }
+            });
+        }
+
+        function addNtsuWeek() {
+            document.getElementById('ntsuModalTitle').innerText = 'Создать новую неделю';
+            document.getElementById('ntsuModalInputs').innerHTML = '<div><label>Период (например, 18.09 - 24.09)</label><input type="text" id="ntsuInpDate" placeholder="Введите даты"></div>';
+            document.getElementById('ntsuModal').style.display = 'flex';
+            ntsuModalAction = function() {
+                var d = document.getElementById('ntsuInpDate').value.trim();
+                if (d) {
+                    rawNtsuData.weeks.push({ id: Date.now().toString(), date: d, webinars: [], tasks: [], works: [] });
+                    saveNtsuData();
+                    closeNtsuModal();
+                }
+            };
+        }
+
+        function addNtsuItem(wIdx, type) {
+            document.getElementById('ntsuModalTitle').innerText = 'Добавить материал';
+            let extra = type === 'webinars' ? '<div><label>Ссылка на видео (YouTube/Drive)</label><input type="text" id="ntsuInpUrl" placeholder="https://..."></div>' : '';
+            document.getElementById('ntsuModalInputs').innerHTML = '<div><label>Заголовок</label><input type="text" id="ntsuInpTitle"></div>' + extra + '<div><label>Описание/Текст</label><textarea id="ntsuInpDesc" rows="4"></textarea></div>';
+            document.getElementById('ntsuModal').style.display = 'flex';
+            ntsuModalAction = function() {
+                var title = document.getElementById('ntsuInpTitle').value.trim();
+                var text = document.getElementById('ntsuInpDesc').value.trim();
+                if (title) {
+                    var item = { id: Date.now().toString(), title: title, text: text };
+                    if (type === 'webinars') {
+                        var url = document.getElementById('ntsuInpUrl').value.trim();
+                        if (url) item.videoUrl = url;
+                    }
+                    rawNtsuData.weeks[wIdx][type].push(item);
+                    saveNtsuData();
+                    closeNtsuModal();
+                }
+            };
+        }
+
+        function deleteNtsuWeek(wIdx) {
+            if (confirm('Удалить неделю со всем содержимым?')) {
+                rawNtsuData.weeks.splice(wIdx, 1);
+                saveNtsuData();
+            }
+        }
+
+        function deleteNtsuItem(wIdx, type, iIdx) {
+            if (confirm('Удалить этот элемент?')) {
+                rawNtsuData.weeks[wIdx][type].splice(iIdx, 1);
+                saveNtsuData();
+            }
+        }
+
+        function closeNtsuModal() {
+            document.getElementById('ntsuModal').style.display = 'none';
+            ntsuModalAction = null;
+        }
+
+        function confirmNtsuModal() {
+            if (ntsuModalAction) ntsuModalAction();
+        }
+
+        function renderNtsuUI() {
+            var container = document.getElementById('ntsuListContainer');
+            if (rawNtsuData.weeks.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted);">Недели не добавлены.</p>';
+                return;
+            }
+            var html = '';
+            for (var i = rawNtsuData.weeks.length - 1; i >= 0; i--) {
+                var w = rawNtsuData.weeks[i];
+                html += '<div style="background:#18181b; border:1px solid #3f3f46; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #27272a; padding-bottom:12px;">';
+                html += '<h4 style="margin:0; font-size:20px; color:#c084fc;">Неделя: ' + w.date + '</h4>';
+                html += '<button type="button" class="btn-danger btn-sm" onclick="deleteNtsuWeek(' + i + ')">🗑 Удалить неделю</button>';
+                html += '</div>';
+
+                html += '<div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">';
+
+                html += '<div style="background:#121214; padding:15px; border-radius:8px; border:1px solid #27272a;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><b style="color:#a78bfa;">Вебинары</b><button type="button" class="btn-success btn-sm" onclick="addNtsuItem(' + i + ',\'webinars\')">➕</button></div>';
+                for (var wj = 0; wj < w.webinars.length; wj++) {
+                    html += '<div style="background:#09090b; padding:12px; border-radius:6px; margin-bottom:8px; position:relative; border:1px solid #3f3f46;">';
+                    html += '<div style="font-size:14px; font-weight:bold; padding-right:25px;">' + w.webinars[wj].title + '</div>';
+                    html += '<button type="button" class="btn-danger btn-sm" style="position:absolute; top:8px; right:8px; padding:2px 8px;" onclick="deleteNtsuItem(' + i + ',\'webinars\',' + wj + ')">×</button>';
+                    html += '</div>';
+                }
+                html += '</div>';
+
+                html += '<div style="background:#121214; padding:15px; border-radius:8px; border:1px solid #27272a;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><b style="color:#f472b6;">Задания</b><button type="button" class="btn-success btn-sm" onclick="addNtsuItem(' + i + ',\'tasks\')">➕</button></div>';
+                for (var tj = 0; tj < w.tasks.length; tj++) {
+                    html += '<div style="background:#09090b; padding:12px; border-radius:6px; margin-bottom:8px; position:relative; border:1px solid #3f3f46;">';
+                    html += '<div style="font-size:14px; font-weight:bold; padding-right:25px;">' + w.tasks[tj].title + '</div>';
+                    html += '<button type="button" class="btn-danger btn-sm" style="position:absolute; top:8px; right:8px; padding:2px 8px;" onclick="deleteNtsuItem(' + i + ',\'tasks\',' + tj + ')">×</button>';
+                    html += '</div>';
+                }
+                html += '</div>';
+
+                html += '<div style="background:#121214; padding:15px; border-radius:8px; border:1px solid #27272a;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><b style="color:#818cf8;">Работы</b><button type="button" class="btn-success btn-sm" onclick="addNtsuItem(' + i + ',\'works\')">➕</button></div>';
+                for (var rj = 0; rj < w.works.length; rj++) {
+                    html += '<div style="background:#09090b; padding:12px; border-radius:6px; margin-bottom:8px; position:relative; border:1px solid #3f3f46;">';
+                    html += '<div style="font-size:14px; font-weight:bold; padding-right:25px;">' + w.works[rj].title + '</div>';
+                    html += '<button type="button" class="btn-danger btn-sm" style="position:absolute; top:8px; right:8px; padding:2px 8px;" onclick="deleteNtsuItem(' + i + ',\'works\',' + rj + ')">×</button>';
+                    html += '</div>';
+                }
+                html += '</div>';
+
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+        }
 
         var DEFAULT_GOV_ACTIONS = [
             { id: 'assist_arrest', name: 'Помощь при задержании', points: 2, isCurator: false },
@@ -1295,6 +1451,9 @@
             }
             if (tabId === 'tokens_manager') {
                 loadTokensUI();
+            }
+            if (tabId === 'ntsu_manager') {
+                loadNtsuUI();
             }
         }
 
@@ -2467,6 +2626,9 @@
                         if (sattr && sattr.indexOf('discord_monitor') !== -1 && !userAuth.permissions.includes('settings') && !userAuth.permissions.includes('all')) {
                             sli.style.display = 'none';
                         }
+                        if (sattr && sattr.indexOf('ntsu_manager') !== -1) {
+                            sli.style.display = 'none';
+                        }
                     }
                     
                     var selector = document.getElementById('factionSelector');
@@ -2532,6 +2694,7 @@
                     loadProjects(); 
                     loadFileList(); 
                     loadSessionsUI(); 
+                    loadNtsuUI();
                 } else if (userAuth.permissions.includes('files') || userAuth.permissions.includes('all')) { 
                     loadFileList(); 
                 }
