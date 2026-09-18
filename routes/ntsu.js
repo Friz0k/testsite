@@ -9,9 +9,13 @@ const FILE_NTSU = path.join(__dirname, '../data/ntsu.json');
 router.get('/', (req, res) => {
     try {
         if (!fs.existsSync(FILE_NTSU)) {
-            fs.writeFileSync(FILE_NTSU, JSON.stringify({ weeks: [] }), 'utf8');
+            fs.writeFileSync(FILE_NTSU, JSON.stringify({ events: [] }), 'utf8');
         }
-        res.json(JSON.parse(fs.readFileSync(FILE_NTSU, 'utf8')));
+        let data = JSON.parse(fs.readFileSync(FILE_NTSU, 'utf8'));
+        if (!data.events) {
+            data.events = [];
+        }
+        res.json(data);
     } catch (err) {
         res.status(500).json({ error: 'Data error' });
     }
