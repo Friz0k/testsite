@@ -60,7 +60,7 @@ module.exports = (req, res, next) => {
         }
     }
 
-    if (req.xhr || (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) || req.path.startsWith('/api/')) {
+    if (req.xhr || (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) || req.originalUrl.startsWith('/api/')) {
         return res.status(401).json({ success: false, error: 'Auth required' });
     }
 
